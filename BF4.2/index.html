@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Forrajero PRO v6.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Pantalla de bienvenida -->
+    <div id="bienvenida" class="bienvenida-container" style="display:none;">
+        <div class="bienvenida-card">
+            <div class="bienvenida-icono">&#127793;</div>
+            <h2>Bienvenido a Balance Forrajero PRO</h2>
+            <p>Planifica la carga de tu campo, rotaciones de potreros, nutricion animal y economia ganadera en una sola herramienta.</p>
+            <p style="font-size:0.85em;color:#888;">Tus datos se guardan automaticamente en este navegador.</p>
+            <div class="bienvenida-opciones">
+                <button class="btn" onclick="cargarDatosEjemplo()">Cargar ejemplo</button>
+                <button class="btn btn-secondary" onclick="ocultarBienvenida()">Empezar de cero</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Balance Forrajero PRO v6.0</h1>
+            <div class="version-badge">Modelo INTA 2008 - Rotaciones + Nutricion + Clima + NDVI</div>
+        </div>
+
+        <div class="content">
+            <!-- Resumen ejecutivo -->
+            <div id="resumenEjecutivo" class="resumen-ejecutivo" style="display:none;">
+                <div class="resumen-header" onclick="toggleResumen()">
+                    <span>Resumen del campo</span>
+                    <span class="flecha">&#9660;</span>
+                </div>
+                <div class="resumen-body" id="resumenBody">
+                    <div class="resumen-grid" id="resumenGrid"></div>
+                </div>
+            </div>
+
+            <!-- Acciones archivo -->
+            <div class="acciones-archivo">
+                <button class="btn btn-sm" onclick="cargarDatosEjemplo()">Cargar ejemplo</button>
+                <button class="btn btn-sm btn-secondary" onclick="exportarConfiguracion()">Guardar JSON</button>
+                <label class="btn btn-sm btn-warning" style="margin-bottom:0;">
+                    Cargar JSON <input type="file" accept=".json" onchange="importarConfiguracion(event)" style="display:none;">
+                </label>
+                <button class="btn btn-sm" onclick="window.print()">Imprimir</button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('balance')">Balance</button>
+                <button class="tab" onclick="switchTab('lotes')">Lotes / Rodeo</button>
+                <button class="tab" onclick="switchTab('potreros')">Potreros</button>
+                <button class="tab" onclick="switchTab('ofertademanda')">Oferta/Demanda</button>
+                <button class="tab" onclick="switchTab('nutricion')">Nutricion</button>
+                <button class="tab" onclick="switchTab('clima')">Clima</button>
+                <button class="tab" onclick="switchTab('economico')">Economico</button>
+                <button class="tab" onclick="switchTab('comparador')">Comparador</button>
+                <button class="tab" onclick="switchTab('ndvi')">NDVI</button>
+            </div>
+
+            <!-- ======================== TAB 1: BALANCE ======================== -->
+            <div id="balance" class="tab-content active">
+                <div id="ayuda_balance" class="ayuda-acordeon acordeon"></div>
+
+                <div class="section">
+                    <h2>Configuracion del Campo</h2>
+
+                    <div class="input-grid" style="max-width: 600px; margin-bottom: 20px;">
+                        <div class="input-group">
+                            <label>Mes de inicio del ejercicio</label>
+                            <select id="mesInicioSelect">
+                                <option value="0">Enero</option>
+                                <option value="1">Febrero</option>
+                                <option value="2">Marzo</option>
+                                <option value="3">Abril</option>
+                                <option value="4">Mayo</option>
+                                <option value="5">Junio</option>
+                                <option value="6" selected>Julio</option>
+                                <option value="7">Agosto</option>
+                                <option value="8">Septiembre</option>
+                                <option value="9">Octubre</option>
+                                <option value="10">Noviembre</option>
+                                <option value="11">Diciembre</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Stock inicial de MS (kg, opcional)</label>
+                            <input type="number" id="stockInicialInput" min="0" value="0" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        Ingresa las hectareas de cada recurso y marca los meses de uso (click en cada mes). O define potreros en la pestana "Potreros" para sincronizar automaticamente.
+                    </div>
+
+                    <div id="recursosContainer"></div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Ajuste de Productividad</span>
+                            <span class="slider-value" id="ajusteValor">100%</span>
+                        </div>
+                        <input type="range" id="ajusteProductividad" min="50" max="150" value="100" step="5"
+                               oninput="document.getElementById('ajusteValor').textContent = this.value + '%'">
+                        <div style="display:flex;justify-content:space-between;font-size:0.8em;color:#7f8c8d;margin-top:5px;">
+                            <span>50% (Pobre)</span><span>100% (Promedio)</span><span>150% (Superior)</span>
+                        </div>
+                    </div>
+
+                    <div class="input-grid" style="max-width: 600px; margin-top: 15px;">
+                        <div class="input-group">
+                            <label>Escenario Climatico</label>
+                            <select id="escenarioSelect">
+                                <option value="promedio">Ano Promedio</option>
+                                <option value="bueno">Ano Bueno</option>
+                                <option value="malo">Ano Malo</option>
+                                <option value="comparar" selected>Comparar los 3</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Manejo del Pastoreo</label>
+                            <select id="manejoPastoreo">
+                                <option value="continuo">Continuo (55%)</option>
+                                <option value="rotativo" selected>Rotativo (72.5%)</option>
+                                <option value="intensivo">Intensivo (82.5%)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="calcularBalance()">Calcular Balance</button>
+                    <button class="btn btn-secondary" onclick="limpiarRecursos()">Limpiar</button>
+                </div>
+
+                <div id="resultadosBalance" style="display:none;">
+                    <div class="section">
+                        <h2>Resultados del Balance</h2>
+                        <div class="card-grid">
+                            <div class="card" data-tooltip="Suma de hectareas de todos los recursos con superficie mayor a 0"><div class="card-title">Superficie</div><div class="card-value" id="superficieTotal">0</div><div class="card-unit">hectareas</div></div>
+                            <div class="card" data-tooltip="Total de materia seca bruta producida en el ano. No incluye perdidas por pastoreo"><div class="card-title">Produccion Anual</div><div class="card-value" id="produccionAnual">0</div><div class="card-unit">kg MS/ano</div></div>
+                            <div class="card" data-tooltip="1 EV = vaca de 400 kg con cria al pie, consume ~10 kg MS/dia. Maximo que soporta tu campo"><div class="card-title">Carga Max Teorica</div><div class="card-value" id="cargaMaxima">0</div><div class="card-unit">EV/ha</div></div>
+                            <div class="card" data-tooltip="Productividad promedio. Zona pampeana buena: 6.000-9.000 kg MS/ha/ano"><div class="card-title">Produccion/ha</div><div class="card-value" id="produccionPorHa">0</div><div class="card-unit">kg MS/ha/ano</div></div>
+                        </div>
+
+                        <div class="chart-container">
+                            <div class="chart-wrapper"><canvas id="chartBalance"></canvas></div>
+                        </div>
+
+                        <div class="chart-container">
+                            <h3>Aporte acumulado por recurso</h3>
+                            <div class="chart-wrapper"><canvas id="chartAcumuladoRecursos"></canvas></div>
+                        </div>
+
+                        <div class="section">
+                            <h3>Produccion por recurso - mes a mes (kg MS)</h3>
+                            <div class="tabla-scroll" id="tablaProduccionRecursos"></div>
+                        </div>
+
+                        <div id="alertasBalance"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================== TAB 2: LOTES / RODEO ======================== -->
+            <div id="lotes" class="tab-content">
+                <div id="ayuda_lotes" class="ayuda-acordeon acordeon"></div>
+
+                <div class="section">
+                    <h2>Gestion de Escenarios</h2>
+                    <div class="alert alert-info">
+                        Cada escenario representa un rodeo completo. Podes duplicar un escenario y modificar parametros para comparar estrategias.
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
+                        <label style="font-weight:600;">Escenario activo:</label>
+                        <select id="escenarioActivoSelect" onchange="cambiarEscenarioActivo()" style="padding:8px;border-radius:8px;border:2px solid #e0e0e0;min-width:200px;"></select>
+                        <button class="btn btn-sm btn-secondary" onclick="nuevoEscenario()">+ Nuevo</button>
+                        <button class="btn btn-sm btn-warning" onclick="duplicarEscenarioActivo()">Duplicar</button>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarEscenarioActivo()">Eliminar</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Agregar grupo al escenario</h2>
+
+                    <div class="toggle-ganancia">
+                        <label><input type="radio" name="modoGanancia" value="manual" checked> Ganancia manual</label>
+                        <label><input type="radio" name="modoGanancia" value="calculada"> Ganancia calculada (NRC)</label>
+                    </div>
+
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Categoria</label>
+                            <select id="grupoCategoria" onchange="ajustarPesosDefecto()">
+                                <option value="ternero">Ternero</option>
+                                <option value="ternera">Ternera</option>
+                                <option value="novillito">Novillito</option>
+                                <option value="novillo" selected>Novillo</option>
+                                <option value="vaquillona">Vaquillona</option>
+                                <option value="vaca">Vaca</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Cantidad</label>
+                            <input type="number" id="grupoCantidad" min="1" value="50">
+                        </div>
+                        <div class="input-group">
+                            <label>Peso inicial (kg)</label>
+                            <input type="number" id="grupoPesoInicial" min="50" value="380">
+                        </div>
+                        <div class="input-group">
+                            <label>Ganancia diaria (kg/dia)</label>
+                            <input type="number" id="grupoGanancia" step="0.05" value="0.7">
+                        </div>
+                    </div>
+
+                    <div class="criterio-salida">
+                        <label><input type="radio" name="criterioSalida" value="fecha" checked onchange="toggleCriterioSalida()"> Fecha de salida</label>
+                        <label><input type="radio" name="criterioSalida" value="peso" onchange="toggleCriterioSalida()"> Peso objetivo</label>
+                    </div>
+
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Fecha entrada</label>
+                            <input type="date" id="grupoFechaEntrada">
+                        </div>
+                        <div class="input-group" id="wrapFechaSalida">
+                            <label>Fecha salida</label>
+                            <input type="date" id="grupoFechaSalida">
+                        </div>
+                        <div class="input-group" id="wrapPesoObjetivo" style="display:none;">
+                            <label>Peso objetivo (kg)</label>
+                            <input type="number" id="grupoPesoObjetivo" min="100" value="450">
+                        </div>
+                    </div>
+
+                    <!-- Costos colapsables -->
+                    <div class="acordeon">
+                        <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                            Datos economicos <span class="flecha">&#9660;</span>
+                        </div>
+                        <div class="acordeon-body">
+                            <div class="input-grid">
+                                <div class="input-group">
+                                    <label>Precio compra ($/kg vivo)</label>
+                                    <input type="number" id="grupoPrecioCompra" value="1200" step="10">
+                                </div>
+                                <div class="input-group">
+                                    <label>Precio venta proy. ($/kg vivo)</label>
+                                    <input type="number" id="grupoPrecioVenta" value="1400" step="10">
+                                </div>
+                                <div class="input-group">
+                                    <label>Sanidad ($/cabeza)</label>
+                                    <input type="number" id="grupoSanidad" value="5000" step="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn" id="btnAgregarGrupo" onclick="agregarGrupo()">Agregar al escenario</button>
+                    <button class="btn btn-secondary" id="btnCancelarEdicion" style="display:none;" onclick="cancelarEdicion()">Cancelar edicion</button>
+                </div>
+
+                <div class="section">
+                    <h2>Rodeo configurado</h2>
+                    <div id="escenariosContainer"></div>
+                </div>
+            </div>
+
+            <!-- ======================== TAB 3: POTREROS ======================== -->
+            <div id="potreros" class="tab-content">
+                <div id="ayuda_potreros" class="ayuda-acordeon acordeon"></div>
+
+                <div class="section">
+                    <h2>Gestion de Potreros</h2>
+                    <div class="alert alert-info">
+                        Define los potreros fisicos del campo. La superficie por recurso se sincroniza con el balance automaticamente.
+                    </div>
+
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Nombre del potrero</label>
+                            <input type="text" id="potreroNombre" placeholder="Ej: Potrero 1">
+                        </div>
+                        <div class="input-group">
+                            <label>Superficie (ha)</label>
+                            <input type="number" id="potreroSuperficie" min="0.1" step="0.1" placeholder="Ha">
+                        </div>
+                        <div class="input-group">
+                            <label>Recurso forrajero</label>
+                            <select id="potreroRecurso">
+                                <option>Campo natural</option>
+                                <option>Campo natural con agropiro</option>
+                                <option>Pastura base alfalfa</option>
+                                <option>Pastura consociada</option>
+                                <option>Pastura de agropiro</option>
+                                <option>Pastura de festuca</option>
+                                <option>Promocion de raigras</option>
+                                <option>Promocion intensiva de raigras</option>
+                                <option>Verdeo de avena</option>
+                                <option>Verdeo de invierno</option>
+                                <option>Verdeo de maiz</option>
+                                <option>Verdeo de raigras</option>
+                                <option>Verdeo de sorgo</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label style="display:flex;align-items:center;gap:8px;">
+                                <input type="checkbox" id="potreroAguada" checked> Tiene aguada
+                            </label>
+                        </div>
+                    </div>
+                    <input type="hidden" id="potreroEditandoId" value="">
+                    <button class="btn" id="btnAgregarPotrero" onclick="agregarPotrero()">Agregar potrero</button>
+                </div>
+
+                <div class="section">
+                    <h2>Potreros del campo</h2>
+                    <div id="resumenPotreros"></div>
+                    <div class="potrero-grid" id="potreroGrid">
+                        <p style="color:#999;text-align:center;grid-column:1/-1;">No hay potreros definidos. Agrega el primero.</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Planificador de Rotaciones</h2>
+                    <div class="alert alert-info">
+                        Asigna grupos de animales a potreros. Se calcula automaticamente la carga instantanea y se alerta si el descanso es insuficiente.
+                        Regla: descanso minimo = dias ocupacion x (N potreros - 1).
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Grupo</label>
+                            <select id="rotacionGrupo"></select>
+                        </div>
+                        <div class="input-group">
+                            <label>Potrero</label>
+                            <select id="rotacionPotrero"></select>
+                        </div>
+                        <div class="input-group">
+                            <label>Fecha de ingreso</label>
+                            <input type="date" id="rotacionFechaIngreso">
+                        </div>
+                        <div class="input-group">
+                            <label>Dias de ocupacion</label>
+                            <input type="number" id="rotacionDias" value="14" min="1">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="agregarRotacion()">Agregar rotacion</button>
+                    <button class="btn btn-secondary" onclick="cargarSelectsRotacion()">Actualizar listas</button>
+                </div>
+
+                <div class="section">
+                    <h2>Indicadores de Rotacion</h2>
+                    <div id="indicadoresRotacion"></div>
+                </div>
+
+                <div class="section">
+                    <h2>Diagrama Gantt de Rotaciones</h2>
+                    <div class="gantt-container" id="ganttContainer">
+                        <p style="color:#999;text-align:center;">Agrega potreros y rotaciones para ver el diagrama.</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Rotaciones programadas</h2>
+                    <div id="listaRotaciones"><p style="color:#999;">No hay rotaciones programadas.</p></div>
+                </div>
+            </div>
+
+            <!-- ======================== TAB 4: OFERTA/DEMANDA ======================== -->
+            <div id="ofertademanda" class="tab-content">
+                <div id="ayuda_ofertademanda" class="ayuda-acordeon acordeon"></div>
+
+                <div class="section">
+                    <h2>Analisis Oferta vs Demanda</h2>
+                    <div class="alert alert-warning">
+                        Primero configura tu balance y agrega lotes para ver el analisis completo.
+                    </div>
+                    <button class="btn" onclick="calcularDemanda()">Generar Analisis</button>
+                </div>
+
+                <div id="resultadosDemanda" style="display:none;">
+                    <div class="section">
+                        <div class="card-grid">
+                            <div class="card" data-tooltip="Produccion bruta sin descontar eficiencia de pastoreo"><div class="card-title">Produccion Total</div><div class="card-value" id="produccionTotalDemanda">0</div><div class="card-unit">kg MS/ano</div></div>
+                            <div class="card" data-tooltip="Consumo total del rodeo activo en el ano"><div class="card-title">Demanda Total</div><div class="card-value" id="demandaTotalAnual">0</div><div class="card-unit">kg MS/ano</div></div>
+                            <div class="card" data-tooltip="Oferta aprovechable menos demanda. Positivo = sobrante, negativo = deficit"><div class="card-title">Balance Anual</div><div class="card-value" id="balanceAnual">0</div><div class="card-unit">kg MS</div></div>
+                            <div class="card" data-tooltip="Equivalentes Vaca por hectarea que genera tu rodeo actual"><div class="card-title">Carga Real</div><div class="card-value" id="cargaAnimalReal">0</div><div class="card-unit">EV/ha</div></div>
+                            <div class="card" data-tooltip="Maxima carga segun produccion y eficiencia de pastoreo"><div class="card-title">Carga Max</div><div class="card-value" id="cargaAnimalMaxima">0</div><div class="card-unit">EV/ha</div></div>
+                            <div class="card" data-tooltip="Demanda / Oferta aprovechable. Ideal: 70-85%. Mayor a 100% = sobrecarga"><div class="card-title">Tasa de Uso</div><div class="card-value" id="tasaUso">0</div><div class="card-unit">%</div></div>
+                        </div>
+
+                        <div class="chart-container">
+                            <div class="chart-wrapper"><canvas id="chartOfertaDemanda"></canvas></div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-wrapper"><canvas id="chartDiferimiento"></canvas></div>
+                        </div>
+
+                        <div id="alertasDemanda"></div>
+
+                        <div class="section">
+                            <h3>Detalle mensual</h3>
+                            <div class="tabla-scroll">
+                                <table>
+                                    <thead><tr>
+                                        <th>Mes</th><th>Oferta (kg MS)</th><th>Demanda (kg MS)</th><th>Balance (kg MS)</th><th>Diferido (kg MS)</th><th>Estado</th>
+                                    </tr></thead>
+                                    <tbody id="tablaDetalleMensualBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="section" id="suplementacionInteligente"></div>
+
+                        <div class="section" id="balanceHidrico"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================== TAB 5: NUTRICION ======================== -->
+            <div id="nutricion" class="tab-content">
+                <div id="ayuda_nutricion" class="ayuda-acordeon acordeon"></div>
+                <div id="nutricionContenido"></div>
+            </div>
+
+            <!-- ======================== TAB 6: CLIMA ======================== -->
+            <div id="clima" class="tab-content">
+                <div id="ayuda_clima" class="ayuda-acordeon acordeon"></div>
+
+                <div class="section">
+                    <h2>Integracion Climatica</h2>
+                    <div class="alert alert-info">
+                        Ajusta la produccion forrajera segun precipitaciones reales. Funciona offline con datos manuales, online con API Open-Meteo.
+                    </div>
+
+                    <div class="input-grid" style="max-width:600px;">
+                        <div class="input-group">
+                            <label>Latitud</label>
+                            <input type="number" id="climaLatitud" step="0.01" value="-36.60" placeholder="-36.60">
+                        </div>
+                        <div class="input-group">
+                            <label>Longitud</label>
+                            <input type="number" id="climaLongitud" step="0.01" value="-59.80" placeholder="-59.80">
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="consultarClima()">Consultar clima (online)</button>
+                    <div id="climaStatus" style="margin-top:10px;"></div>
+                </div>
+
+                <div class="section">
+                    <h2>Precipitaciones mensuales (mm)</h2>
+                    <div class="alert alert-info">
+                        Ingresa manualmente o usa "Consultar clima" para traer datos automaticos del ultimo ano.
+                    </div>
+                    <div class="clima-grid">
+                        <div class="clima-mes">
+                            <div class="mes-nombre">ENE</div>
+                            <input type="number" id="climaPrec_0" value="0" min="0" onchange="actualizarPrecipitacionManual(0)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">FEB</div>
+                            <input type="number" id="climaPrec_1" value="0" min="0" onchange="actualizarPrecipitacionManual(1)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">MAR</div>
+                            <input type="number" id="climaPrec_2" value="0" min="0" onchange="actualizarPrecipitacionManual(2)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">ABR</div>
+                            <input type="number" id="climaPrec_3" value="0" min="0" onchange="actualizarPrecipitacionManual(3)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">MAY</div>
+                            <input type="number" id="climaPrec_4" value="0" min="0" onchange="actualizarPrecipitacionManual(4)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">JUN</div>
+                            <input type="number" id="climaPrec_5" value="0" min="0" onchange="actualizarPrecipitacionManual(5)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">JUL</div>
+                            <input type="number" id="climaPrec_6" value="0" min="0" onchange="actualizarPrecipitacionManual(6)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">AGO</div>
+                            <input type="number" id="climaPrec_7" value="0" min="0" onchange="actualizarPrecipitacionManual(7)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">SEP</div>
+                            <input type="number" id="climaPrec_8" value="0" min="0" onchange="actualizarPrecipitacionManual(8)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">OCT</div>
+                            <input type="number" id="climaPrec_9" value="0" min="0" onchange="actualizarPrecipitacionManual(9)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">NOV</div>
+                            <input type="number" id="climaPrec_10" value="0" min="0" onchange="actualizarPrecipitacionManual(10)">
+                        </div>
+                        <div class="clima-mes">
+                            <div class="mes-nombre">DIC</div>
+                            <input type="number" id="climaPrec_11" value="0" min="0" onchange="actualizarPrecipitacionManual(11)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Indice de sequia (ajuste rapido)</h2>
+                    <div class="sequia-slider">
+                        <div class="slider-label">
+                            <span>Indice de sequia</span>
+                            <span class="slider-value" id="sequiaValor">100%</span>
+                        </div>
+                        <input type="range" id="climaIndiceSequia" min="40" max="130" value="100" step="5"
+                               oninput="actualizarIndiceSequia()">
+                        <div style="display:flex;justify-content:space-between;font-size:0.8em;color:#7f8c8d;margin-top:5px;">
+                            <span>40% (Sequia severa)</span><span>100% (Normal)</span><span>130% (Lluvia excesiva)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Indicadores climaticos</h2>
+                    <div id="climaIndicadores"></div>
+                    <div class="chart-container">
+                        <div class="chart-wrapper"><canvas id="chartClima"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================== TAB 7: ECONOMICO ======================== -->
+            <div id="economico" class="tab-content">
+                <div id="ayuda_economico" class="ayuda-acordeon acordeon"></div>
+
+                <div class="section">
+                    <h2>Costos de Produccion</h2>
+                    <div class="alert alert-info">
+                        Completa los costos para obtener margenes mas precisos. Los costos de compra, venta y sanidad se cargan en cada lote.
+                    </div>
+                    <h3>Costos por hectarea</h3>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Labores ($/ha/ano)</label>
+                            <input type="number" id="costoLabores" value="0" step="100" placeholder="Siembra, fertilizacion...">
+                        </div>
+                        <div class="input-group">
+                            <label>Estructura ($/ha/ano)</label>
+                            <input type="number" id="costosEstructura" value="0" step="100" placeholder="Personal, impuestos...">
+                        </div>
+                    </div>
+                    <h3>Suplementacion</h3>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Costo suplemento ($/kg)</label>
+                            <input type="number" id="costoSuplemento" value="0" step="10">
+                        </div>
+                        <div class="input-group">
+                            <label>Kg suplemento total/ano</label>
+                            <input type="number" id="kgSuplemento" value="0" step="100">
+                        </div>
+                    </div>
+
+                    <!-- Comercializacion colapsable -->
+                    <div class="acordeon">
+                        <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                            Comercializacion (comision, flete) <span class="flecha">&#9660;</span>
+                        </div>
+                        <div class="acordeon-body">
+                            <div class="input-grid">
+                                <div class="input-group">
+                                    <label>Comision venta (%)</label>
+                                    <input type="number" id="comisionVenta" value="4" step="0.5" min="0" max="100">
+                                </div>
+                                <div class="input-group">
+                                    <label>Flete ($/cabeza)</label>
+                                    <input type="number" id="costoFlete" value="0" step="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="calcularEconomico()">Calcular Economico</button>
+                </div>
+
+                <div id="resultadosEconomico" style="display:none;">
+                    <div class="section">
+                        <h2>Resumen Economico</h2>
+                        <div class="card-grid">
+                            <div class="card" data-tooltip="Compra de hacienda + sanidad"><div class="card-title">Inversion Total</div><div class="card-value" id="inversionTotal">0</div><div class="card-unit">$</div></div>
+                            <div class="card" data-tooltip="Peso final x cantidad x precio de venta"><div class="card-title">Ingreso Bruto</div><div class="card-value" id="ingresoTotal">0</div><div class="card-unit">$</div></div>
+                            <div class="card" data-tooltip="Compra + sanidad + comision + flete"><div class="card-title">Costos Directos</div><div class="card-value" id="costosDirectosTotal">0</div><div class="card-unit">$</div></div>
+                            <div class="card" data-tooltip="Ingreso bruto menos costos directos"><div class="card-title">Margen Bruto</div><div class="card-value" id="margenBrutoTotal">0</div><div class="card-unit">$</div></div>
+                            <div class="card" data-tooltip="Util para comparar con agricultura (soja, trigo, etc.)"><div class="card-title">Margen Bruto/ha</div><div class="card-value" id="margenBrutoHa">0</div><div class="card-unit">$/ha</div></div>
+                            <div class="card" data-tooltip="Margen bruto menos gastos generales (labores + estructura + suplementacion)"><div class="card-title">Margen Neto</div><div class="card-value" id="margenNetoTotal">0</div><div class="card-unit">$</div></div>
+                        </div>
+                        <div class="section">
+                            <h3>Detalle por grupo</h3>
+                            <div class="tabla-scroll" id="tablaDetalleEconomico"></div>
+                        </div>
+                        <div class="section">
+                            <h3>Composicion de costos</h3>
+                            <div class="tabla-scroll" id="tablaComposicionCostos"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================== TAB 8: COMPARADOR ======================== -->
+            <div id="comparador" class="tab-content">
+                <div id="ayuda_comparador" class="ayuda-acordeon acordeon"></div>
+
+                <div class="section">
+                    <h2>Comparador de Escenarios</h2>
+                    <div class="alert alert-info">
+                        Compara los diferentes escenarios de rodeo que configuraste. Necesitas al menos 2 escenarios.
+                    </div>
+                    <button class="btn" onclick="compararEscenarios()">Comparar Escenarios</button>
+                </div>
+                <div id="resultadosComparador" style="display:none;">
+                    <div class="section">
+                        <div id="comparadorContainer"></div>
+                        <div class="chart-container">
+                            <div class="chart-wrapper"><canvas id="chartComparador"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================== TAB 9: NDVI ======================== -->
+            <div id="ndvi" class="tab-content">
+                <div id="ayuda_ndvi" class="ayuda-acordeon acordeon"></div>
+                <div id="ndviContenido"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scripts en orden de dependencia -->
+    <script src="js/datos.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/balance.js"></script>
+    <script src="js/lotes.js"></script>
+    <script src="js/demanda.js"></script>
+    <script src="js/economico.js"></script>
+    <script src="js/comparador.js"></script>
+    <script src="js/rotaciones.js"></script>
+    <script src="js/nutricion.js"></script>
+    <script src="js/clima.js"></script>
+    <script src="js/ndvi.js"></script>
+    <script src="js/ayuda.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
