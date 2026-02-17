@@ -181,7 +181,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .card:hover { transform: translateY(-3px); }
 .card-title { color: #7f8c8d; font-size: 0.85em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
-.card-value { color: #2c3e50; font-size: 2em; font-weight: 700; margin-bottom: 3px; }
+.card-value { color: #2c3e50; font-size: 2em; font-weight: 700; margin-bottom: 3px; overflow-wrap: anywhere; word-break: break-word; line-height: 1.1; }
 .card-unit { color: #95a5a6; font-size: 0.85em; }
 
 /* --- Charts --- */

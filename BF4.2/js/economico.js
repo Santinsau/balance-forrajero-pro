@@ -58,14 +58,21 @@ function calcularEconomico() {
     var margenBrutoCalc = ingresoBrutoTotal - totalCostosCompra - totalCostosSanidad - totalComision - totalFlete;
     var margenNeto = margenBrutoCalc - gastosGenerales;
 
-    document.getElementById('inversionTotal').textContent = formatMoney(totalCostosCompra + totalCostosSanidad);
-    document.getElementById('ingresoTotal').textContent = formatMoney(ingresoBrutoTotal);
-    document.getElementById('costosDirectosTotal').textContent = formatMoney(totalCostosCompra + totalCostosSanidad + totalComision + totalFlete);
-    document.getElementById('margenBrutoTotal').textContent = formatMoney(margenBrutoCalc);
-    document.getElementById('margenBrutoTotal').style.color = margenBrutoCalc >= 0 ? '#27ae60' : '#e74c3c';
-    document.getElementById('margenBrutoHa').textContent = formatMoney(margenBrutoCalc / superficie);
-    document.getElementById('margenNetoTotal').textContent = formatMoney(margenNeto);
-    document.getElementById('margenNetoTotal').style.color = margenNeto >= 0 ? '#27ae60' : '#e74c3c';
+    var ecoCards = [
+        { id: 'inversionTotal', val: totalCostosCompra + totalCostosSanidad },
+        { id: 'ingresoTotal', val: ingresoBrutoTotal },
+        { id: 'costosDirectosTotal', val: totalCostosCompra + totalCostosSanidad + totalComision + totalFlete },
+        { id: 'margenBrutoTotal', val: margenBrutoCalc, color: true },
+        { id: 'margenBrutoHa', val: margenBrutoCalc / superficie, color: true },
+        { id: 'margenNetoTotal', val: margenNeto, color: true }
+    ];
+    ecoCards.forEach(function(c) {
+        var el = document.getElementById(c.id);
+        if (!el) return;
+        el.textContent = formatMoneyCompact(c.val);
+        el.title = formatMoney(c.val);
+        if (c.color) el.style.color = c.val >= 0 ? '#27ae60' : '#e74c3c';
+    });
 
     // Tabla detalle por grupo
     var htmlDetalle = '<table><thead><tr><th>Grupo</th><th>Cab</th><th>Dias</th><th>Peso Final</th><th>Kg Producidos</th><th>Ingreso</th><th>Costos</th><th>Margen</th></tr></thead><tbody>';

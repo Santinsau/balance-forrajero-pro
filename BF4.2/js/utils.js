@@ -10,6 +10,22 @@ function formatMoney(n) {
     return '$' + Math.round(n).toLocaleString('es-AR');
 }
 
+function formatMoneyCompact(n) {
+    var abs = Math.abs(n);
+    var signo = n < 0 ? '-' : '';
+    if (abs >= 1000000000) return signo + '$' + (n / 1000000000).toFixed(1).replace('.', ',') + ' MM';
+    if (abs >= 1000000) return signo + '$' + (n / 1000000).toFixed(1).replace('.', ',') + ' M';
+    if (abs >= 100000) return signo + '$' + (n / 1000).toFixed(0) + ' K';
+    return formatMoney(n);
+}
+
+function formatNumCompact(n) {
+    var abs = Math.abs(n);
+    if (abs >= 1000000) return (n / 1000000).toFixed(1).replace('.', ',') + ' M';
+    if (abs >= 100000) return (n / 1000).toFixed(0) + ' K';
+    return formatNum(n);
+}
+
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
     document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
