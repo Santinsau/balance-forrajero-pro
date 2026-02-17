@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Forrajero PRO - Lite</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+/* ============================================
+   BALANCE FORRAJERO PRO - Lite - Estilos
+   ============================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+.header {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+.header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+.version-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+.content { padding: 30px; }
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e0e0e0;
+    flex-wrap: wrap;
+}
+.tab {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s;
+}
+.tab:hover { color: #27ae60; }
+.tab.active { color: #27ae60; border-bottom-color: #27ae60; }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.4s; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Secciones */
+.section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.section h2 { color: #2c3e50; margin-bottom: 20px; font-size: 1.6em; display: flex; align-items: center; gap: 10px; }
+.section h3 { color: #34495e; margin-bottom: 15px; font-size: 1.2em; }
+
+/* Inputs */
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.input-group { display: flex; flex-direction: column; gap: 6px; }
+.input-group label { font-weight: 600; color: #2c3e50; font-size: 0.9em; }
+.input-group input, .input-group select {
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.3s;
+}
+.input-group input:focus, .input-group select:focus { outline: none; border-color: #27ae60; }
+
+/* Slider */
+.slider-container { margin: 20px 0; }
+.slider-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #2c3e50; }
+.slider-value { color: #27ae60; font-size: 1.2em; }
+input[type="range"] { width: 100%; height: 8px; border-radius: 5px; background: #e0e0e0; outline: none; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #27ae60; cursor: pointer; }
+
+/* Botones */
+.btn {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4); }
+.btn-secondary { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); }
+.btn-warning { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3); }
+.btn-sm { padding: 6px 14px; font-size: 0.85em; }
+.btn-danger { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); }
+
+/* Cards */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    border-left: 5px solid #27ae60;
+    transition: transform 0.3s;
+}
+.card:hover { transform: translateY(-3px); }
+.card-title { color: #7f8c8d; font-size: 0.85em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
+.card-value { color: #2c3e50; font-size: 2em; font-weight: 700; margin-bottom: 3px; }
+.card-unit { color: #95a5a6; font-size: 0.85em; }
+
+/* Charts */
+.chart-container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+.chart-wrapper { position: relative; height: 380px; }
+
+/* Alertas */
+.alert { padding: 12px 18px; border-radius: 10px; margin-bottom: 15px; }
+.alert-info { background: #e3f2fd; border-left: 4px solid #2196f3; color: #1565c0; }
+.alert-warning { background: #fff3e0; border-left: 4px solid #ff9800; color: #e65100; }
+.alert-success { background: #e8f5e9; border-left: 4px solid #4caf50; color: #2e7d32; }
+.alert-danger { background: #ffebee; border-left: 4px solid #f44336; color: #c62828; }
+
+/* Tablas */
+table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; font-size: 0.9em; }
+th { background: #27ae60; color: white; padding: 10px 8px; text-align: left; font-weight: 600; font-size: 0.85em; }
+td { padding: 8px; border-bottom: 1px solid #e0e0e0; }
+tr:hover { background: #f8f9fa; }
+tr.fila-total { background: #e8f5e9; font-weight: 700; }
+.tabla-scroll { overflow-x: auto; }
+.tabla-scroll table { min-width: 800px; }
+.tabla-scroll td, .tabla-scroll th { text-align: right; white-space: nowrap; }
+.tabla-scroll td:first-child, .tabla-scroll th:first-child { text-align: left; }
+
+/* Recursos con meses */
+.recurso-row {
+    background: white; border-radius: 10px; padding: 12px 15px; margin-bottom: 10px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.recurso-info { min-width: 200px; flex: 1; }
+.recurso-info strong { display: block; font-size: 0.9em; color: #2c3e50; }
+.recurso-info .prod-info { font-size: 0.75em; color: #7f8c8d; }
+.recurso-ha { width: 90px; }
+.recurso-ha input { width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px; text-align: center; font-size: 0.95em; }
+.recurso-ha input:focus { outline: none; border-color: #27ae60; }
+.meses-container { display: flex; gap: 3px; }
+.mes-btn {
+    width: 30px; height: 28px; border: 1px solid #ddd; border-radius: 4px; background: #f0f0f0;
+    cursor: pointer; font-size: 0.7em; font-weight: 700; color: #aaa; transition: all 0.2s;
+}
+.mes-btn:hover { border-color: #27ae60; }
+.mes-btn.activo { background: #27ae60; color: white; border-color: #219a52; }
+
+/* Escenarios */
+.escenario-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-left: 5px solid #3498db; }
+.escenario-card.activo { border-left-color: #27ae60; }
+.escenario-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px; }
+.escenario-nombre { font-size: 1.2em; font-weight: 700; color: #2c3e50; }
+.grupo-item { background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.grupo-info { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9em; }
+.grupo-info span { color: #555; }
+.grupo-info strong { color: #2c3e50; }
+.grupo-acciones { display: flex; gap: 5px; }
+.grupo-acciones button { padding: 4px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8em; font-weight: 600; color: white; }
+.btn-editar { background: #3498db; }
+.btn-duplicar { background: #f39c12; }
+.btn-eliminar { background: #e74c3c; }
+
+/* Criterio salida */
+.criterio-salida { display: flex; gap: 15px; align-items: center; margin-bottom: 10px; }
+.criterio-salida label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600; color: #2c3e50; font-size: 0.9em; }
+
+/* Acordeon */
+.acordeon { border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 15px; overflow: hidden; }
+.acordeon-header { padding: 12px 18px; background: #f8f9fa; cursor: pointer; font-weight: 600; color: #2c3e50; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+.acordeon-header:hover { background: #f0f0f0; }
+.acordeon-header .flecha { transition: transform 0.3s; }
+.acordeon-header.abierto .flecha { transform: rotate(180deg); }
+.acordeon-body { padding: 0 18px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+.acordeon-body.abierto { padding: 18px; max-height: 2000px; }
+
+/* Tooltips */
+[data-tooltip] { position: relative; cursor: help; }
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: #2c3e50; color: white; padding: 8px 12px; border-radius: 6px; font-size: 0.78em; font-weight: 400;
+    white-space: normal; max-width: 250px; min-width: 150px; z-index: 100; text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25); pointer-events: none; line-height: 1.4; animation: tooltipFade 0.2s;
+}
+[data-tooltip]:hover::before {
+    content: ''; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%);
+    border: 6px solid transparent; border-top-color: #2c3e50; z-index: 100; pointer-events: none;
+}
+@keyframes tooltipFade {
+    from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Validacion inline */
+.input-error input, .input-error select { border-color: #e74c3c !important; background-color: #fff5f5; }
+.error-msg { color: #e74c3c; font-size: 0.8em; font-weight: 600; margin-top: 2px; }
+
+/* Bienvenida */
+.bienvenida-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+.bienvenida-card { background: white; border-radius: 20px; padding: 40px; max-width: 520px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: bienvenidaIn 0.4s ease; }
+@keyframes bienvenidaIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.bienvenida-icono { font-size: 3em; margin-bottom: 10px; }
+.bienvenida-card h2 { color: #2c3e50; margin-bottom: 15px; font-size: 1.5em; }
+.bienvenida-card p { color: #666; margin-bottom: 15px; line-height: 1.5; }
+.bienvenida-opciones { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+
+/* Acciones archivo */
+.acciones-archivo { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+
+/* Print */
+@media print {
+    body { background: white; padding: 0; }
+    .container { box-shadow: none; border-radius: 0; }
+    .tabs, .btn, .btn-sm, .btn-secondary, .btn-warning, .btn-danger, .btn-editar, .btn-duplicar, .btn-eliminar,
+    .acciones-archivo, .slider-container, .input-group input, .input-group select, .recurso-ha input, .mes-btn,
+    #btnAgregarGrupo, #btnCancelarEdicion { display: none !important; }
+    .tab-content { display: block !important; page-break-inside: avoid; }
+    .section { box-shadow: none; border: 1px solid #ddd; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body { padding: 8px; }
+    .header { padding: 20px 15px; }
+    .header h1 { font-size: 1.5em; }
+    .content { padding: 15px; }
+    .tabs { gap: 2px; }
+    .tab { padding: 8px 10px; font-size: 0.8em; }
+    .input-grid { grid-template-columns: 1fr; }
+    .recurso-row { flex-direction: column; align-items: stretch; }
+    .recurso-ha { width: 100%; }
+    .meses-container { justify-content: center; flex-wrap: wrap; }
+    .card-grid { grid-template-columns: repeat(2, 1fr); }
+    .card { padding: 12px; }
+    .card-value { font-size: 1.4em; }
+    .section { padding: 15px; }
+    .section h2 { font-size: 1.2em; }
+    .grupo-item { flex-direction: column; align-items: flex-start; }
+    .chart-wrapper { height: 280px; }
+    [data-tooltip]:hover::after, [data-tooltip]:hover::before { display: none; }
+}
+    </style>
+</head>
+<body>
+    <!-- Pantalla de bienvenida -->
+    <div id="bienvenida" class="bienvenida-container" style="display:none;">
+        <div class="bienvenida-card">
+            <div class="bienvenida-icono">&#127793;</div>
+            <h2>Balance Forrajero PRO - Lite</h2>
+            <p>Planifica la carga de tu campo y analiza oferta vs demanda forrajera con datos del modelo INTA.</p>
+            <p style="font-size:0.85em;color:#888;">Se incluyen datos de ejemplo para que veas como funciona.</p>
+            <div class="bienvenida-opciones">
+                <button class="btn" onclick="ocultarBienvenida()">Empezar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Balance Forrajero PRO - Lite</h1>
+            <div class="version-badge">Modelo INTA 2008 - Version simplificada</div>
+        </div>
+
+        <div class="content">
+            <div class="acciones-archivo">
+                <button class="btn btn-sm btn-secondary" onclick="exportarConfiguracion()">Guardar JSON</button>
+                <label class="btn btn-sm btn-warning" style="margin-bottom:0;">
+                    Cargar JSON <input type="file" accept=".json" onchange="importarConfiguracion(event)" style="display:none;">
+                </label>
+                <button class="btn btn-sm" onclick="window.print()">Imprimir</button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('balance')">Balance</button>
+                <button class="tab" onclick="switchTab('lotes')">Lotes / Rodeo</button>
+                <button class="tab" onclick="switchTab('ofertademanda')">Oferta/Demanda</button>
+                <button class="tab" onclick="switchTab('economico')">Economico</button>
+            </div>
+
+            <!-- TAB 1: BALANCE -->
+            <div id="balance" class="tab-content active">
+                <div class="section">
+                    <h2>Configuracion del Campo</h2>
+                    <div class="input-grid" style="max-width: 600px; margin-bottom: 20px;">
+                        <div class="input-group">
+                            <label>Mes de inicio del ejercicio</label>
+                            <select id="mesInicioSelect">
+                                <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+                                <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+                                <option value="6" selected>Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+                                <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Stock inicial de MS (kg, opcional)</label>
+                            <input type="number" id="stockInicialInput" min="0" value="0" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        Ingresa las hectareas de cada recurso y marca los meses de uso (click en cada mes).
+                    </div>
+                    <div id="recursosContainer"></div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Ajuste de Productividad</span>
+                            <span class="slider-value" id="ajusteValor">100%</span>
+                        </div>
+                        <input type="range" id="ajusteProductividad" min="50" max="150" value="100" step="5"
+                               oninput="document.getElementById('ajusteValor').textContent = this.value + '%'">
+                        <div style="display:flex;justify-content:space-between;font-size:0.8em;color:#7f8c8d;margin-top:5px;">
+                            <span>50% (Pobre)</span><span>100% (Promedio)</span><span>150% (Superior)</span>
+                        </div>
+                    </div>
+
+                    <div class="input-grid" style="max-width: 600px; margin-top: 15px;">
+                        <div class="input-group">
+                            <label>Escenario Climatico</label>
+                            <select id="escenarioSelect">
+                                <option value="promedio">Ano Promedio</option>
+                                <option value="bueno">Ano Bueno</option>
+                                <option value="malo">Ano Malo</option>
+                                <option value="comparar" selected>Comparar los 3</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Manejo del Pastoreo</label>
+                            <select id="manejoPastoreo">
+                                <option value="continuo">Continuo (55%)</option>
+                                <option value="rotativo" selected>Rotativo (72.5%)</option>
+                                <option value="intensivo">Intensivo (82.5%)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="calcularBalance()">Calcular Balance</button>
+                    <button class="btn btn-secondary" onclick="limpiarRecursos()">Limpiar</button>
+                </div>
+
+                <div id="resultadosBalance" style="display:none;">
+                    <div class="section">
+                        <h2>Resultados del Balance</h2>
+                        <div class="card-grid">
+                            <div class="card" data-tooltip="Suma de hectareas de todos los recursos"><div class="card-title">Superficie</div><div class="card-value" id="superficieTotal">0</div><div class="card-unit">hectareas</div></div>
+                            <div class="card" data-tooltip="Total de materia seca bruta producida en el ano"><div class="card-title">Produccion Anual</div><div class="card-value" id="produccionAnual">0</div><div class="card-unit">kg MS/ano</div></div>
+                            <div class="card" data-tooltip="1 EV = vaca de 400 kg con cria. Maximo que soporta tu campo"><div class="card-title">Carga Max Teorica</div><div class="card-value" id="cargaMaxima">0</div><div class="card-unit">EV/ha</div></div>
+                            <div class="card" data-tooltip="Productividad promedio por hectarea"><div class="card-title">Produccion/ha</div><div class="card-value" id="produccionPorHa">0</div><div class="card-unit">kg MS/ha/ano</div></div>
+                        </div>
+                        <div class="chart-container"><div class="chart-wrapper"><canvas id="chartBalance"></canvas></div></div>
+                        <div class="chart-container"><h3>Aporte acumulado por recurso</h3><div class="chart-wrapper"><canvas id="chartAcumuladoRecursos"></canvas></div></div>
+                        <div class="section"><h3>Produccion por recurso - mes a mes (kg MS)</h3><div class="tabla-scroll" id="tablaProduccionRecursos"></div></div>
+                        <div id="alertasBalance"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: LOTES / RODEO -->
+            <div id="lotes" class="tab-content">
+                <div class="section">
+                    <h2>Gestion de Escenarios</h2>
+                    <div class="alert alert-info">Cada escenario representa un rodeo completo. Podes duplicar y modificar para comparar estrategias.</div>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
+                        <label style="font-weight:600;">Escenario activo:</label>
+                        <select id="escenarioActivoSelect" onchange="cambiarEscenarioActivo()" style="padding:8px;border-radius:8px;border:2px solid #e0e0e0;min-width:200px;"></select>
+                        <button class="btn btn-sm btn-secondary" onclick="nuevoEscenario()">+ Nuevo</button>
+                        <button class="btn btn-sm btn-warning" onclick="duplicarEscenarioActivo()">Duplicar</button>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarEscenarioActivo()">Eliminar</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Agregar grupo al escenario</h2>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Categoria</label>
+                            <select id="grupoCategoria" onchange="ajustarPesosDefecto()">
+                                <option value="ternero">Ternero</option><option value="ternera">Ternera</option>
+                                <option value="novillito">Novillito</option><option value="novillo" selected>Novillo</option>
+                                <option value="vaquillona">Vaquillona</option><option value="vaca">Vaca</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Cantidad</label><input type="number" id="grupoCantidad" min="1" value="50"></div>
+                        <div class="input-group"><label>Peso inicial (kg)</label><input type="number" id="grupoPesoInicial" min="50" value="380"></div>
+                        <div class="input-group"><label>Ganancia diaria (kg/dia)</label><input type="number" id="grupoGanancia" step="0.05" value="0.7"></div>
+                    </div>
+                    <div class="criterio-salida">
+                        <label><input type="radio" name="criterioSalida" value="fecha" checked onchange="toggleCriterioSalida()"> Fecha de salida</label>
+                        <label><input type="radio" name="criterioSalida" value="peso" onchange="toggleCriterioSalida()"> Peso objetivo</label>
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Fecha entrada</label><input type="date" id="grupoFechaEntrada"></div>
+                        <div class="input-group" id="wrapFechaSalida"><label>Fecha salida</label><input type="date" id="grupoFechaSalida"></div>
+                        <div class="input-group" id="wrapPesoObjetivo" style="display:none;"><label>Peso objetivo (kg)</label><input type="number" id="grupoPesoObjetivo" min="100" value="450"></div>
+                    </div>
+                    <div class="acordeon">
+                        <div class="acordeon-header" onclick="toggleAcordeon(this)">Datos economicos <span class="flecha">&#9660;</span></div>
+                        <div class="acordeon-body">
+                            <div class="input-grid">
+                                <div class="input-group"><label>Precio compra ($/kg vivo)</label><input type="number" id="grupoPrecioCompra" value="1200" step="10"></div>
+                                <div class="input-group"><label>Precio venta proy. ($/kg vivo)</label><input type="number" id="grupoPrecioVenta" value="1400" step="10"></div>
+                                <div class="input-group"><label>Sanidad ($/cabeza)</label><input type="number" id="grupoSanidad" value="5000" step="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn" id="btnAgregarGrupo" onclick="agregarGrupo()">Agregar al escenario</button>
+                    <button class="btn btn-secondary" id="btnCancelarEdicion" style="display:none;" onclick="cancelarEdicion()">Cancelar edicion</button>
+                </div>
+                <div class="section"><h2>Rodeo configurado</h2><div id="escenariosContainer"></div></div>
+            </div>
+
+            <!-- TAB 3: OFERTA/DEMANDA -->
+            <div id="ofertademanda" class="tab-content">
+                <div class="section">
+                    <h2>Analisis Oferta vs Demanda</h2>
+                    <div class="alert alert-warning">Primero configura tu balance y agrega lotes para ver el analisis completo.</div>
+                    <button class="btn" onclick="calcularDemanda()">Generar Analisis</button>
+                </div>
+                <div id="resultadosDemanda" style="display:none;">
+                    <div class="section">
+                        <div class="card-grid">
+                            <div class="card" data-tooltip="Produccion bruta sin descontar eficiencia"><div class="card-title">Produccion Total</div><div class="card-value" id="produccionTotalDemanda">0</div><div class="card-unit">kg MS/ano</div></div>
+                            <div class="card" data-tooltip="Consumo total del rodeo activo en el ano"><div class="card-title">Demanda Total</div><div class="card-value" id="demandaTotalAnual">0</div><div class="card-unit">kg MS/ano</div></div>
+                            <div class="card" data-tooltip="Oferta menos demanda. Positivo = sobrante"><div class="card-title">Balance Anual</div><div class="card-value" id="balanceAnual">0</div><div class="card-unit">kg MS</div></div>
+                            <div class="card" data-tooltip="EV/ha que genera tu rodeo actual"><div class="card-title">Carga Real</div><div class="card-value" id="cargaAnimalReal">0</div><div class="card-unit">EV/ha</div></div>
+                            <div class="card" data-tooltip="Maxima carga segun produccion y eficiencia"><div class="card-title">Carga Max</div><div class="card-value" id="cargaAnimalMaxima">0</div><div class="card-unit">EV/ha</div></div>
+                            <div class="card" data-tooltip="Demanda / Oferta. Ideal: 70-85%"><div class="card-title">Tasa de Uso</div><div class="card-value" id="tasaUso">0</div><div class="card-unit">%</div></div>
+                        </div>
+                        <div class="chart-container"><div class="chart-wrapper"><canvas id="chartOfertaDemanda"></canvas></div></div>
+                        <div class="chart-container"><div class="chart-wrapper"><canvas id="chartDiferimiento"></canvas></div></div>
+                        <div id="alertasDemanda"></div>
+                        <div class="section"><h3>Detalle mensual</h3>
+                            <div class="tabla-scroll"><table><thead><tr><th>Mes</th><th>Oferta (kg MS)</th><th>Demanda (kg MS)</th><th>Balance (kg MS)</th><th>Diferido (kg MS)</th><th>Estado</th></tr></thead><tbody id="tablaDetalleMensualBody"></tbody></table></div>
+                        </div>
+                        <div class="section" id="suplementacionInteligente"></div>
+                        <div class="section" id="balanceHidrico"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: ECONOMICO -->
+            <div id="economico" class="tab-content">
+                <div class="section">
+                    <h2>Costos de Produccion</h2>
+                    <div class="alert alert-info">Completa los costos para obtener margenes. Los costos de compra, venta y sanidad se cargan en cada lote.</div>
+                    <h3>Costos por hectarea</h3>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Labores ($/ha/ano)</label><input type="number" id="costoLabores" value="0" step="100"></div>
+                        <div class="input-group"><label>Estructura ($/ha/ano)</label><input type="number" id="costosEstructura" value="0" step="100"></div>
+                    </div>
+                    <h3>Suplementacion</h3>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Costo suplemento ($/kg)</label><input type="number" id="costoSuplemento" value="0" step="10"></div>
+                        <div class="input-group"><label>Kg suplemento total/ano</label><input type="number" id="kgSuplemento" value="0" step="100"></div>
+                    </div>
+                    <div class="acordeon">
+                        <div class="acordeon-header" onclick="toggleAcordeon(this)">Comercializacion (comision, flete) <span class="flecha">&#9660;</span></div>
+                        <div class="acordeon-body">
+                            <div class="input-grid">
+                                <div class="input-group"><label>Comision venta (%)</label><input type="number" id="comisionVenta" value="4" step="0.5" min="0" max="100"></div>
+                                <div class="input-group"><label>Flete ($/cabeza)</label><input type="number" id="costoFlete" value="0" step="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="calcularEconomico()">Calcular Economico</button>
+                </div>
+                <div id="resultadosEconomico" style="display:none;">
+                    <div class="section">
+                        <h2>Resumen Economico</h2>
+                        <div class="card-grid">
+                            <div class="card" data-tooltip="Compra de hacienda + sanidad"><div class="card-title">Inversion Total</div><div class="card-value" id="inversionTotal">0</div><div class="card-unit">$</div></div>
+                            <div class="card" data-tooltip="Peso final x cantidad x precio venta"><div class="card-title">Ingreso Bruto</div><div class="card-value" id="ingresoTotal">0</div><div class="card-unit">$</div></div>
+                            <div class="card" data-tooltip="Compra + sanidad + comision + flete"><div class="card-title">Costos Directos</div><div class="card-value" id="costosDirectosTotal">0</div><div class="card-unit">$</div></div>
+                            <div class="card" data-tooltip="Ingreso bruto menos costos directos"><div class="card-title">Margen Bruto</div><div class="card-value" id="margenBrutoTotal">0</div><div class="card-unit">$</div></div>
+                            <div class="card" data-tooltip="Util para comparar con agricultura"><div class="card-title">Margen Bruto/ha</div><div class="card-value" id="margenBrutoHa">0</div><div class="card-unit">$/ha</div></div>
+                            <div class="card" data-tooltip="Margen bruto menos gastos generales"><div class="card-title">Margen Neto</div><div class="card-value" id="margenNetoTotal">0</div><div class="card-unit">$</div></div>
+                        </div>
+                        <div class="section"><h3>Detalle por grupo</h3><div class="tabla-scroll" id="tablaDetalleEconomico"></div></div>
+                        <div class="section"><h3>Composicion de costos</h3><div class="tabla-scroll" id="tablaComposicionCostos"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ============================================
+// BALANCE FORRAJERO PRO - Lite
+// ============================================
+
+// --- DATOS FORRAJEROS (INTA 2008) ---
+var DATOS_FORRAJEROS_EMBEBIDOS = {
+  "recursos": ["Campo natural","Campo natural con agropiro","Pastura base alfalfa","Pastura consociada","Pastura de agropiro","Pastura de festuca","Promocion de raigras","Promocion intensiva de raigras","Verdeo de avena","Verdeo de invierno","Verdeo de maiz","Verdeo de raigras","Verdeo de sorgo"],
+  "promedios": {
+    "Campo natural":{"mensual":[525.9,534.0,524.9,417.0,303.5,256.5,251.2,287.1,362.2,498.6,618.8,563.3],"anual":5143.0},
+    "Campo natural con agropiro":{"mensual":[488.4,487.1,513.9,432.8,322.6,271.0,270.6,311.5,395.1,535.7,622.7,522.8],"anual":5174.2},
+    "Pastura base alfalfa":{"mensual":[892.9,843.1,682.4,625.3,495.2,412.7,388.9,505.6,607.7,602.7,814.8,758.7],"anual":7630.0},
+    "Pastura consociada":{"mensual":[736.3,798.4,785.8,740.2,574.0,484.1,503.1,618.2,774.0,832.9,876.0,764.9],"anual":8487.9},
+    "Pastura de agropiro":{"mensual":[663.7,702.8,702.3,619.7,498.4,421.0,414.3,491.0,600.4,654.2,929.6,814.4],"anual":7511.8},
+    "Pastura de festuca":{"mensual":[742.1,830.4,832.3,792.0,540.4,405.9,395.0,483.6,670.7,899.3,931.4,781.0],"anual":8304.1},
+    "Promocion de raigras":{"mensual":[503.6,491.4,683.1,655.4,548.4,455.0,442.0,513.6,609.7,797.8,872.4,548.3],"anual":7120.7},
+    "Promocion intensiva de raigras":{"mensual":[681.3,655.2,742.0,665.9,807.4,732.5,706.4,784.4,919.0,907.1,668.5,630.9],"anual":8900.6},
+    "Verdeo de avena":{"mensual":[0,767.0,894.6,815.4,601.0,389.7,471.8,692.0,773.3,541.4,968.2,0],"anual":6914.4},
+    "Verdeo de invierno":{"mensual":[0,682.2,699.7,678.3,770.1,671.3,664.9,795.4,846.6,903.0,933.9,0],"anual":7645.4},
+    "Verdeo de maiz":{"mensual":[0,673.5,615.9,579.9,673.7,0,0,0,0,741.3,0,945.6],"anual":4229.9},
+    "Verdeo de raigras":{"mensual":[0,761.6,802.7,541.4,646.2,597.9,618.9,679.6,721.2,864.2,0,0],"anual":6233.7},
+    "Verdeo de sorgo":{"mensual":[817.1,0,0,679.4,771.8,0,0,0,0,608.7,899.2,830.0],"anual":4606.2}
+  },
+  "resumen": {
+    "Campo natural":{"promedio":427.91,"produccion_mejor":481.5,"produccion_peor":357.1},
+    "Campo natural con agropiro":{"promedio":430.79,"produccion_mejor":562.9,"produccion_peor":322.9},
+    "Pastura base alfalfa":{"promedio":584.36,"produccion_mejor":645.9,"produccion_peor":498.8},
+    "Pastura consociada":{"promedio":674.56,"produccion_mejor":767.4,"produccion_peor":551.2},
+    "Pastura de agropiro":{"promedio":609.77,"produccion_mejor":658.4,"produccion_peor":540.3},
+    "Pastura de festuca":{"promedio":622.68,"produccion_mejor":710.6,"produccion_peor":532.0},
+    "Promocion de raigras":{"promedio":578.01,"produccion_mejor":657.2,"produccion_peor":485.6},
+    "Promocion intensiva de raigras":{"promedio":728.39,"produccion_mejor":863.9,"produccion_peor":555.4},
+    "Verdeo de avena":{"promedio":611.13,"produccion_mejor":750.7,"produccion_peor":375.8},
+    "Verdeo de invierno":{"promedio":723.99,"produccion_mejor":897.7,"produccion_peor":341.7},
+    "Verdeo de maiz":{"promedio":723.13,"produccion_mejor":961.8,"produccion_peor":467.6},
+    "Verdeo de raigras":{"promedio":664.65,"produccion_mejor":851.1,"produccion_peor":432.4},
+    "Verdeo de sorgo":{"promedio":708.12,"produccion_mejor":969.3,"produccion_peor":412.9}
+  }
+};
+
+var CATEGORIAS = {
+    ternero:    { nombre: 'Ternero',    consumo: 0.025, pesoDefecto: 180, gananciaDefecto: 0.55, usaPasto: true },
+    ternera:    { nombre: 'Ternera',    consumo: 0.025, pesoDefecto: 170, gananciaDefecto: 0.50, usaPasto: true },
+    novillito:  { nombre: 'Novillito',  consumo: 0.028, pesoDefecto: 280, gananciaDefecto: 0.65, usaPasto: true },
+    novillo:    { nombre: 'Novillo',    consumo: 0.025, pesoDefecto: 380, gananciaDefecto: 0.80, usaPasto: true },
+    vaquillona: { nombre: 'Vaquillona', consumo: 0.025, pesoDefecto: 300, gananciaDefecto: 0.60, usaPasto: true },
+    vaca:       { nombre: 'Vaca',       consumo: 0.022, pesoDefecto: 450, gananciaDefecto: 0.00, usaPasto: true, consumoCria: 0.015, pesoCria: 80 }
+};
+
+var MESES_LABELS = ['E','F','M','A','M','J','J','A','S','O','N','D'];
+var MESES_NOMBRES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+
+var MESES_USO_DEFECTO = {
+    'Campo natural': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Campo natural con agropiro': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Pastura base alfalfa': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Pastura consociada': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Pastura de agropiro': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Pastura de festuca': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Promocion de raigras': [0,0,0,1,1,1,1,1,1,1,1,0],
+    'Promocion intensiva de raigras': [0,0,0,1,1,1,1,1,1,1,1,0],
+    'Verdeo de avena': [0,1,1,1,1,1,1,1,1,1,1,0],
+    'Verdeo de invierno': [0,1,1,1,1,1,1,1,1,1,1,0],
+    'Verdeo de maiz': [1,1,1,1,1,0,0,0,0,1,0,1],
+    'Verdeo de raigras': [0,1,1,1,1,1,1,1,1,1,0,0],
+    'Verdeo de sorgo': [1,0,0,1,1,0,0,0,0,1,1,1]
+};
+
+// --- CONFIGURACION ---
+var MODELO_CONFIG = {
+    perdidaDiferido: 0.05,
+    eficienciaPastoreo: { continuo: 0.55, rotativo: 0.725, intensivo: 0.825 },
+    consumoAnualEV: 3650
+};
+
+// --- ESTADO GLOBAL ---
+var datosForrajeros = null;
+var configuracionCampo = null;
+var mesesUsoRecursos = {};
+var escenarios = [];
+var escenarioActivoId = null;
+var grupoEditandoId = null;
+var nextId = 1;
+var chartBalance, chartAcumulado, chartOfertaDemanda, chartDiferimiento;
+
+// --- UTILIDADES ---
+function formatNum(n) { return Math.round(n).toLocaleString('es-AR'); }
+function formatMoney(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    var tabEl = document.getElementById(tabId);
+    if (tabEl) tabEl.classList.add('active');
+    document.querySelectorAll('.tab').forEach(function(t) {
+        var txt = t.textContent.toLowerCase();
+        if ((tabId === 'balance' && txt === 'balance') || (tabId === 'lotes' && txt.indexOf('lotes') >= 0) ||
+            (tabId === 'ofertademanda' && txt.indexOf('oferta') >= 0) || (tabId === 'economico' && txt.indexOf('econom') >= 0)) {
+            t.classList.add('active');
+        }
+    });
+}
+
+function toggleAcordeon(header) { header.classList.toggle('abierto'); header.nextElementSibling.classList.toggle('abierto'); }
+function getMesesActivos(recurso) { return mesesUsoRecursos[recurso] || Array(12).fill(1); }
+function getEstacion(mesIndex) {
+    if (mesIndex >= 11 || mesIndex <= 1) return 'verano';
+    if (mesIndex >= 2 && mesIndex <= 4) return 'otono';
+    if (mesIndex >= 5 && mesIndex <= 7) return 'invierno';
+    return 'primavera';
+}
+function generarColorGrupo(idx) {
+    var colores = ['#2ecc71','#3498db','#e74c3c','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e','#16a085','#c0392b'];
+    return colores[idx % colores.length];
+}
+function calcularCargaMaxima(produccionAnual, superficie, manejo) {
+    var eficiencia = MODELO_CONFIG.eficienciaPastoreo[manejo] || 0.725;
+    return (produccionAnual * eficiencia) / MODELO_CONFIG.consumoAnualEV / superficie;
+}
+
+// Validacion inline
+function mostrarError(inputId, mensaje) {
+    var el = document.getElementById(inputId); if (!el) return;
+    var grupo = el.closest('.input-group') || el.parentElement;
+    grupo.classList.add('input-error');
+    var prev = grupo.querySelector('.error-msg'); if (prev) prev.remove();
+    var msg = document.createElement('div'); msg.className = 'error-msg'; msg.textContent = mensaje;
+    grupo.appendChild(msg);
+}
+function limpiarError(inputId) {
+    var el = document.getElementById(inputId); if (!el) return;
+    var grupo = el.closest('.input-group') || el.parentElement;
+    grupo.classList.remove('input-error');
+    var prev = grupo.querySelector('.error-msg'); if (prev) prev.remove();
+}
+function limpiarErrores(ids) { ids.forEach(function(id) { limpiarError(id); }); }
+
+// Auto-persistencia
+var STORAGE_KEY = 'balanceForrajeroLite_estado';
+function guardarEstadoAuto() {
+    try {
+        var data = { version: 'lite', fecha: new Date().toISOString(), mesesUsoRecursos: mesesUsoRecursos,
+            escenarios: escenarios, escenarioActivoId: escenarioActivoId, nextId: nextId, hectareasRecursos: {}, configuracionBalance: {}, costos: {} };
+        datosForrajeros.recursos.forEach(function(r) {
+            var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+            if (el) data.hectareasRecursos[r] = parseFloat(el.value) || 0;
+        });
+        var ids = { mesInicio: 'mesInicioSelect', stockInicial: 'stockInicialInput', ajusteProductividad: 'ajusteProductividad', escenarioClimatico: 'escenarioSelect', manejo: 'manejoPastoreo' };
+        Object.keys(ids).forEach(function(key) { var el = document.getElementById(ids[key]); data.configuracionBalance[key] = el ? el.value : ''; });
+        var costIds = { labores: 'costoLabores', estructura: 'costosEstructura', costoSuplemento: 'costoSuplemento', kgSuplemento: 'kgSuplemento', comisionVenta: 'comisionVenta', flete: 'costoFlete' };
+        Object.keys(costIds).forEach(function(key) { var el = document.getElementById(costIds[key]); data.costos[key] = el ? (parseFloat(el.value) || 0) : 0; });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch(e) {}
+}
+
+function restaurarEstadoAuto() {
+    try {
+        var saved = localStorage.getItem(STORAGE_KEY); if (!saved) return false;
+        var data = JSON.parse(saved); if (!data.version) return false;
+        if (data.mesesUsoRecursos) mesesUsoRecursos = data.mesesUsoRecursos;
+        generarInputsRecursos();
+        if (data.escenarios && data.escenarios.length > 0) { escenarios = data.escenarios; escenarioActivoId = data.escenarioActivoId || escenarios[0].id; }
+        if (data.nextId) nextId = data.nextId;
+        if (data.hectareasRecursos) {
+            Object.keys(data.hectareasRecursos).forEach(function(r) {
+                var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+                if (el) el.value = data.hectareasRecursos[r];
+            });
+        }
+        if (data.configuracionBalance) {
+            var cb = data.configuracionBalance; var el;
+            el = document.getElementById('mesInicioSelect'); if (el && cb.mesInicio) el.value = cb.mesInicio;
+            el = document.getElementById('stockInicialInput'); if (el && cb.stockInicial) el.value = cb.stockInicial;
+            el = document.getElementById('ajusteProductividad');
+            if (el && cb.ajusteProductividad) { el.value = cb.ajusteProductividad; var d = document.getElementById('ajusteValor'); if (d) d.textContent = cb.ajusteProductividad + '%'; }
+            el = document.getElementById('escenarioSelect'); if (el && cb.escenarioClimatico) el.value = cb.escenarioClimatico;
+            el = document.getElementById('manejoPastoreo'); if (el && cb.manejo) el.value = cb.manejo;
+        }
+        if (data.costos) {
+            var c = data.costos;
+            var costMap = { costoLabores: 'labores', costosEstructura: 'estructura', costoSuplemento: 'costoSuplemento', kgSuplemento: 'kgSuplemento', comisionVenta: 'comisionVenta', costoFlete: 'flete' };
+            Object.keys(costMap).forEach(function(elId) { var el = document.getElementById(elId); if (el) el.value = c[costMap[elId]] || 0; });
+        }
+        actualizarSelectEscenarios();
+        actualizarVistaEscenarios();
+        return true;
+    } catch(e) { return false; }
+}
+
+function exportarConfiguracion() {
+    var data = { version: 'lite', fecha: new Date().toISOString(), mesesUsoRecursos: mesesUsoRecursos,
+        escenarios: escenarios, escenarioActivoId: escenarioActivoId, hectareasRecursos: {}, costos: {} };
+    datosForrajeros.recursos.forEach(function(r) {
+        var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+        if (el) data.hectareasRecursos[r] = parseFloat(el.value) || 0;
+    });
+    data.costos = {
+        labores: parseFloat(document.getElementById('costoLabores').value) || 0,
+        estructura: parseFloat(document.getElementById('costosEstructura').value) || 0,
+        costoSuplemento: parseFloat(document.getElementById('costoSuplemento').value) || 0,
+        kgSuplemento: parseFloat(document.getElementById('kgSuplemento').value) || 0,
+        comisionVenta: parseFloat(document.getElementById('comisionVenta').value) || 0,
+        flete: parseFloat(document.getElementById('costoFlete').value) || 0
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url;
+    a.download = 'balance_forrajero_lite_' + new Date().toISOString().split('T')[0] + '.json';
+    a.click(); URL.revokeObjectURL(url);
+}
+
+function importarConfiguracion(event) {
+    var file = event.target.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            var data = JSON.parse(e.target.result);
+            if (!data.version) { alert('Archivo no valido.'); return; }
+            if (data.mesesUsoRecursos) mesesUsoRecursos = data.mesesUsoRecursos;
+            if (data.escenarios) {
+                escenarios = data.escenarios;
+                escenarioActivoId = data.escenarioActivoId || (escenarios[0] ? escenarios[0].id : null);
+                var maxId = 0;
+                escenarios.forEach(function(e) { if (e.id > maxId) maxId = e.id; e.grupos.forEach(function(g) { if (g.id > maxId) maxId = g.id; }); });
+                nextId = maxId + 1;
+            }
+            generarInputsRecursos();
+            if (data.hectareasRecursos) {
+                Object.keys(data.hectareasRecursos).forEach(function(r) {
+                    var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+                    if (el) el.value = data.hectareasRecursos[r];
+                });
+            }
+            if (data.costos) {
+                var c = data.costos;
+                if (document.getElementById('costoLabores')) document.getElementById('costoLabores').value = c.labores || 0;
+                if (document.getElementById('costosEstructura')) document.getElementById('costosEstructura').value = c.estructura || 0;
+                if (document.getElementById('costoSuplemento')) document.getElementById('costoSuplemento').value = c.costoSuplemento || 0;
+                if (document.getElementById('kgSuplemento')) document.getElementById('kgSuplemento').value = c.kgSuplemento || 0;
+                if (document.getElementById('comisionVenta')) document.getElementById('comisionVenta').value = c.comisionVenta || 0;
+                if (document.getElementById('costoFlete')) document.getElementById('costoFlete').value = c.flete || 0;
+            }
+            actualizarSelectEscenarios();
+            actualizarVistaEscenarios();
+            alert('Configuracion importada correctamente.');
+        } catch(err) { alert('Error al leer archivo: ' + err.message); }
+    };
+    reader.readAsText(file);
+}
+
+// --- BALANCE ---
+function generarInputsRecursos() {
+    var container = document.getElementById('recursosContainer'); if (!container) return;
+    var recursos = datosForrajeros.recursos;
+    var html = '';
+    for (var r = 0; r < recursos.length; r++) {
+        var recurso = recursos[r];
+        var inputId = 'ha_' + recurso.replace(/\s+/g, '_');
+        var prodAnual = datosForrajeros.promedios[recurso] ? datosForrajeros.promedios[recurso].anual : 0;
+        var mesesActivos = mesesUsoRecursos[recurso] || [1,1,1,1,1,1,1,1,1,1,1,1];
+        html += '<div class="recurso-row"><div class="recurso-info"><strong>' + recurso + '</strong>';
+        html += '<span class="prod-info">' + Math.round(prodAnual) + ' kg MS/ha/ano</span></div>';
+        html += '<div class="recurso-ha"><input type="number" id="' + inputId + '" step="0.1" min="0" value="0" placeholder="Ha"></div>';
+        html += '<div class="meses-container">';
+        for (var m = 0; m < 12; m++) {
+            html += '<button type="button" class="mes-btn ' + (mesesActivos[m] ? 'activo' : '') + '" data-recurso="' + recurso + '" data-mes="' + m + '" onclick="toggleMesRecurso(this)">' + MESES_LABELS[m] + '</button>';
+        }
+        html += '</div></div>';
+    }
+    container.innerHTML = html;
+}
+
+function toggleMesRecurso(btn) {
+    var recurso = btn.getAttribute('data-recurso');
+    var mes = parseInt(btn.getAttribute('data-mes'));
+    mesesUsoRecursos[recurso][mes] = mesesUsoRecursos[recurso][mes] ? 0 : 1;
+    btn.classList.toggle('activo');
+    guardarEstadoAuto();
+}
+
+function limpiarRecursos() {
+    datosForrajeros.recursos.forEach(function(r) {
+        var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+        if (el) el.value = '0';
+    });
+}
+
+function calcularBalance() {
+    var recursos = datosForrajeros.recursos;
+    var escenario = document.getElementById('escenarioSelect').value;
+    var ajuste = parseFloat(document.getElementById('ajusteProductividad').value) / 100;
+    var manejo = document.getElementById('manejoPastoreo').value;
+    var superficieTotal = 0; var config = [];
+    recursos.forEach(function(recurso) {
+        var hectareas = parseFloat(document.getElementById('ha_' + recurso.replace(/\s+/g, '_')).value) || 0;
+        if (hectareas > 0) { superficieTotal += hectareas; config.push({ recurso: recurso, hectareas: hectareas }); }
+    });
+    if (superficieTotal === 0) {
+        var c = document.getElementById('recursosContainer');
+        if (c) { var a = document.createElement('div'); a.className = 'alert alert-danger'; a.innerHTML = '<strong>Ingresa al menos una superficie mayor a 0</strong>'; c.prepend(a); setTimeout(function(){a.remove();},5000); }
+        return;
+    }
+    configuracionCampo = { superficie: superficieTotal, recursos: config, escenario: escenario, ajuste: ajuste, manejo: manejo };
+    var produccionPorRecurso = {}; var produccionMensualTotal = Array(12).fill(0);
+    config.forEach(function(item) {
+        var recurso = item.recurso; var hectareas = item.hectareas;
+        var promedios = datosForrajeros.promedios[recurso]; var resumen = datosForrajeros.resumen[recurso];
+        var mesesActivos = getMesesActivos(recurso);
+        var factorEscenario = 1;
+        if (escenario === 'bueno') factorEscenario = resumen.produccion_mejor / resumen.promedio;
+        else if (escenario === 'malo') factorEscenario = resumen.produccion_peor / resumen.promedio;
+        var prodRecurso = promedios.mensual.map(function(prod, i) { return prod * hectareas * factorEscenario * ajuste * mesesActivos[i]; });
+        produccionPorRecurso[recurso] = prodRecurso;
+        prodRecurso.forEach(function(p, i) { produccionMensualTotal[i] += p; });
+    });
+    if (escenario === 'comparar') {
+        var datasets = ['promedio','bueno','malo'].map(function(esc) {
+            var prod = Array(12).fill(0);
+            config.forEach(function(item) {
+                var resumen = datosForrajeros.resumen[item.recurso]; var promedios = datosForrajeros.promedios[item.recurso];
+                var mesesActivos = getMesesActivos(item.recurso); var factor = 1;
+                if (esc === 'bueno') factor = resumen.produccion_mejor / resumen.promedio;
+                else if (esc === 'malo') factor = resumen.produccion_peor / resumen.promedio;
+                promedios.mensual.forEach(function(p, i) { prod[i] += p * item.hectareas * factor * ajuste * mesesActivos[i]; });
+            });
+            return { label: esc === 'promedio' ? 'Ano Promedio' : esc === 'bueno' ? 'Ano Bueno' : 'Ano Malo', data: prod,
+                color: esc === 'promedio' ? '#f39c12' : esc === 'bueno' ? '#2ecc71' : '#e74c3c' };
+        });
+        mostrarGraficoBalance(datasets);
+        produccionPorRecurso = {}; produccionMensualTotal = Array(12).fill(0);
+        config.forEach(function(item) {
+            var prodRecurso = datosForrajeros.promedios[item.recurso].mensual.map(function(prod, i) { return prod * item.hectareas * ajuste * getMesesActivos(item.recurso)[i]; });
+            produccionPorRecurso[item.recurso] = prodRecurso;
+            prodRecurso.forEach(function(p, i) { produccionMensualTotal[i] += p; });
+        });
+    } else {
+        mostrarGraficoBalance([{ label: escenario === 'promedio' ? 'Ano Promedio' : escenario === 'bueno' ? 'Ano Bueno' : 'Ano Malo',
+            data: produccionMensualTotal, color: escenario === 'promedio' ? '#27ae60' : escenario === 'bueno' ? '#2ecc71' : '#e74c3c' }]);
+    }
+    var produccionAnual = produccionMensualTotal.reduce(function(a,b){return a+b;},0);
+    var cargaMax = calcularCargaMaxima(produccionAnual, superficieTotal, manejo);
+    document.getElementById('superficieTotal').textContent = superficieTotal.toFixed(1);
+    document.getElementById('produccionAnual').textContent = formatNum(produccionAnual);
+    document.getElementById('cargaMaxima').textContent = cargaMax.toFixed(2);
+    document.getElementById('produccionPorHa').textContent = formatNum(produccionAnual / superficieTotal);
+    generarTablaProduccionRecursos(produccionPorRecurso, config);
+    mostrarGraficoAcumuladoRecursos(produccionPorRecurso, config);
+    generarAlertasBalance(produccionMensualTotal, manejo, ajuste);
+    configuracionCampo.produccionPorRecurso = produccionPorRecurso;
+    configuracionCampo.produccionMensualTotal = produccionMensualTotal;
+    document.getElementById('resultadosBalance').style.display = 'block';
+    document.getElementById('resultadosBalance').scrollIntoView({ behavior: 'smooth' });
+    guardarEstadoAuto();
+}
+
+function generarTablaProduccionRecursos(produccionPorRecurso, config) {
+    var container = document.getElementById('tablaProduccionRecursos');
+    var html = '<table><thead><tr><th>Recurso</th><th>Ha</th>';
+    MESES_NOMBRES.forEach(function(m) { html += '<th>' + m + '</th>'; });
+    html += '<th>Total</th></tr></thead><tbody>';
+    var totalesMes = Array(12).fill(0); var granTotal = 0;
+    config.forEach(function(item) {
+        var prod = produccionPorRecurso[item.recurso]; var totalRecurso = prod.reduce(function(a,b){return a+b;},0); granTotal += totalRecurso;
+        html += '<tr><td>' + item.recurso + '</td><td>' + item.hectareas + '</td>';
+        prod.forEach(function(p, i) { totalesMes[i] += p; html += '<td>' + formatNum(p) + '</td>'; });
+        html += '<td><strong>' + formatNum(totalRecurso) + '</strong></td></tr>';
+    });
+    html += '<tr class="fila-total"><td>TOTAL</td><td>' + configuracionCampo.superficie.toFixed(1) + '</td>';
+    totalesMes.forEach(function(t) { html += '<td>' + formatNum(t) + '</td>'; });
+    html += '<td><strong>' + formatNum(granTotal) + '</strong></td></tr></tbody></table>';
+    container.innerHTML = html;
+}
+
+function mostrarGraficoBalance(datasets) {
+    var ctx = document.getElementById('chartBalance');
+    if (chartBalance) chartBalance.destroy();
+    chartBalance = new Chart(ctx, { type: 'line', data: { labels: MESES_NOMBRES,
+        datasets: datasets.map(function(ds) { return { label: ds.label, data: ds.data, borderColor: ds.color, backgroundColor: ds.color + '20', borderWidth: 3, fill: datasets.length === 1, tension: 0.4 }; }) },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Produccion Forrajera Mensual (kg MS)', font: { size: 14, weight: 'bold' } }, legend: { position: 'top' } },
+            scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return (v/1000).toFixed(0) + 'k'; } } } } } });
+}
+
+function mostrarGraficoAcumuladoRecursos(produccionPorRecurso, config) {
+    var ctx = document.getElementById('chartAcumuladoRecursos');
+    if (chartAcumulado) chartAcumulado.destroy();
+    chartAcumulado = new Chart(ctx, { type: 'line', data: { labels: MESES_NOMBRES,
+        datasets: config.map(function(item, idx) { return { label: item.recurso, data: produccionPorRecurso[item.recurso], backgroundColor: generarColorGrupo(idx) + '80', borderColor: generarColorGrupo(idx), borderWidth: 1, fill: true }; }) },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Aporte de cada recurso (kg MS/mes)', font: { size: 14, weight: 'bold' } }, legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: function(v) { return (v/1000).toFixed(0) + 'k'; } } } },
+            elements: { line: { tension: 0.3 }, point: { radius: 0 } } } });
+}
+
+function generarAlertasBalance(produccionMensual, manejo, ajuste) {
+    var container = document.getElementById('alertasBalance');
+    var eficiencia = MODELO_CONFIG.eficienciaPastoreo[manejo];
+    var minProd = Math.min.apply(null, produccionMensual); var maxProd = Math.max.apply(null, produccionMensual);
+    var mesMin = MESES_NOMBRES[produccionMensual.indexOf(minProd)]; var mesMax = MESES_NOMBRES[produccionMensual.indexOf(maxProd)];
+    var alertas = [];
+    var variacion = minProd > 0 ? ((maxProd - minProd) / minProd * 100) : 999;
+    if (variacion > 100) alertas.push({ tipo: 'warning', msg: '<strong>Alta estacionalidad:</strong> Variacion del ' + variacion.toFixed(0) + '% entre ' + mesMin + ' y ' + mesMax + '.' });
+    var prodTotal = produccionMensual.reduce(function(a,b){return a+b;},0);
+    alertas.push({ tipo: 'info', msg: '<strong>Eficiencia de pastoreo:</strong> ' + (eficiencia*100).toFixed(1) + '% (' + manejo + '). Produccion aprovechable: ' + formatNum(prodTotal * eficiencia) + ' kg MS.' });
+    if (ajuste !== 1) alertas.push({ tipo: ajuste > 1 ? 'success' : 'warning', msg: '<strong>Ajuste de productividad:</strong> ' + (ajuste*100).toFixed(0) + '%.' });
+    container.innerHTML = alertas.map(function(a) { return '<div class="alert alert-' + a.tipo + '">' + a.msg + '</div>'; }).join('');
+}
+
+// --- LOTES / ESCENARIOS ---
+function crearEscenario(nombre) { var esc = { id: nextId++, nombre: nombre, grupos: [] }; escenarios.push(esc); escenarioActivoId = esc.id; actualizarSelectEscenarios(); actualizarVistaEscenarios(); return esc; }
+function getEscenarioActivo() { return escenarios.find(function(e) { return e.id === escenarioActivoId; }) || null; }
+function nuevoEscenario() { var nombre = prompt('Nombre:', 'Escenario ' + (escenarios.length + 1)); if (nombre) crearEscenario(nombre); }
+function duplicarEscenarioActivo() {
+    var esc = getEscenarioActivo(); if (!esc) return;
+    var nuevo = { id: nextId++, nombre: esc.nombre + ' (copia)', grupos: esc.grupos.map(function(g) { return Object.assign({}, g, { id: nextId++, costos: Object.assign({}, g.costos) }); }) };
+    escenarios.push(nuevo); escenarioActivoId = nuevo.id; actualizarSelectEscenarios(); actualizarVistaEscenarios();
+}
+function eliminarEscenarioActivo() {
+    if (escenarios.length <= 1) { alert('Debe haber al menos un escenario.'); return; }
+    if (!confirm('Eliminar este escenario?')) return;
+    escenarios = escenarios.filter(function(e) { return e.id !== escenarioActivoId; });
+    escenarioActivoId = escenarios[0].id; actualizarSelectEscenarios(); actualizarVistaEscenarios();
+}
+function cambiarEscenarioActivo() { escenarioActivoId = parseInt(document.getElementById('escenarioActivoSelect').value); actualizarVistaEscenarios(); }
+function actualizarSelectEscenarios() {
+    var select = document.getElementById('escenarioActivoSelect'); if (!select) return;
+    select.innerHTML = escenarios.map(function(e) { return '<option value="' + e.id + '"' + (e.id === escenarioActivoId ? ' selected' : '') + '>' + e.nombre + '</option>'; }).join('');
+}
+function ajustarPesosDefecto() { var info = CATEGORIAS[document.getElementById('grupoCategoria').value]; if (info) { document.getElementById('grupoPesoInicial').value = info.pesoDefecto; document.getElementById('grupoGanancia').value = info.gananciaDefecto; } }
+function toggleCriterioSalida() {
+    var criterio = document.querySelector('input[name="criterioSalida"]:checked').value;
+    document.getElementById('wrapFechaSalida').style.display = criterio === 'fecha' ? '' : 'none';
+    document.getElementById('wrapPesoObjetivo').style.display = criterio === 'peso' ? '' : 'none';
+}
+
+function agregarGrupo() {
+    var esc = getEscenarioActivo(); if (!esc) { alert('Selecciona un escenario.'); return; }
+    limpiarErrores(['grupoCantidad','grupoPesoInicial','grupoGanancia','grupoFechaEntrada','grupoFechaSalida','grupoPesoObjetivo']);
+    var categoria = document.getElementById('grupoCategoria').value;
+    var cantidad = parseInt(document.getElementById('grupoCantidad').value);
+    var pesoInicial = parseFloat(document.getElementById('grupoPesoInicial').value);
+    var ganancia = parseFloat(document.getElementById('grupoGanancia').value);
+    var fechaEntrada = document.getElementById('grupoFechaEntrada').value;
+    var criterio = document.querySelector('input[name="criterioSalida"]:checked').value;
+    var hayError = false;
+    if (!cantidad || cantidad <= 0) { mostrarError('grupoCantidad', 'Ingresa la cantidad'); hayError = true; }
+    if (!pesoInicial || pesoInicial <= 0) { mostrarError('grupoPesoInicial', 'Ingresa el peso'); hayError = true; }
+    if (!fechaEntrada) { mostrarError('grupoFechaEntrada', 'Ingresa fecha de entrada'); hayError = true; }
+    if (hayError) return;
+    var fechaSalida, pesoObjetivo = null;
+    if (criterio === 'peso') {
+        pesoObjetivo = parseFloat(document.getElementById('grupoPesoObjetivo').value);
+        if (!pesoObjetivo || pesoObjetivo <= pesoInicial) { mostrarError('grupoPesoObjetivo', 'Debe ser mayor al peso inicial'); return; }
+        if (!ganancia || ganancia <= 0) { mostrarError('grupoGanancia', 'Debe ser mayor a 0'); return; }
+        var dias = Math.ceil((pesoObjetivo - pesoInicial) / ganancia);
+        fechaSalida = new Date(new Date(fechaEntrada).getTime() + dias * 86400000).toISOString().split('T')[0];
+    } else {
+        fechaSalida = document.getElementById('grupoFechaSalida').value;
+        if (!fechaSalida) { mostrarError('grupoFechaSalida', 'Ingresa fecha de salida'); return; }
+        if (new Date(fechaSalida) <= new Date(fechaEntrada)) { mostrarError('grupoFechaSalida', 'Debe ser posterior a la entrada'); return; }
+    }
+    var costos = { compra: parseFloat(document.getElementById('grupoPrecioCompra').value)||0, venta: parseFloat(document.getElementById('grupoPrecioVenta').value)||0, sanidad: parseFloat(document.getElementById('grupoSanidad').value)||0 };
+    if (grupoEditandoId !== null) {
+        var grupo = esc.grupos.find(function(g) { return g.id === grupoEditandoId; });
+        if (grupo) Object.assign(grupo, { categoria:categoria, cantidad:cantidad, pesoInicial:pesoInicial, ganancia:ganancia, criterioSalida:criterio, fechaEntrada:fechaEntrada, fechaSalida:fechaSalida, pesoObjetivo:pesoObjetivo, costos:costos });
+        grupoEditandoId = null; document.getElementById('btnAgregarGrupo').textContent = 'Agregar al escenario'; document.getElementById('btnCancelarEdicion').style.display = 'none';
+    } else {
+        esc.grupos.push({ id: nextId++, categoria:categoria, cantidad:cantidad, pesoInicial:pesoInicial, ganancia:ganancia, criterioSalida:criterio, fechaEntrada:fechaEntrada, fechaSalida:fechaSalida, pesoObjetivo:pesoObjetivo, costos:costos });
+    }
+    actualizarVistaEscenarios(); limpiarFormGrupo();
+}
+
+function editarGrupo(escId, grupoId) {
+    var esc = escenarios.find(function(e) { return e.id === escId; }); if (!esc) return;
+    var g = esc.grupos.find(function(gr) { return gr.id === grupoId; }); if (!g) return;
+    escenarioActivoId = escId; actualizarSelectEscenarios();
+    document.getElementById('grupoCategoria').value = g.categoria;
+    document.getElementById('grupoCantidad').value = g.cantidad;
+    document.getElementById('grupoPesoInicial').value = g.pesoInicial;
+    document.getElementById('grupoGanancia').value = g.ganancia;
+    document.getElementById('grupoFechaEntrada').value = g.fechaEntrada;
+    document.querySelector('input[name="criterioSalida"][value="' + (g.criterioSalida||'fecha') + '"]').checked = true;
+    toggleCriterioSalida();
+    if (g.criterioSalida === 'peso' && g.pesoObjetivo) document.getElementById('grupoPesoObjetivo').value = g.pesoObjetivo;
+    else document.getElementById('grupoFechaSalida').value = g.fechaSalida;
+    document.getElementById('grupoPrecioCompra').value = g.costos.compra;
+    document.getElementById('grupoPrecioVenta').value = g.costos.venta;
+    document.getElementById('grupoSanidad').value = g.costos.sanidad;
+    grupoEditandoId = grupoId; document.getElementById('btnAgregarGrupo').textContent = 'Guardar cambios'; document.getElementById('btnCancelarEdicion').style.display = '';
+    document.getElementById('grupoCategoria').scrollIntoView({ behavior: 'smooth' });
+}
+function cancelarEdicion() { grupoEditandoId = null; document.getElementById('btnAgregarGrupo').textContent = 'Agregar al escenario'; document.getElementById('btnCancelarEdicion').style.display = 'none'; limpiarFormGrupo(); }
+function duplicarGrupo(escId, grupoId) {
+    var esc = escenarios.find(function(e) { return e.id === escId; }); if (!esc) return;
+    var g = esc.grupos.find(function(gr) { return gr.id === grupoId; }); if (!g) return;
+    esc.grupos.push(Object.assign({}, g, { id: nextId++, costos: Object.assign({}, g.costos) })); actualizarVistaEscenarios();
+}
+function eliminarGrupo(escId, grupoId) {
+    if (!confirm('Eliminar este grupo?')) return;
+    var esc = escenarios.find(function(e) { return e.id === escId; }); if (!esc) return;
+    esc.grupos = esc.grupos.filter(function(g) { return g.id !== grupoId; }); actualizarVistaEscenarios();
+}
+function limpiarFormGrupo() { document.getElementById('grupoCantidad').value = '50'; ajustarPesosDefecto(); document.getElementById('grupoFechaEntrada').value = ''; document.getElementById('grupoFechaSalida').value = ''; }
+
+function actualizarVistaEscenarios() {
+    var container = document.getElementById('escenariosContainer'); if (!container) return;
+    if (escenarios.length === 0) { container.innerHTML = '<p style="color:#999;text-align:center;">No hay escenarios.</p>'; return; }
+    var html = '';
+    escenarios.forEach(function(esc) {
+        var esActivo = esc.id === escenarioActivoId;
+        html += '<div class="escenario-card' + (esActivo ? ' activo' : '') + '"><div class="escenario-header">';
+        html += '<span class="escenario-nombre">' + esc.nombre + (esActivo ? ' (activo)' : '') + '</span>';
+        var totalCab = esc.grupos.reduce(function(s,g){return s+g.cantidad;},0);
+        html += '<span style="font-size:0.85em;color:#7f8c8d;">' + esc.grupos.length + ' grupos - ' + totalCab + ' cabezas</span></div>';
+        if (esc.grupos.length === 0) { html += '<p style="color:#aaa;font-size:0.9em;">Sin grupos cargados.</p>'; }
+        else {
+            esc.grupos.forEach(function(g) {
+                var cat = CATEGORIAS[g.categoria];
+                var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
+                var pesoFinal = g.pesoInicial + g.ganancia * dias;
+                html += '<div class="grupo-item"><div class="grupo-info">';
+                html += '<span><strong>' + cat.nombre + '</strong></span><span>' + g.cantidad + ' cab</span>';
+                html += '<span>' + g.pesoInicial + ' &rarr; ' + pesoFinal.toFixed(0) + ' kg</span>';
+                html += '<span>' + g.ganancia + ' kg/dia</span><span>' + dias + ' dias</span>';
+                html += '<span>' + formatNum(g.ganancia * dias * g.cantidad) + ' kg prod</span></div>';
+                html += '<div class="grupo-acciones"><button class="btn-editar" onclick="editarGrupo(' + esc.id + ',' + g.id + ')">Editar</button>';
+                html += '<button class="btn-duplicar" onclick="duplicarGrupo(' + esc.id + ',' + g.id + ')">Duplicar</button>';
+                html += '<button class="btn-eliminar" onclick="eliminarGrupo(' + esc.id + ',' + g.id + ')">Eliminar</button></div></div>';
+            });
+        }
+        html += '</div>';
+    });
+    container.innerHTML = html;
+    guardarEstadoAuto();
+}
+
+// --- OFERTA/DEMANDA ---
+function calcularDemanda() {
+    if (!configuracionCampo) { alert('Primero calcula el balance forrajero.'); return; }
+    var esc = getEscenarioActivo();
+    if (!esc || esc.grupos.length === 0) { alert('Agrega al menos un grupo de animales.'); return; }
+    var manejo = configuracionCampo.manejo; var eficiencia = MODELO_CONFIG.eficienciaPastoreo[manejo];
+    var mesInicio = parseInt(document.getElementById('mesInicioSelect').value);
+    var stockInicial = parseFloat(document.getElementById('stockInicialInput').value) || 0;
+    var ofertaMensual = configuracionCampo.produccionMensualTotal;
+    var demandaMensual = Array(12).fill(0);
+    esc.grupos.forEach(function(g) {
+        var cat = CATEGORIAS[g.categoria]; if (!cat.usaPasto) return;
+        var entrada = new Date(g.fechaEntrada); var salida = new Date(g.fechaSalida);
+        var mesActual = new Date(entrada.getFullYear(), entrada.getMonth(), 1);
+        var mesFinal = new Date(salida.getFullYear(), salida.getMonth(), 1);
+        while (mesActual <= mesFinal) {
+            var mesIdx = mesActual.getMonth();
+            var inicioMes = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1);
+            var finMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
+            var diaDesde = entrada > inicioMes ? entrada : inicioMes;
+            var diaHasta = salida < finMes ? salida : finMes;
+            var diasPresente = Math.max(0, Math.floor((diaHasta - diaDesde) / 86400000) + 1);
+            if (diasPresente > 0) {
+                var diasDesdeEntrada = Math.max(0, Math.floor((new Date(mesActual.getFullYear(), mesActual.getMonth(), 15) - entrada) / 86400000));
+                var pesoPromedio = g.pesoInicial + g.ganancia * diasDesdeEntrada;
+                var consumoDiario = pesoPromedio * cat.consumo;
+                if (g.categoria === 'vaca' && cat.consumoCria) { consumoDiario += (cat.pesoCria + g.ganancia * 0.3 * diasDesdeEntrada) * cat.consumoCria; }
+                demandaMensual[mesIdx] += consumoDiario * diasPresente * g.cantidad;
+            }
+            mesActual.setMonth(mesActual.getMonth() + 1);
+        }
+    });
+    var balanceMensual = Array(12).fill(0); var diferidoAcumulado = Array(12).fill(0); var disponibilidadMensual = Array(12).fill(0); var diferidoActual = stockInicial;
+    for (var i = 0; i < 12; i++) {
+        var mes = (mesInicio + i) % 12;
+        var produccionMes = ofertaMensual[mes] * eficiencia;
+        diferidoActual = diferidoActual * (1 - MODELO_CONFIG.perdidaDiferido);
+        var disponibilidadTotal = produccionMes + diferidoActual;
+        disponibilidadMensual[mes] = disponibilidadTotal;
+        var balance = disponibilidadTotal - demandaMensual[mes];
+        balanceMensual[mes] = balance; diferidoActual = balance > 0 ? balance : 0; diferidoAcumulado[mes] = diferidoActual;
+    }
+    mostrarGraficoOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
+    mostrarGraficoDiferimiento(diferidoAcumulado, disponibilidadMensual);
+    generarTablaDetalleMensual(ofertaMensual, demandaMensual, balanceMensual, diferidoAcumulado, eficiencia, mesInicio);
+    generarAlertasDemanda(ofertaMensual, demandaMensual, balanceMensual, diferidoAcumulado, eficiencia, mesInicio);
+    calcularIndicadoresOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
+    detectarSuplementacionNecesaria(balanceMensual, demandaMensual, mesInicio);
+    calcularBalanceHidrico();
+    document.getElementById('resultadosDemanda').style.display = 'block';
+    document.getElementById('resultadosDemanda').scrollIntoView({ behavior: 'smooth' });
+}
+
+function calcularIndicadoresOfertaDemanda(oferta, demanda, balance, eficiencia) {
+    var superficie = configuracionCampo.superficie;
+    var produccionTotal = oferta.reduce(function(a,b){return a+b;},0);
+    var produccionAprov = produccionTotal * eficiencia;
+    var demandaTotal = demanda.reduce(function(a,b){return a+b;},0);
+    var balanceAnual = balance.reduce(function(a,b){return a+b;},0);
+    document.getElementById('produccionTotalDemanda').textContent = formatNum(produccionTotal);
+    document.getElementById('demandaTotalAnual').textContent = formatNum(demandaTotal);
+    document.getElementById('balanceAnual').textContent = formatNum(balanceAnual);
+    document.getElementById('balanceAnual').style.color = balanceAnual >= 0 ? '#27ae60' : '#e74c3c';
+    document.getElementById('cargaAnimalReal').textContent = (demandaTotal / MODELO_CONFIG.consumoAnualEV / superficie).toFixed(2);
+    document.getElementById('cargaAnimalMaxima').textContent = (produccionAprov / MODELO_CONFIG.consumoAnualEV / superficie).toFixed(2);
+    var tasa = demandaTotal / produccionAprov * 100;
+    document.getElementById('tasaUso').textContent = tasa.toFixed(1);
+    document.getElementById('tasaUso').style.color = tasa > 100 ? '#e74c3c' : tasa > 85 ? '#f39c12' : '#27ae60';
+}
+
+function mostrarGraficoOfertaDemanda(oferta, demanda, balance, eficiencia) {
+    var ctx = document.getElementById('chartOfertaDemanda'); if (chartOfertaDemanda) chartOfertaDemanda.destroy();
+    chartOfertaDemanda = new Chart(ctx, { type: 'bar', data: { labels: MESES_NOMBRES, datasets: [
+        { label: 'Oferta aprovechable', data: oferta.map(function(o){return o*eficiencia;}), backgroundColor: '#27ae6050', borderColor: '#27ae60', borderWidth: 2 },
+        { label: 'Demanda', data: demanda, backgroundColor: '#e74c3c50', borderColor: '#e74c3c', borderWidth: 2 },
+        { label: 'Balance', data: balance, type: 'line', borderColor: '#3498db', borderWidth: 2, tension: 0.4, fill: false, pointRadius: 4 }
+    ]}, options: { responsive: true, maintainAspectRatio: false,
+        plugins: { title: { display: true, text: 'Oferta vs Demanda', font: { size: 14, weight: 'bold' } }, legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, ticks: { callback: function(v){return (v/1000).toFixed(0)+'k';} } } } } });
+}
+
+function mostrarGraficoDiferimiento(diferido, disponibilidad) {
+    var ctx = document.getElementById('chartDiferimiento'); if (chartDiferimiento) chartDiferimiento.destroy();
+    chartDiferimiento = new Chart(ctx, { type: 'line', data: { labels: MESES_NOMBRES, datasets: [
+        { label: 'Forraje Diferido', data: diferido, backgroundColor: '#f39c1230', borderColor: '#f39c12', borderWidth: 3, fill: true, tension: 0.4 },
+        { label: 'Disponibilidad Total', data: disponibilidad, borderColor: '#3498db', borderWidth: 2, borderDash: [5,5], fill: false, tension: 0.4 }
+    ]}, options: { responsive: true, maintainAspectRatio: false,
+        plugins: { title: { display: true, text: 'Diferimiento (perdida 5%/mes)', font: { size: 14, weight: 'bold' } }, legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, ticks: { callback: function(v){return (v/1000).toFixed(0)+'k';} } } } } });
+}
+
+function generarTablaDetalleMensual(oferta, demanda, balance, diferido, eficiencia, mesInicio) {
+    var tbody = document.getElementById('tablaDetalleMensualBody'); var html = '';
+    for (var i = 0; i < 12; i++) {
+        var mes = (mesInicio + i) % 12;
+        html += '<tr><td>' + MESES_NOMBRES[mes] + '</td><td>' + formatNum(oferta[mes]*eficiencia) + '</td><td>' + formatNum(demanda[mes]) + '</td>';
+        html += '<td style="color:' + (balance[mes]>=0?'#27ae60':'#e74c3c') + ';font-weight:700;">' + formatNum(balance[mes]) + '</td>';
+        html += '<td>' + formatNum(diferido[mes]) + '</td><td>' + (balance[mes]>=0 ? '<span style="color:#27ae60;font-weight:700;">OK</span>' : '<span style="color:#e74c3c;font-weight:700;">DEFICIT</span>') + '</td></tr>';
+    }
+    tbody.innerHTML = html;
+}
+
+function generarAlertasDemanda(oferta, demanda, balance, diferido, eficiencia, mesInicio) {
+    var container = document.getElementById('alertasDemanda'); var alertas = [];
+    var mesesDeficit = []; var deficitTotal = 0;
+    for (var i = 0; i < 12; i++) { var mes = (mesInicio+i)%12; if (balance[mes]<0) { mesesDeficit.push(MESES_NOMBRES[mes]); deficitTotal += Math.abs(balance[mes]); } }
+    if (mesesDeficit.length > 0) alertas.push({ tipo: 'danger', msg: '<strong>Deficit:</strong> ' + mesesDeficit.length + ' meses: ' + mesesDeficit.join(', ') + '. Total: ' + formatNum(deficitTotal) + ' kg MS.' });
+    else alertas.push({ tipo: 'success', msg: '<strong>Balance positivo</strong> en todos los meses.' });
+    var ofertaTotal = oferta.reduce(function(a,b){return a+b;},0);
+    alertas.push({ tipo: 'warning', msg: '<strong>Desperdicio por manejo:</strong> ' + formatNum(ofertaTotal*(1-eficiencia)) + ' kg MS/ano (' + ((1-eficiencia)*100).toFixed(1) + '%).' });
+    container.innerHTML = alertas.map(function(a) { return '<div class="alert alert-' + a.tipo + '">' + a.msg + '</div>'; }).join('');
+}
+
+function detectarSuplementacionNecesaria(balance, demanda, mesInicio) {
+    var container = document.getElementById('suplementacionInteligente'); if (!container) return;
+    var sugerencias = [];
+    for (var i = 0; i < 12; i++) { var mes = (mesInicio+i)%12; if (balance[mes]<0) sugerencias.push({ mes: MESES_NOMBRES[mes], deficit: Math.abs(balance[mes]), kgGrano: Math.abs(balance[mes])/0.9 }); }
+    if (sugerencias.length === 0) { container.innerHTML = '<div class="alert alert-success"><strong>Sin deficit:</strong> No se requiere suplementacion.</div>'; return; }
+    var html = '<h3>Suplementacion sugerida</h3><table><thead><tr><th>Mes</th><th>Deficit (kg MS)</th><th>Suplemento (kg)</th><th>Equivale a</th></tr></thead><tbody>';
+    var totalKg = 0;
+    sugerencias.forEach(function(s) { totalKg += s.kgGrano; html += '<tr><td>' + s.mes + '</td><td style="color:#e74c3c;">' + formatNum(s.deficit) + '</td><td>' + formatNum(s.kgGrano) + '</td><td>' + (s.kgGrano/30).toFixed(1) + ' kg/dia</td></tr>'; });
+    html += '<tr class="fila-total"><td>TOTAL</td><td></td><td>' + formatNum(totalKg) + ' kg</td><td></td></tr></tbody></table>';
+    container.innerHTML = html;
+}
+
+// Balance hidrico
+var CONSUMO_AGUA_FACTOR = { verano: 0.08, otono: 0.06, invierno: 0.045, primavera: 0.065 };
+function calcularBalanceHidrico() {
+    var container = document.getElementById('balanceHidrico'); if (!container) return;
+    var esc = getEscenarioActivo(); if (!esc || esc.grupos.length === 0) { container.innerHTML = ''; return; }
+    var consumoMensual = Array(12).fill(0);
+    esc.grupos.forEach(function(g) {
+        var cat = CATEGORIAS[g.categoria]; if (!cat.usaPasto) return;
+        var entrada = new Date(g.fechaEntrada); var salida = new Date(g.fechaSalida);
+        var mesActual = new Date(entrada.getFullYear(), entrada.getMonth(), 1);
+        var mesFinal = new Date(salida.getFullYear(), salida.getMonth(), 1);
+        while (mesActual <= mesFinal) {
+            var mesIdx = mesActual.getMonth();
+            var inicioMes = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1);
+            var finMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
+            var diaDesde = entrada > inicioMes ? entrada : inicioMes; var diaHasta = salida < finMes ? salida : finMes;
+            var diasPresente = Math.max(0, Math.floor((diaHasta - diaDesde) / 86400000) + 1);
+            if (diasPresente > 0) {
+                var factorAgua = CONSUMO_AGUA_FACTOR[getEstacion(mesIdx)] || 0.06;
+                var diasDesdeEntrada = Math.max(0, Math.floor((new Date(mesActual.getFullYear(), mesActual.getMonth(), 15) - entrada) / 86400000));
+                var pesoPromedio = g.pesoInicial + g.ganancia * diasDesdeEntrada;
+                var consumoDiarioAnimal = pesoPromedio * factorAgua;
+                if (g.categoria === 'vaca' && cat.consumoCria) consumoDiarioAnimal += (cat.pesoCria + g.ganancia * 0.3 * diasDesdeEntrada) * factorAgua * 0.5;
+                consumoMensual[mesIdx] += consumoDiarioAnimal * diasPresente * g.cantidad;
+            }
+            mesActual.setMonth(mesActual.getMonth() + 1);
+        }
+    });
+    var consumoAnual = consumoMensual.reduce(function(a,b){return a+b;},0);
+    if (consumoAnual === 0) { container.innerHTML = ''; return; }
+    var maxMensual = Math.max.apply(null, consumoMensual);
+    var mesMax = MESES_NOMBRES[consumoMensual.indexOf(maxMensual)];
+    var totalCab = esc.grupos.reduce(function(s,g){return s+g.cantidad;},0);
+    var consumoMaxPorCabeza = totalCab > 0 ? maxMensual / 30 / totalCab : 0;
+    var html = '<h3>Balance Hidrico</h3><div class="card-grid">';
+    html += '<div class="card"><div class="card-title">Consumo anual</div><div class="card-value">' + (consumoAnual/1000).toFixed(0) + '</div><div class="card-unit">m3/ano</div></div>';
+    html += '<div class="card"><div class="card-title">Pico consumo</div><div class="card-value">' + mesMax + '</div><div class="card-unit">' + (maxMensual/1000).toFixed(1) + ' m3/mes</div></div>';
+    html += '<div class="card"><div class="card-title">Max por cabeza</div><div class="card-value">' + consumoMaxPorCabeza.toFixed(0) + '</div><div class="card-unit">litros/dia</div></div></div>';
+    container.innerHTML = html;
+}
+
+// --- ECONOMICO ---
+function calcularEconomico() {
+    if (!configuracionCampo) { alert('Primero calcula el balance.'); return; }
+    var esc = getEscenarioActivo(); if (!esc || esc.grupos.length === 0) { alert('Agrega lotes primero.'); return; }
+    var superficie = configuracionCampo.superficie;
+    var costoLabores = (parseFloat(document.getElementById('costoLabores').value)||0) * superficie;
+    var costosEstructura = (parseFloat(document.getElementById('costosEstructura').value)||0) * superficie;
+    var costoSuplemento = (parseFloat(document.getElementById('costoSuplemento').value)||0) * (parseFloat(document.getElementById('kgSuplemento').value)||0);
+    var comisionVenta = (parseFloat(document.getElementById('comisionVenta').value)||0) / 100;
+    var costoFleteCab = parseFloat(document.getElementById('costoFlete').value) || 0;
+    var inversionTotal = 0; var ingresoTotal = 0; var detalleGrupos = [];
+    esc.grupos.forEach(function(g) {
+        var cat = CATEGORIAS[g.categoria]; var dias = Math.floor((new Date(g.fechaSalida)-new Date(g.fechaEntrada))/86400000);
+        var pesoFinal = g.pesoInicial + g.ganancia*dias; var kgCompra = g.pesoInicial*g.cantidad; var kgVenta = pesoFinal*g.cantidad;
+        var costoCompra = kgCompra*g.costos.compra; var costoSanidad = g.costos.sanidad*g.cantidad; var costoFlete = costoFleteCab*g.cantidad;
+        var ingresoBruto = kgVenta*g.costos.venta; var costoComision = ingresoBruto*comisionVenta;
+        inversionTotal += costoCompra + costoSanidad; ingresoTotal += ingresoBruto;
+        detalleGrupos.push({ nombre:cat.nombre, cantidad:g.cantidad, kgProducidos:g.ganancia*dias*g.cantidad, costoCompra:costoCompra,
+            costoSanidad:costoSanidad, costoFlete:costoFlete, costoComision:costoComision, ingresoBruto:ingresoBruto,
+            margen:ingresoBruto-costoComision-costoCompra-costoSanidad-costoFlete, dias:dias, pesoFinal:pesoFinal });
+    });
+    var totalCostosCompra = detalleGrupos.reduce(function(s,d){return s+d.costoCompra;},0);
+    var totalCostosSanidad = detalleGrupos.reduce(function(s,d){return s+d.costoSanidad;},0);
+    var totalComision = detalleGrupos.reduce(function(s,d){return s+d.costoComision;},0);
+    var totalFlete = detalleGrupos.reduce(function(s,d){return s+d.costoFlete;},0);
+    var gastosGenerales = costoLabores + costosEstructura + costoSuplemento;
+    var margenBrutoCalc = ingresoTotal - totalCostosCompra - totalCostosSanidad - totalComision - totalFlete;
+    var margenNeto = margenBrutoCalc - gastosGenerales;
+    document.getElementById('inversionTotal').textContent = formatMoney(totalCostosCompra + totalCostosSanidad);
+    document.getElementById('ingresoTotal').textContent = formatMoney(ingresoTotal);
+    document.getElementById('costosDirectosTotal').textContent = formatMoney(totalCostosCompra + totalCostosSanidad + totalComision + totalFlete);
+    document.getElementById('margenBrutoTotal').textContent = formatMoney(margenBrutoCalc);
+    document.getElementById('margenBrutoTotal').style.color = margenBrutoCalc >= 0 ? '#27ae60' : '#e74c3c';
+    document.getElementById('margenBrutoHa').textContent = formatMoney(margenBrutoCalc / superficie);
+    document.getElementById('margenNetoTotal').textContent = formatMoney(margenNeto);
+    document.getElementById('margenNetoTotal').style.color = margenNeto >= 0 ? '#27ae60' : '#e74c3c';
+    var htmlD = '<table><thead><tr><th>Grupo</th><th>Cab</th><th>Dias</th><th>Peso Final</th><th>Kg Prod</th><th>Ingreso</th><th>Costos</th><th>Margen</th></tr></thead><tbody>';
+    detalleGrupos.forEach(function(d) {
+        htmlD += '<tr><td>' + d.nombre + '</td><td>' + d.cantidad + '</td><td>' + d.dias + '</td><td>' + d.pesoFinal.toFixed(0) + ' kg</td>';
+        htmlD += '<td>' + formatNum(d.kgProducidos) + '</td><td>' + formatMoney(d.ingresoBruto) + '</td>';
+        htmlD += '<td>' + formatMoney(d.costoCompra+d.costoSanidad+d.costoFlete+d.costoComision) + '</td>';
+        htmlD += '<td style="color:' + (d.margen>=0?'#27ae60':'#e74c3c') + ';font-weight:700;">' + formatMoney(d.margen) + '</td></tr>';
+    });
+    htmlD += '</tbody></table>'; document.getElementById('tablaDetalleEconomico').innerHTML = htmlD;
+    var todosLosCostos = [{concepto:'Compra',monto:totalCostosCompra},{concepto:'Sanidad',monto:totalCostosSanidad},{concepto:'Comision',monto:totalComision},{concepto:'Flete',monto:totalFlete},{concepto:'Labores',monto:costoLabores},{concepto:'Estructura',monto:costosEstructura},{concepto:'Suplementacion',monto:costoSuplemento}];
+    var costoTotalG = todosLosCostos.reduce(function(s,c){return s+c.monto;},0);
+    var htmlC = '<table><thead><tr><th>Concepto</th><th>Monto</th><th>%</th></tr></thead><tbody>';
+    todosLosCostos.forEach(function(c) { if (c.monto>0) htmlC += '<tr><td>' + c.concepto + '</td><td>' + formatMoney(c.monto) + '</td><td>' + (c.monto/costoTotalG*100).toFixed(1) + '%</td></tr>'; });
+    htmlC += '<tr class="fila-total"><td>TOTAL</td><td>' + formatMoney(costoTotalG) + '</td><td>100%</td></tr></tbody></table>';
+    document.getElementById('tablaComposicionCostos').innerHTML = htmlC;
+    document.getElementById('resultadosEconomico').style.display = 'block';
+    document.getElementById('resultadosEconomico').scrollIntoView({ behavior: 'smooth' });
+}
+
+// --- INICIALIZACION ---
+function mostrarBienvenida() { var el = document.getElementById('bienvenida'); if (el) el.style.display = 'flex'; }
+function ocultarBienvenida() { var el = document.getElementById('bienvenida'); if (el) el.style.display = 'none'; }
+
+function cargarDatos() {
+    datosForrajeros = DATOS_FORRAJEROS_EMBEBIDOS;
+    datosForrajeros.recursos.forEach(function(r) { mesesUsoRecursos[r] = (MESES_USO_DEFECTO[r] || [1,1,1,1,1,1,1,1,1,1,1,1]).slice(); });
+    generarInputsRecursos();
+    var restaurado = restaurarEstadoAuto();
+    if (!restaurado) {
+        crearEscenario('Escenario Base');
+        // Cargar datos de ejemplo por defecto
+        var haInputs = { 'Campo_natural': 10, 'Pastura_consociada': 32, 'Pastura_de_agropiro': 15, 'Pastura_de_festuca': 71 };
+        Object.keys(haInputs).forEach(function(key) { var el = document.getElementById('ha_' + key); if (el) el.value = haInputs[key]; });
+        var esc = getEscenarioActivo();
+        if (esc) {
+            esc.grupos.push({ id: nextId++, categoria: 'novillo', cantidad: 91, pesoInicial: 370, ganancia: 0.800,
+                criterioSalida: 'fecha', fechaEntrada: '2025-01-10', fechaSalida: '2025-10-30', pesoObjetivo: null, costos: { compra: 1200, venta: 1400, sanidad: 5000 } });
+            esc.grupos.push({ id: nextId++, categoria: 'ternera', cantidad: 150, pesoInicial: 180, ganancia: 0.650,
+                criterioSalida: 'fecha', fechaEntrada: '2025-01-01', fechaSalida: '2025-12-31', pesoObjetivo: null, costos: { compra: 800, venta: 1100, sanidad: 4000 } });
+            actualizarVistaEscenarios();
+        }
+        setTimeout(function() { try { calcularBalance(); } catch(e) {} }, 300);
+        mostrarBienvenida();
+    }
+}
+
+window.onload = cargarDatos;
+</script>
+</body>
+</html>
