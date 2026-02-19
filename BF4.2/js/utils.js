@@ -166,6 +166,11 @@ function actualizarResumenEjecutivo() {
     }
 
     grid.innerHTML = html;
+
+    // Renderizar alertas predictivas si existen
+    if (typeof alertasPredictivas !== 'undefined' && alertasPredictivas.length > 0) {
+        if (typeof renderAlertasPredictivas === 'function') renderAlertasPredictivas();
+    }
 }
 
 // --- Validacion inline ---

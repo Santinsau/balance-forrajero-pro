@@ -223,6 +223,14 @@ setTimeout(function() {
         test('CONSUMO_AGUA_FACTOR existe', !!window.CONSUMO_AGUA_FACTOR);
         test('Div balanceHidrico existe', !!document.getElementById('balanceHidrico'));
 
+        // --- FASE 7: Alertas Predictivas ---
+        console.log('\n--- Fase 7: Alertas Predictivas ---');
+
+        test('Funcion generarAlertasPredictivas existe', typeof window.generarAlertasPredictivas === 'function');
+        test('Funcion renderAlertasPredictivas existe', typeof window.renderAlertasPredictivas === 'function');
+        test('Variable alertasPredictivas es array', Array.isArray(window.alertasPredictivas));
+        test('Div alertasPredictivas existe', !!document.getElementById('alertasPredictivas'));
+
         // Test cargar ejemplo
         console.log('\n--- Test: Cargar datos ejemplo ---');
         try {
@@ -247,6 +255,19 @@ setTimeout(function() {
             // Resumen ejecutivo se muestra con datos
             var resumen = document.getElementById('resumenEjecutivo');
             test('Resumen ejecutivo visible con datos', resumen && resumen.style.display !== 'none');
+
+            // Test alertas predictivas despues de calcular
+            try {
+                window.calcularBalance();
+                window.calcularDemanda();
+            } catch(e) {
+                console.log('  INFO: calculo parcial: ' + e.message);
+            }
+            test('Alertas predictivas generadas despues de calcular', window.alertasPredictivas && window.alertasPredictivas.length > 0);
+            if (window.alertasPredictivas && window.alertasPredictivas.length > 0) {
+                test('Alerta tiene campo tipo', !!window.alertasPredictivas[0].tipo);
+                test('Alerta tiene campo titulo', !!window.alertasPredictivas[0].titulo);
+            }
 
             console.log('\n=== RESUMEN ===');
             console.log('  Pasaron: ' + passed);

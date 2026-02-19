@@ -648,7 +648,7 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
     padding: 0 18px;
 }
 .resumen-ejecutivo.abierto .resumen-body {
-    max-height: 500px;
+    max-height: 800px;
     padding: 0 18px 18px 18px;
 }
 .resumen-grid {
@@ -676,6 +676,24 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
 .ri-ok { background: #e8f5e9; color: #2e7d32; }
 .ri-warning { background: #fff3e0; color: #e65100; }
 .ri-danger { background: #ffebee; color: #c62828; }
+
+/* --- Alertas predictivas (resumen ejecutivo) --- */
+.alerta-predictiva {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+.alerta-predictiva .alerta-icono { font-size: 1.5em; flex-shrink: 0; }
+.alerta-predictiva .alerta-texto strong { display: block; margin-bottom: 2px; }
+.alerta-predictiva .alerta-accion { font-size: 0.85em; margin-top: 4px; opacity: 0.85; }
+.alerta-ok { background: #e8f5e9; border-left: 4px solid #4caf50; }
+.alerta-atencion { background: #fff3e0; border-left: 4px solid #ff9800; }
+.alerta-critica { background: #ffebee; border-left: 4px solid #f44336; }
 
 /* --- Validacion inline --- */
 .input-error input,

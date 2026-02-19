@@ -2,6 +2,8 @@
 // BALANCE FORRAJERO PRO v6.0 - Oferta/Demanda
 // ============================================
 
+var alertasPredictivas = [];
+
 function calcularDemanda() {
     var alertContainer = document.querySelector('#ofertademanda .section');
     if (!configuracionCampo) {
@@ -95,6 +97,9 @@ function calcularDemanda() {
 
     // Suplementacion inteligente
     detectarSuplementacionNecesaria(balanceMensual, demandaMensual, mesInicio);
+
+    // Alertas predictivas para resumen ejecutivo
+    generarAlertasPredictivas(balanceMensual, demandaMensual, ofertaMensual, eficiencia, mesInicio);
 
     // Balance hidrico
     calcularBalanceHidrico();
@@ -267,6 +272,136 @@ function detectarSuplementacionNecesaria(balance, demanda, mesInicio) {
     });
     html += '<tr class="fila-total"><td>TOTAL</td><td></td><td>' + formatNum(totalKg) + ' kg</td><td></td></tr>';
     html += '</tbody></table>';
+
+    container.innerHTML = html;
+}
+
+// Alertas predictivas para resumen ejecutivo
+function generarAlertasPredictivas(balance, demanda, oferta, eficiencia, mesInicio) {
+    alertasPredictivas = [];
+
+    var ofertaTotal = oferta.reduce(function(a, b) { return a + b; }, 0);
+    var ofertaAprovechable = ofertaTotal * eficiencia;
+    var demandaTotal = demanda.reduce(function(a, b) { return a + b; }, 0);
+    var tasaUso = ofertaAprovechable > 0 ? (demandaTotal / ofertaAprovechable * 100) : 0;
+
+    // Recorrer meses en orden del ejercicio
+    var mesesDeficit = [];
+    var deficitTotal = 0;
+    var primerDeficitIdx = -1;
+    var mesMenorMargen = -1;
+    var menorMargenRatio = Infinity;
+
+    for (var i = 0; i < 12; i++) {
+        var mes = (mesInicio + i) % 12;
+        if (balance[mes] < 0) {
+            if (primerDeficitIdx === -1) primerDeficitIdx = i;
+            mesesDeficit.push({ mes: mes, idx: i, deficit: Math.abs(balance[mes]) });
+            deficitTotal += Math.abs(balance[mes]);
+        }
+        // Buscar mes con menor margen (para alerta amarilla)
+        if (demanda[mes] > 0) {
+            var ofertaMes = oferta[mes] * eficiencia;
+            var ratio = ofertaMes / demanda[mes];
+            if (ratio < menorMargenRatio) {
+                menorMargenRatio = ratio;
+                mesMenorMargen = mes;
+            }
+        }
+    }
+
+    // Calcular cabezas a vender para eliminar deficit
+    var esc = getEscenarioActivo();
+    var totalCab = 0;
+    if (esc && esc.grupos) {
+        esc.grupos.forEach(function(g) { totalCab += g.cantidad; });
+    }
+
+    // Consumo promedio diario del rodeo (para calcular cabezas equivalentes)
+    var consumoPromedioDiario = demandaTotal > 0 ? demandaTotal / 365 : 0;
+    var consumoPorCabezaDia = totalCab > 0 ? consumoPromedioDiario / totalCab : 10;
+
+    if (tasaUso > 100) {
+        // ROJO: Sobrecarga
+        var exceso = demandaTotal - ofertaAprovechable;
+        var cabVender = totalCab > 0 ? Math.ceil(exceso / consumoPorCabezaDia / 365) : 0;
+        alertasPredictivas.push({
+            tipo: 'critica',
+            titulo: 'Sobrecarga: la demanda supera la oferta anual',
+            detalle: 'Tasa de uso: ' + tasaUso.toFixed(0) + '%. Exceso: ' + formatNum(exceso) + ' kg MS.',
+            accion: cabVender > 0 ? 'Reducir ' + cabVender + ' cabezas para equilibrar el balance.' : ''
+        });
+    }
+
+    if (mesesDeficit.length >= 3 || (mesesDeficit.length > 0 && deficitTotal > demandaTotal * 0.15)) {
+        // ROJO: Deficit critico
+        var mesesEnAnticipacion = primerDeficitIdx > 0 ? 'En ' + primerDeficitIdx + ' meses: ' : '';
+        var nombresMeses = mesesDeficit.map(function(m) { return MESES_NOMBRES[m.mes]; }).join(', ');
+        var kgSuplemento = deficitTotal / 0.9; // aprox 1 kg grano = 0.9 kg MS
+        var tonSuplemento = (kgSuplemento / 1000).toFixed(1);
+        var cabVender = totalCab > 0 ? Math.ceil(deficitTotal / consumoPorCabezaDia / 365) : 0;
+        alertasPredictivas.push({
+            tipo: 'critica',
+            titulo: mesesEnAnticipacion + 'Deficit critico en ' + mesesDeficit.length + ' meses',
+            detalle: 'Meses afectados: ' + nombresMeses + '. Deficit total: ' + formatNum(deficitTotal) + ' kg MS.',
+            accion: 'Vender ' + cabVender + ' cabezas o suplementar ~' + tonSuplemento + ' toneladas de grano.'
+        });
+    } else if (mesesDeficit.length > 0) {
+        // AMARILLO: Deficit leve (1-2 meses, <15% demanda)
+        var mesesEnAnticipacion = primerDeficitIdx > 0 ? 'En ' + primerDeficitIdx + ' meses: ' : '';
+        var nombresMeses = mesesDeficit.map(function(m) { return MESES_NOMBRES[m.mes]; }).join(', ');
+        var kgSupDiario = deficitTotal / (mesesDeficit.length * 30);
+        alertasPredictivas.push({
+            tipo: 'atencion',
+            titulo: mesesEnAnticipacion + 'Deficit leve en ' + nombresMeses,
+            detalle: 'Deficit total: ' + formatNum(deficitTotal) + ' kg MS (' + (deficitTotal / demandaTotal * 100).toFixed(1) + '% de la demanda).',
+            accion: 'Suplementar ~' + formatNum(kgSupDiario) + ' kg/dia de grano durante ' + mesesDeficit.length + ' mes(es).'
+        });
+    } else if (tasaUso > 85) {
+        // AMARILLO: Balance ajustado
+        alertasPredictivas.push({
+            tipo: 'atencion',
+            titulo: 'Balance ajustado. Margen bajo en ' + MESES_NOMBRES[mesMenorMargen],
+            detalle: 'Tasa de uso: ' + tasaUso.toFixed(0) + '%. Sin deficit actual pero con poco margen.',
+            accion: 'Considerar reducir carga o reservar forraje para contingencias.'
+        });
+    } else {
+        // VERDE: Todo OK
+        alertasPredictivas.push({
+            tipo: 'ok',
+            titulo: 'Balance positivo todo el ano',
+            detalle: 'Tasa de uso: ' + tasaUso.toFixed(0) + '%. Buen margen de seguridad.',
+            accion: ''
+        });
+    }
+
+    // Renderizar en el panel de resumen
+    renderAlertasPredictivas();
+    actualizarResumenEjecutivo();
+}
+
+function renderAlertasPredictivas() {
+    var container = document.getElementById('alertasPredictivas');
+    if (!container) return;
+
+    if (alertasPredictivas.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    var iconos = { ok: '&#9989;', atencion: '&#9888;&#65039;', critica: '&#10060;' };
+
+    var html = alertasPredictivas.map(function(a) {
+        var icono = iconos[a.tipo] || '';
+        var accionHtml = a.accion ? '<div class="alerta-accion">' + a.accion + '</div>' : '';
+        return '<div class="alerta-predictiva alerta-' + a.tipo + '">' +
+            '<div class="alerta-icono">' + icono + '</div>' +
+            '<div class="alerta-texto">' +
+                '<strong>' + a.titulo + '</strong>' +
+                '<div>' + a.detalle + '</div>' +
+                accionHtml +
+            '</div></div>';
+    }).join('');
 
     container.innerHTML = html;
 }
