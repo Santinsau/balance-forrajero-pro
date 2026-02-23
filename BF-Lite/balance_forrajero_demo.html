@@ -257,17 +257,125 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
 
 /* Acciones archivo */
 .acciones-archivo { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+.informe-inputs { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+.informe-inputs .input-group { flex: 1; min-width: 200px; }
+
+/* Informe header (solo visible al imprimir) */
+.informe-header { display: none; }
+
+/* Feedback FAB + Modal */
+.fab-feedback { position: fixed; bottom: 24px; right: 24px; z-index: 999; width: 56px; height: 56px; border-radius: 50%; border: none; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 1.5em; cursor: pointer; box-shadow: 0 4px 15px rgba(39,174,96,0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.fab-feedback:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(39,174,96,0.5); }
+.fab-feedback:active { transform: scale(0.95); }
+.feedback-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+.feedback-modal.activo { opacity: 1; visibility: visible; }
+.feedback-card { background: white; border-radius: 20px; padding: 35px 30px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: bienvenidaIn 0.4s ease; }
+.feedback-card h2 { color: #2c3e50; margin-bottom: 15px; font-size: 1.4em; }
+.feedback-card p { color: #666; margin-bottom: 20px; line-height: 1.5; font-size: 0.95em; }
+.feedback-card .btn { width: 100%; margin-bottom: 10px; }
 
 /* Print */
 @media print {
-    body { background: white; padding: 0; }
-    .container { box-shadow: none; border-radius: 0; }
+    /* --- Reset general --- */
+    * { overflow: visible !important; }
+    body { background: white !important; padding: 0; margin: 0; }
+    .container { box-shadow: none; border-radius: 0; max-width: 100%; overflow: visible !important; }
+    .content { padding: 15px; }
+
+    /* --- Informe header --- */
+    .informe-header {
+        display: block !important;
+        padding: 25px 30px;
+        border-bottom: 3px solid #27ae60;
+        margin-bottom: 0;
+        text-align: center;
+    }
+    .informe-header h1 { font-size: 2em; color: #2c3e50; margin-bottom: 5px; letter-spacing: 1px; }
+    .informe-subtitulo { color: #666; font-size: 1.1em; margin-bottom: 15px; }
+    .informe-datos { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; font-size: 0.95em; }
+    .informe-datos p { margin: 3px 0; }
+
+    /* --- Ocultar UI interactiva --- */
     .tabs, .btn, .btn-sm, .btn-secondary, .btn-warning, .btn-danger, .btn-editar, .btn-duplicar, .btn-eliminar,
-    .acciones-archivo, .slider-container, .input-group input, .input-group select, .recurso-ha input, .mes-btn,
-    #btnAgregarGrupo, #btnCancelarEdicion { display: none !important; }
-    .tab-content { display: block !important; page-break-inside: avoid; }
-    .section { box-shadow: none; border: 1px solid #ddd; }
-    .card { box-shadow: none; border: 1px solid #ddd; }
+    .fab-feedback, .feedback-modal, #bienvenida,
+    .acciones-archivo, .informe-inputs, .slider-container,
+    .input-group input, .input-group select, .recurso-ha input, .mes-btn,
+    #btnAgregarGrupo, #btnCancelarEdicion,
+    .criterio-salida, .acordeon,
+    .alert-info, .alert-warning,
+    [data-tooltip]:hover::after, [data-tooltip]:hover::before { display: none !important; }
+
+    /* Ocultar secciones de configuracion/input (solo mostrar resultados) */
+    #balance > .section:first-child { display: none !important; }
+    #lotes > .section:nth-child(1),
+    #lotes > .section:nth-child(2) { display: none !important; }
+    #ofertademanda > .section:first-child { display: none !important; }
+    #economico > .section:first-child { display: none !important; }
+
+    /* Ocultar resultados que no estan calculados */
+    #resultadosBalance[style*="display:none"],
+    #resultadosDemanda[style*="display:none"],
+    #resultadosEconomico[style*="display:none"] { display: none !important; }
+
+    /* --- Mostrar todas las tabs --- */
+    .tab-content { display: block !important; }
+
+    /* --- Estilos de resultados --- */
+    .section {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        margin-bottom: 15px;
+    }
+    .section h2 { font-size: 1.3em; color: #2c3e50; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; }
+    .section h3 { font-size: 1.1em; }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+    }
+    .card:hover { transform: none; }
+    .card-value { font-size: 1.6em; }
+
+    /* --- Charts: imagen estatica generada por JS --- */
+    .chart-container {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        page-break-inside: avoid;
+    }
+    .chart-wrapper { height: auto !important; }
+    .chart-print-img {
+        display: block;
+        width: 100% !important;
+        height: auto !important;
+        max-height: 350px;
+        object-fit: contain;
+    }
+
+    /* --- Tablas: forzar que entren en el ancho de pagina --- */
+    .tabla-scroll { overflow: visible !important; }
+    .tabla-scroll table { min-width: 0 !important; width: 100% !important; table-layout: auto; }
+    .tabla-scroll td, .tabla-scroll th { white-space: normal !important; font-size: 0.75em; padding: 5px 4px; }
+    table { box-shadow: none; font-size: 0.8em; }
+    th { background: #27ae60 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr:hover { background: transparent; }
+
+    .alert, .alerta-predictiva {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* --- Page breaks entre secciones principales --- */
+    #resultadosDemanda { page-break-before: always; }
+    #resultadosEconomico { page-break-before: always; }
+    #lotes .section:last-child { page-break-before: always; }
+
+    /* --- Ocultar header de la app (ya tenemos informe-header) --- */
+    .container > .header { display: none !important; }
 }
 
 /* Responsive */
@@ -294,6 +402,17 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
     </style>
 </head>
 <body>
+    <!-- Encabezado de informe (solo visible al imprimir) -->
+    <div id="informeHeader" class="informe-header">
+        <h1>BALANCE FORRAJERO PRO</h1>
+        <p class="informe-subtitulo">Informe de planificacion forrajera</p>
+        <div class="informe-datos">
+            <p><strong>Establecimiento:</strong> <span id="informeNombreCampo">-</span></p>
+            <p><strong>Asesor:</strong> <span id="informeNombreAsesor">-</span></p>
+            <p><strong>Fecha:</strong> <span id="informeFecha">-</span></p>
+        </div>
+    </div>
+
     <!-- Pantalla de bienvenida -->
     <div id="bienvenida" class="bienvenida-container" style="display:none;">
         <div class="bienvenida-card">
@@ -304,6 +423,20 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
             <div class="bienvenida-opciones">
                 <button class="btn" onclick="ocultarBienvenida()">Empezar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Boton flotante de feedback -->
+    <button class="fab-feedback" onclick="abrirFeedback()" title="Enviar feedback">&#9993;</button>
+
+    <!-- Modal de feedback -->
+    <div id="feedbackModal" class="feedback-modal" onclick="if(event.target===this)cerrarFeedback()">
+        <div class="feedback-card">
+            <div style="font-size:2.5em;margin-bottom:10px;">&#128172;</div>
+            <h2>Tu opinion cuenta</h2>
+            <p>Estamos en beta y tu feedback nos ayuda a mejorar la herramienta. Contanos que te parecio, que falta o que no funciona.</p>
+            <button class="btn" onclick="irAlFormulario()">Enviar feedback &#8599;</button>
+            <button class="btn btn-secondary" onclick="cerrarFeedback()">Cerrar</button>
         </div>
     </div>
 
@@ -319,7 +452,17 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                 <label class="btn btn-sm btn-warning" style="margin-bottom:0;">
                     Cargar JSON <input type="file" accept=".json" onchange="importarConfiguracion(event)" style="display:none;">
                 </label>
-                <button class="btn btn-sm" onclick="window.print()">Imprimir</button>
+                <button class="btn btn-sm" onclick="imprimirInforme()">Imprimir informe</button>
+            </div>
+            <div class="informe-inputs">
+                <div class="input-group">
+                    <label>Establecimiento</label>
+                    <input type="text" id="nombreCampo" placeholder="Nombre del campo...">
+                </div>
+                <div class="input-group">
+                    <label>Asesor</label>
+                    <input type="text" id="nombreAsesor" placeholder="Nombre del asesor...">
+                </div>
             </div>
 
             <div class="tabs">
@@ -1385,6 +1528,62 @@ function cargarDatos() {
         mostrarBienvenida();
     }
 }
+
+var FEEDBACK_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfiLJB8cCuOIQ5CgiCuR64r9ETUlS_dNUgq6RsWhS98OTb7dw/viewform';
+function abrirFeedback() { document.getElementById('feedbackModal').classList.add('activo'); }
+function cerrarFeedback() { document.getElementById('feedbackModal').classList.remove('activo'); }
+function irAlFormulario() { window.open(FEEDBACK_FORM_URL, '_blank'); cerrarFeedback(); }
+
+// --- INFORME IMPRIMIBLE ---
+function imprimirInforme() {
+    // 1. Llenar encabezado del informe
+    var nombreCampo = document.getElementById('nombreCampo').value.trim() || 'No especificado';
+    var nombreAsesor = document.getElementById('nombreAsesor').value.trim() || 'No especificado';
+    var hoy = new Date();
+    var fecha = hoy.getDate() + '/' + (hoy.getMonth() + 1) + '/' + hoy.getFullYear();
+    document.getElementById('informeNombreCampo').textContent = nombreCampo;
+    document.getElementById('informeNombreAsesor').textContent = nombreAsesor;
+    document.getElementById('informeFecha').textContent = fecha;
+
+    // 2. Convertir cada chart canvas a imagen estatica
+    var charts = [chartBalance, chartAcumulado, chartOfertaDemanda, chartDiferimiento];
+    var convertidos = 0;
+    var totalCharts = 0;
+
+    charts.forEach(function(c) {
+        if (!c) return;
+        totalCharts++;
+        try {
+            var canvas = c.canvas;
+            var img = new Image();
+            img.className = 'chart-print-img';
+            img.onload = function() {
+                convertidos++;
+                if (convertidos >= totalCharts) {
+                    // Todas las imagenes cargadas, ahora imprimir
+                    window.print();
+                }
+            };
+            img.src = canvas.toDataURL('image/png');
+            canvas.style.display = 'none';
+            canvas.parentNode.insertBefore(img, canvas.nextSibling);
+        } catch(e) { totalCharts--; }
+    });
+
+    // Si no hay charts, imprimir directo
+    if (totalCharts === 0) { window.print(); }
+}
+
+function restaurarCharts() {
+    document.querySelectorAll('.chart-print-img').forEach(function(img) {
+        img.parentNode.removeChild(img);
+    });
+    document.querySelectorAll('.chart-wrapper canvas').forEach(function(canvas) {
+        canvas.style.display = '';
+    });
+}
+
+window.onafterprint = restaurarCharts;
 
 window.onload = cargarDatos;
 </script>
