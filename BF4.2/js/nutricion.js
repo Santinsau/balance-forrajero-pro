@@ -1,5 +1,7 @@
 // ============================================
 // BALANCE FORRAJERO PRO v6.0 - Nutricion / Ganancia Dinamica
+// (c) 2025-2026 Santiago Jose Insaurralde.
+// Todos los derechos reservados.
 // ============================================
 
 // Calcular ganancia diaria basada en calidad del forraje (modelo NRC simplificado)

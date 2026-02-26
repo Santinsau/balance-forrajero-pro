@@ -1,5 +1,7 @@
 // ============================================
 // BALANCE FORRAJERO PRO v6.0 - Datos Forrajeros
+// (c) 2025-2026 Santiago Jose Insaurralde.
+// Todos los derechos reservados.
 // ============================================
 
 var DATOS_FORRAJEROS_EMBEBIDOS = {
@@ -57,13 +59,21 @@ var DATOS_FORRAJEROS_EMBEBIDOS = {
 
 // --- CATEGORIAS (6 tipos) ---
 var CATEGORIAS = {
-    ternero:    { nombre: 'Ternero',    consumo: 0.025, pesoDefecto: 180, gananciaDefecto: 0.55, usaPasto: true },
-    ternera:    { nombre: 'Ternera',    consumo: 0.025, pesoDefecto: 170, gananciaDefecto: 0.50, usaPasto: true },
-    novillito:  { nombre: 'Novillito',  consumo: 0.028, pesoDefecto: 280, gananciaDefecto: 0.65, usaPasto: true },
-    novillo:    { nombre: 'Novillo',    consumo: 0.025, pesoDefecto: 380, gananciaDefecto: 0.80, usaPasto: true },
-    vaquillona: { nombre: 'Vaquillona', consumo: 0.025, pesoDefecto: 300, gananciaDefecto: 0.60, usaPasto: true },
+    ternero:    { nombre: 'Ternero',    consumo: 0.025, pesoDefecto: 180, gananciaDefecto: 0.55, usaPasto: true,
+                  transicionDefecto: 'novillito', pesoTransicion: 280 },
+    ternera:    { nombre: 'Ternera',    consumo: 0.025, pesoDefecto: 170, gananciaDefecto: 0.50, usaPasto: true,
+                  transicionDefecto: 'vaquillona', pesoTransicion: 260 },
+    novillito:  { nombre: 'Novillito',  consumo: 0.028, pesoDefecto: 280, gananciaDefecto: 0.65, usaPasto: true,
+                  transicionDefecto: null },
+    novillo:    { nombre: 'Novillo',    consumo: 0.025, pesoDefecto: 380, gananciaDefecto: 0.80, usaPasto: true,
+                  transicionDefecto: null },
+    vaquillona: { nombre: 'Vaquillona', consumo: 0.025, pesoDefecto: 300, gananciaDefecto: 0.60, usaPasto: true,
+                  transicionDefecto: null },
     vaca:       { nombre: 'Vaca',       consumo: 0.022, pesoDefecto: 450, gananciaDefecto: 0.00, usaPasto: true,
-                  consumoCria: 0.015, pesoCria: 80 }
+                  consumoCria: 0.015, pesoCria: 80, pesoDestete: 180,
+                  desteteDefecto: 85, porcentajeMachosDefecto: 50 },
+    toro:       { nombre: 'Toro',       consumo: 0.025, pesoDefecto: 800, gananciaDefecto: 0.00, usaPasto: true,
+                  transicionDefecto: null }
 };
 
 // --- MESES ---

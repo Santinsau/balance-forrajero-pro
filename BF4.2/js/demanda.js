@@ -1,5 +1,7 @@
 // ============================================
 // BALANCE FORRAJERO PRO v6.0 - Oferta/Demanda
+// (c) 2025-2026 Santiago Jose Insaurralde.
+// Todos los derechos reservados.
 // ============================================
 
 var alertasPredictivas = [];
@@ -33,43 +35,107 @@ function calcularDemanda() {
 
     var ofertaMensual = configuracionCampo.produccionMensualTotal;
     var demandaMensual = Array(12).fill(0);
+    var demandaPorGrupo = [];
 
     esc.grupos.forEach(function(g) {
         var cat = CATEGORIAS[g.categoria];
         if (!cat.usaPasto) return;
+        var demandaGrupo = Array(12).fill(0);
 
         var entrada = new Date(g.fechaEntrada);
         var salida = new Date(g.fechaSalida);
+        var trans = g.transicion || null;
+
+        // Pre-calcular fechas de transicion
+        var fechaParto = null, fechaDestete = null, fechaTransRecria = null;
+        var cantTerneros = 0, cantTerneras = 0;
+        if (trans && trans.tipo === 'cria' && g.categoria === 'vaca') {
+            fechaParto = trans.fechaParto ? new Date(trans.fechaParto) : null;
+            fechaDestete = trans.fechaDestete ? new Date(trans.fechaDestete) : null;
+            cantTerneros = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (trans.porcentajeMachos||50)/100);
+            cantTerneras = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (1-(trans.porcentajeMachos||50)/100));
+        }
+        if (trans && trans.tipo === 'recria' && (g.categoria === 'ternero' || g.categoria === 'ternera')) {
+            if (trans.criterioTransicion === 'peso' && trans.pesoTransicion && g.ganancia > 0) {
+                var diasHastaT = Math.ceil((trans.pesoTransicion - g.pesoInicial) / g.ganancia);
+                fechaTransRecria = new Date(entrada.getTime() + diasHastaT * 86400000);
+            } else if (trans.criterioTransicion === 'fecha' && trans.fechaTransicion) {
+                fechaTransRecria = new Date(trans.fechaTransicion);
+            }
+        }
 
         // Iterar mes a mes desde entrada hasta salida (puede cruzar anos)
         var mesActual = new Date(entrada.getFullYear(), entrada.getMonth(), 1);
         var mesFinal = new Date(salida.getFullYear(), salida.getMonth(), 1);
 
         while (mesActual <= mesFinal) {
-            var mesIdx = mesActual.getMonth(); // 0-11 mes calendario
+            var mesIdx = mesActual.getMonth();
             var inicioMes = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1);
             var finMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
 
-            // Dias realmente presentes en este mes
             var diaDesde = entrada > inicioMes ? entrada : inicioMes;
             var diaHasta = salida < finMes ? salida : finMes;
             var diasPresente = Math.max(0, Math.floor((diaHasta - diaDesde) / 86400000) + 1);
 
             if (diasPresente > 0) {
-                var diasDesdeEntrada = Math.max(0, Math.floor((new Date(mesActual.getFullYear(), mesActual.getMonth(), 15) - entrada) / 86400000));
+                var mediados = new Date(mesActual.getFullYear(), mesActual.getMonth(), 15);
+                var diasDesdeEntrada = Math.max(0, Math.floor((mediados - entrada) / 86400000));
                 var pesoPromedio = g.pesoInicial + g.ganancia * diasDesdeEntrada;
 
-                var consumoDiario = pesoPromedio * cat.consumo;
-                if (g.categoria === 'vaca' && cat.consumoCria) {
-                    var pesoCria = cat.pesoCria + g.ganancia * 0.3 * diasDesdeEntrada;
-                    consumoDiario += pesoCria * cat.consumoCria;
+                var demandaMes = 0;
+
+                // === VACA CON CICLO DE CRIA ===
+                if (trans && trans.tipo === 'cria' && fechaParto && fechaDestete) {
+                    var consumoDiarioVaca = pesoPromedio * cat.consumo;
+                    // Cria al pie: solo entre parto y destete
+                    if (mediados >= fechaParto && mediados < fechaDestete) {
+                        var diasDesdeParto = Math.max(0, Math.floor((mediados - fechaParto) / 86400000));
+                        var pesoCriaActual = (cat.pesoCria || 80) + 0.6 * diasDesdeParto;
+                        consumoDiarioVaca += pesoCriaActual * (cat.consumoCria || 0.015) * (trans.porcentajeDestete||85)/100;
+                    }
+                    demandaMes += consumoDiarioVaca * diasPresente * g.cantidad;
+
+                    // Demanda virtual de terneros post-destete (solo si se retienen)
+                    var destinoDestete = trans.destinoDestete || 'vender';
+                    if (destinoDestete === 'retener' && fechaDestete && mediados >= fechaDestete && mediados <= salida) {
+                        var diasDesdeDestete = Math.max(0, Math.floor((mediados - fechaDestete) / 86400000));
+                        if (cantTerneros > 0) {
+                            var pesoTernero = (cat.pesoDestete || 180) + 0.55 * diasDesdeDestete;
+                            demandaMes += pesoTernero * CATEGORIAS.ternero.consumo * diasPresente * cantTerneros;
+                        }
+                        if (cantTerneras > 0) {
+                            var pesoTernera = ((cat.pesoDestete || 180) - 10) + 0.50 * diasDesdeDestete;
+                            demandaMes += pesoTernera * CATEGORIAS.ternera.consumo * diasPresente * cantTerneras;
+                        }
+                    }
+
+                // === TERNERO/TERNERA CON RECRIA ===
+                } else if (trans && trans.tipo === 'recria' && fechaTransRecria) {
+                    var catConsumo;
+                    if (mediados < fechaTransRecria) {
+                        catConsumo = cat.consumo;
+                    } else {
+                        catConsumo = CATEGORIAS[trans.nuevaCategoria].consumo;
+                    }
+                    demandaMes += pesoPromedio * catConsumo * diasPresente * g.cantidad;
+
+                // === SIN TRANSICION (comportamiento original) ===
+                } else {
+                    var consumoDiario = pesoPromedio * cat.consumo;
+                    if (g.categoria === 'vaca' && cat.consumoCria) {
+                        var pesoCria = cat.pesoCria + g.ganancia * 0.3 * diasDesdeEntrada;
+                        consumoDiario += pesoCria * cat.consumoCria;
+                    }
+                    demandaMes += consumoDiario * diasPresente * g.cantidad;
                 }
 
-                demandaMensual[mesIdx] += consumoDiario * diasPresente * g.cantidad;
+                demandaMensual[mesIdx] += demandaMes;
+                demandaGrupo[mesIdx] += demandaMes;
             }
 
             mesActual.setMonth(mesActual.getMonth() + 1);
         }
+        demandaPorGrupo.push({ nombre: cat.nombre + ' (' + g.cantidad + ')', data: demandaGrupo });
     });
 
     var balanceMensual = Array(12).fill(0);
@@ -91,6 +157,7 @@ function calcularDemanda() {
 
     mostrarGraficoOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
     mostrarGraficoDiferimiento(diferidoAcumulado, disponibilidadMensual);
+    mostrarGraficoDemandaCategoria(demandaPorGrupo);
     generarTablaDetalleMensual(ofertaMensual, demandaMensual, balanceMensual, diferidoAcumulado, eficiencia, mesInicio);
     generarAlertasDemanda(ofertaMensual, demandaMensual, balanceMensual, diferidoAcumulado, eficiencia, mesInicio);
     calcularIndicadoresOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
@@ -126,6 +193,29 @@ function calcularIndicadoresOfertaDemanda(oferta, demanda, balance, eficiencia) 
     document.getElementById('cargaAnimalMaxima').textContent = cargaMaxima.toFixed(2);
     document.getElementById('tasaUso').textContent = tasaUso.toFixed(1);
     document.getElementById('tasaUso').style.color = tasaUso > 100 ? '#e74c3c' : tasaUso > 85 ? '#f39c12' : '#27ae60';
+
+    // Eficiencia de conversion: kg MS consumidos / kg carne producidos
+    var esc = getEscenarioActivo();
+    var kgCarne = 0;
+    if (esc && esc.grupos) {
+        esc.grupos.forEach(function(g) {
+            var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
+            kgCarne += g.ganancia * dias * g.cantidad;
+        });
+    }
+    var elEf = document.getElementById('efConversion');
+    var elKg = document.getElementById('kgCarneTotal');
+    if (elKg) elKg.textContent = formatNum(kgCarne);
+    if (elEf) {
+        if (kgCarne > 0) {
+            var efConv = demandaTotal / kgCarne;
+            elEf.textContent = efConv.toFixed(1);
+            elEf.style.color = efConv < 10 ? '#27ae60' : efConv < 15 ? '#f39c12' : '#e74c3c';
+        } else {
+            elEf.textContent = '-';
+            elEf.style.color = '';
+        }
+    }
 }
 
 function mostrarGraficoOfertaDemanda(oferta, demanda, balance, eficiencia) {
@@ -520,4 +610,38 @@ function calcularBalanceHidrico() {
     }
 
     container.innerHTML = html;
+}
+
+function mostrarGraficoDemandaCategoria(demandaPorGrupo) {
+    var ctx = document.getElementById('chartDemandaCategoria');
+    if (!ctx) return;
+    if (chartDemandaCategoria) chartDemandaCategoria.destroy();
+    if (!demandaPorGrupo || demandaPorGrupo.length === 0) return;
+
+    var datasets = demandaPorGrupo.map(function(g, idx) {
+        var color = generarColorGrupo(idx);
+        return {
+            label: g.nombre,
+            data: g.data,
+            backgroundColor: color + '90',
+            borderColor: color,
+            borderWidth: 1
+        };
+    });
+
+    chartDemandaCategoria = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: MESES_NOMBRES, datasets: datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Demanda por grupo (kg MS/mes)', font: { size: 14, weight: 'bold' } },
+                legend: { position: 'bottom', labels: { font: { size: 11 } } }
+            },
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true, ticks: { callback: function(v) { return (v/1000).toFixed(0) + 'k'; } } }
+            }
+        }
+    });
 }

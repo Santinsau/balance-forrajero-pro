@@ -1,5 +1,7 @@
 // ============================================
 // BALANCE FORRAJERO PRO v6.0 - Sistema de Ayuda
+// (c) 2025-2026 Santiago Jose Insaurralde.
+// Todos los derechos reservados.
 // ============================================
 
 var INSTRUCTIVOS = {

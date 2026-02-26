@@ -1,3 +1,9 @@
+<!--
+  Balance Forrajero PRO v6.0
+  (c) 2025-2026 Santiago Jose Insaurralde. Todos los derechos reservados.
+  Este software es propiedad de su autor. Queda prohibida su copia,
+  modificacion o distribucion sin autorizacion expresa.
+-->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -16,9 +22,24 @@
             <p>Planifica la carga de tu campo, rotaciones de potreros, nutricion animal y economia ganadera en una sola herramienta.</p>
             <p style="font-size:0.85em;color:#888;">Tus datos se guardan automaticamente en este navegador.</p>
             <div class="bienvenida-opciones">
-                <button class="btn" onclick="cargarDatosEjemplo()">Cargar ejemplo</button>
+                <button class="btn" onclick="cargarEjemploCria()">Ejemplo Cria</button>
+                <button class="btn" onclick="cargarEjemploRecria()">Ejemplo Recria</button>
                 <button class="btn btn-secondary" onclick="ocultarBienvenida()">Empezar de cero</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Boton flotante de feedback -->
+    <button class="fab-feedback" onclick="abrirFeedback()" title="Enviar feedback">&#9993;</button>
+
+    <!-- Modal de feedback -->
+    <div id="feedbackModal" class="feedback-modal" onclick="if(event.target===this)cerrarFeedback()">
+        <div class="feedback-card">
+            <div style="font-size:2.5em;margin-bottom:10px;">&#128172;</div>
+            <h2>Tu opinion cuenta</h2>
+            <p>Estamos en beta y tu feedback nos ayuda a mejorar la herramienta. Contanos que te parecio, que falta o que no funciona.</p>
+            <button class="btn" onclick="irAlFormulario()">Enviar feedback &#8599;</button>
+            <button class="btn btn-secondary" onclick="cerrarFeedback()">Cerrar</button>
         </div>
     </div>
 
@@ -33,22 +54,24 @@
             <div id="resumenEjecutivo" class="resumen-ejecutivo" style="display:none;">
                 <div class="resumen-header" onclick="toggleResumen()">
                     <span>Resumen del campo</span>
+                    <span id="resumenSemaforo" class="resumen-semaforo"></span>
                     <span class="flecha">&#9660;</span>
                 </div>
                 <div class="resumen-body" id="resumenBody">
-                    <div class="resumen-grid" id="resumenGrid"></div>
+                    <div id="resumenSecciones"></div>
                     <div id="alertasPredictivas"></div>
                 </div>
             </div>
 
             <!-- Acciones archivo -->
             <div class="acciones-archivo">
-                <button class="btn btn-sm" onclick="cargarDatosEjemplo()">Cargar ejemplo</button>
+                <button class="btn btn-sm" onclick="cargarEjemploCria()">Ejemplo Cria</button>
+                <button class="btn btn-sm" onclick="cargarEjemploRecria()">Ejemplo Recria</button>
                 <button class="btn btn-sm btn-secondary" onclick="exportarConfiguracion()">Guardar JSON</button>
                 <label class="btn btn-sm btn-warning" style="margin-bottom:0;">
                     Cargar JSON <input type="file" accept=".json" onchange="importarConfiguracion(event)" style="display:none;">
                 </label>
-                <button class="btn btn-sm" onclick="window.print()">Imprimir</button>
+                <button class="btn btn-sm" onclick="generarInforme()">Imprimir informe</button>
             </div>
 
             <div class="tabs">
@@ -95,7 +118,15 @@
                     </div>
 
                     <div class="alert alert-info">
-                        Ingresa las hectareas de cada recurso y marca los meses de uso (click en cada mes). O define potreros en la pestana "Potreros" para sincronizar automaticamente.
+                        Selecciona un recurso forrajero y asigna las hectareas. Podes marcar los meses de uso haciendo click en cada mes.
+                    </div>
+
+                    <div style="display:flex;gap:10px;align-items:end;margin-bottom:15px;flex-wrap:wrap;">
+                        <div class="input-group" style="flex:1;min-width:200px;">
+                            <label>Recurso forrajero</label>
+                            <select id="selectorRecurso"></select>
+                        </div>
+                        <button class="btn btn-sm" onclick="agregarRecursoSeleccionado()">Agregar recurso</button>
                     </div>
 
                     <div id="recursosContainer"></div>
@@ -106,7 +137,7 @@
                             <span class="slider-value" id="ajusteValor">100%</span>
                         </div>
                         <input type="range" id="ajusteProductividad" min="50" max="150" value="100" step="5"
-                               oninput="document.getElementById('ajusteValor').textContent = this.value + '%'">
+                               oninput="document.getElementById('ajusteValor').textContent = this.value + '%'; autoCalcular()">
                         <div style="display:flex;justify-content:space-between;font-size:0.8em;color:#7f8c8d;margin-top:5px;">
                             <span>50% (Pobre)</span><span>100% (Promedio)</span><span>150% (Superior)</span>
                         </div>
@@ -115,7 +146,7 @@
                     <div class="input-grid" style="max-width: 600px; margin-top: 15px;">
                         <div class="input-group">
                             <label>Escenario Climatico</label>
-                            <select id="escenarioSelect">
+                            <select id="escenarioSelect" onchange="autoCalcular()">
                                 <option value="promedio">Ano Promedio</option>
                                 <option value="bueno">Ano Bueno</option>
                                 <option value="malo">Ano Malo</option>
@@ -124,7 +155,7 @@
                         </div>
                         <div class="input-group">
                             <label>Manejo del Pastoreo</label>
-                            <select id="manejoPastoreo">
+                            <select id="manejoPastoreo" onchange="autoCalcular()">
                                 <option value="continuo">Continuo (55%)</option>
                                 <option value="rotativo" selected>Rotativo (72.5%)</option>
                                 <option value="intensivo">Intensivo (82.5%)</option>
@@ -201,6 +232,7 @@
                                 <option value="novillo" selected>Novillo</option>
                                 <option value="vaquillona">Vaquillona</option>
                                 <option value="vaca">Vaca</option>
+                                <option value="toro">Toro</option>
                             </select>
                         </div>
                         <div class="input-group">
@@ -260,6 +292,55 @@
                         </div>
                     </div>
 
+                    <!-- Ciclo productivo (transiciones) -->
+                    <div class="acordeon" id="acordeonCiclo" style="display:none;">
+                        <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                            Ciclo productivo <span class="flecha">&#9660;</span>
+                        </div>
+                        <div class="acordeon-body">
+                            <!-- Vaca: ciclo de cria -->
+                            <div id="cicloVaca" style="display:none;">
+                                <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;">
+                                    <input type="checkbox" id="cicloCriaCheck" onchange="toggleCicloCria()"> Incluir ciclo de cria
+                                </label>
+                                <div id="cicloCriaFields" style="display:none;">
+                                    <div class="input-grid">
+                                        <div class="input-group"><label>Fecha de parto</label><input type="date" id="cicloFechaParto"></div>
+                                        <div class="input-group"><label>Fecha de destete</label><input type="date" id="cicloFechaDestete"></div>
+                                        <div class="input-group"><label>% Destete</label><input type="number" id="cicloDestete" min="0" max="100" value="85"></div>
+                                        <div class="input-group"><label>% Machos en terneros</label><input type="number" id="cicloMachos" min="0" max="100" value="50"></div>
+                                    </div>
+                                    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee;">
+                                        <label style="font-weight:600;margin-bottom:8px;display:block;">Destino al destete</label>
+                                        <div style="margin-bottom:10px;">
+                                            <label style="margin-right:15px;"><input type="radio" name="destinoDestete" value="vender" checked onchange="toggleDestinoDestete()"> Vender al destete</label>
+                                            <label><input type="radio" name="destinoDestete" value="retener" onchange="toggleDestinoDestete()"> Retener en campo</label>
+                                        </div>
+                                        <div class="input-grid" id="wrapPrecioTernero">
+                                            <div class="input-group"><label>Precio ternero ($/kg vivo)</label><input type="number" id="cicloPrecioTernero" value="2200" step="10"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Ternero/Ternera: recria -->
+                            <div id="cicloRecria" style="display:none;">
+                                <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;">
+                                    <input type="checkbox" id="cicloRecriaCheck" onchange="toggleCicloRecria()"> Transicion a <span id="cicloRecriaDestino">Novillito</span>
+                                </label>
+                                <div id="cicloRecriaFields" style="display:none;">
+                                    <div style="margin-bottom:10px;">
+                                        <label style="margin-right:15px;"><input type="radio" name="criterioRecria" value="peso" checked onchange="toggleCriterioRecria()"> Al alcanzar peso</label>
+                                        <label><input type="radio" name="criterioRecria" value="fecha" onchange="toggleCriterioRecria()"> En fecha fija</label>
+                                    </div>
+                                    <div class="input-grid">
+                                        <div class="input-group" id="wrapPesoRecria"><label>Peso de transicion (kg)</label><input type="number" id="cicloPesoTransicion" min="100" value="280"></div>
+                                        <div class="input-group" id="wrapFechaRecria" style="display:none;"><label>Fecha de transicion</label><input type="date" id="cicloFechaTransicion"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <button class="btn" id="btnAgregarGrupo" onclick="agregarGrupo()">Agregar al escenario</button>
                     <button class="btn btn-secondary" id="btnCancelarEdicion" style="display:none;" onclick="cancelarEdicion()">Cancelar edicion</button>
                 </div>
@@ -267,6 +348,22 @@
                 <div class="section">
                     <h2>Rodeo configurado</h2>
                     <div id="escenariosContainer"></div>
+                </div>
+
+                <div class="section" id="seccionEvolucion" style="display:none;">
+                    <h2>Evolucion mensual del rodeo</h2>
+                    <div class="alert alert-info">
+                        Peso estimado, consumo y categoria de cada grupo mes a mes. Se actualiza automaticamente al modificar los lotes.
+                    </div>
+                    <div id="tablaEvolucionContainer" style="overflow-x:auto;"></div>
+                </div>
+
+                <div class="section" id="seccionComposicion" style="display:none;">
+                    <h2>Composicion del rodeo</h2>
+                    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+                        <div class="chart-wrapper" style="max-width:350px;height:300px;"><canvas id="chartComposicion"></canvas></div>
+                        <div id="composicionDetalle" style="flex:1;min-width:200px;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -392,6 +489,8 @@
                             <div class="card" data-tooltip="Equivalentes Vaca por hectarea que genera tu rodeo actual"><div class="card-title">Carga Real</div><div class="card-value" id="cargaAnimalReal">0</div><div class="card-unit">EV/ha</div></div>
                             <div class="card" data-tooltip="Maxima carga segun produccion y eficiencia de pastoreo"><div class="card-title">Carga Max</div><div class="card-value" id="cargaAnimalMaxima">0</div><div class="card-unit">EV/ha</div></div>
                             <div class="card" data-tooltip="Demanda / Oferta aprovechable. Ideal: 70-85%. Mayor a 100% = sobrecarga"><div class="card-title">Tasa de Uso</div><div class="card-value" id="tasaUso">0</div><div class="card-unit">%</div></div>
+                            <div class="card" data-tooltip="Kg de materia seca consumidos por cada kg de carne producido"><div class="card-title">Ef. Conversion</div><div class="card-value" id="efConversion">-</div><div class="card-unit">kg MS / kg carne</div></div>
+                            <div class="card" data-tooltip="Kilogramos de carne total producidos por el rodeo en el ejercicio"><div class="card-title">Produccion Carne</div><div class="card-value" id="kgCarneTotal">0</div><div class="card-unit">kg</div></div>
                         </div>
 
                         <div class="chart-container">
@@ -399,6 +498,9 @@
                         </div>
                         <div class="chart-container">
                             <div class="chart-wrapper"><canvas id="chartDiferimiento"></canvas></div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-wrapper"><canvas id="chartDemandaCategoria"></canvas></div>
                         </div>
 
                         <div id="alertasDemanda"></div>
@@ -584,7 +686,10 @@
                         </div>
                     </div>
 
-                    <button class="btn" onclick="calcularEconomico()">Calcular Economico</button>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn" onclick="calcularEconomico()">Calcular Economico</button>
+                        <button class="btn btn-secondary" onclick="cargarValoresReferencia()" title="Carga precios orientativos de labores, estructura, suplementacion, comision y flete">Cargar valores de referencia</button>
+                    </div>
                 </div>
 
                 <div id="resultadosEconomico" style="display:none;">
@@ -605,6 +710,11 @@
                         <div class="section">
                             <h3>Composicion de costos</h3>
                             <div class="tabla-scroll" id="tablaComposicionCostos"></div>
+                        </div>
+                        <div class="section">
+                            <h3>Sensibilidad de precios</h3>
+                            <p style="font-size:0.85em;color:#666;margin-bottom:8px;">Como cambia el margen neto si varian los precios de compra y venta.</p>
+                            <div class="tabla-scroll" id="tablaSensibilidad"></div>
                         </div>
                     </div>
                 </div>
@@ -655,5 +765,21 @@
     <script src="js/ndvi.js"></script>
     <script src="js/ayuda.js"></script>
     <script src="js/app.js"></script>
+    <script>
+    function abrirFeedback() {
+        document.getElementById('feedbackModal').classList.add('activo');
+    }
+    function cerrarFeedback() {
+        document.getElementById('feedbackModal').classList.remove('activo');
+    }
+    function irAlFormulario() {
+        window.open(FEEDBACK_FORM_URL, '_blank');
+        cerrarFeedback();
+    }
+    </script>
+    <div id="informeImprimible"></div>
+    <footer style="text-align:center;padding:18px 10px 14px;margin-top:32px;font-size:0.82em;color:#95a5a6;border-top:1px solid #ecf0f1;">
+        &copy; 2025-2026 Santiago Jose Insaurralde. Todos los derechos reservados. | <a href="mailto:insau.sj@gmail.com" style="color:#7f8c8d;">insau.sj@gmail.com</a>
+    </footer>
 </body>
 </html>

@@ -1,5 +1,7 @@
 // ============================================
 // BALANCE FORRAJERO PRO v6.0 - Economico
+// (c) 2025-2026 Santiago Jose Insaurralde.
+// Todos los derechos reservados.
 // ============================================
 
 function calcularEconomico() {
@@ -27,10 +29,37 @@ function calcularEconomico() {
         var kgVenta = pesoFinal * g.cantidad;
         var kgProducidos = g.ganancia * dias * g.cantidad;
 
+        // Produccion de terneros destete (se atribuye a la vaca)
+        var kgTerneros = 0;
+        var cantTerneros = 0, cantTerneras = 0;
+        var infoDestete = '';
+        var ingresoTerneros = 0;
+        var trans = g.transicion || null;
+        if (trans && trans.tipo === 'cria' && trans.fechaDestete && g.categoria === 'vaca') {
+            cantTerneros = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (trans.porcentajeMachos||50)/100);
+            cantTerneras = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (1-(trans.porcentajeMachos||50)/100));
+            // Peso real al destete = peso nacimiento + ganancia * dias de lactancia
+            var diasLactancia = Math.floor((new Date(trans.fechaDestete) - new Date(trans.fechaParto)) / 86400000);
+            var pesoDesteteMachos = (cat.pesoCria || 80) + 0.6 * Math.max(0, diasLactancia);
+            var pesoDesteteHembras = pesoDesteteMachos - 10;
+            kgTerneros = cantTerneros * pesoDesteteMachos + cantTerneras * pesoDesteteHembras;
+            kgProducidos += kgTerneros;
+
+            var destinoDestete = trans.destinoDestete || 'vender';
+            if (destinoDestete === 'vender') {
+                var precioTernero = trans.precioTernero || g.costos.venta;
+                ingresoTerneros = kgTerneros * precioTernero;
+                infoDestete = ' (Venta: ' + (cantTerneros + cantTerneras) + ' terneros, ' + formatNum(kgTerneros) + ' kg a $' + formatNum(precioTernero) + '/kg)';
+            } else {
+                infoDestete = ' (Retiene: ' + (cantTerneros + cantTerneras) + ' terneros, ' + formatNum(kgTerneros) + ' kg)';
+            }
+        }
+
         var costoCompra = kgCompra * g.costos.compra;
         var costoSanidad = g.costos.sanidad * g.cantidad;
         var costoFlete = costoFleteCab * g.cantidad;
-        var ingresoBruto = kgVenta * g.costos.venta;
+        // Ingreso: vaca a su precio + terneros a precio ternero (si se venden)
+        var ingresoBruto = kgVenta * g.costos.venta + ingresoTerneros;
         var costoComision = ingresoBruto * comisionVenta;
 
         var ingresoNeto = ingresoBruto - costoComision;
@@ -44,7 +73,8 @@ function calcularEconomico() {
             nombre: cat.nombre, cantidad: g.cantidad, kgCompra: kgCompra, kgVenta: kgVenta,
             kgProducidos: kgProducidos, costoCompra: costoCompra, costoSanidad: costoSanidad,
             costoFlete: costoFlete, costoComision: costoComision, ingresoBruto: ingresoBruto,
-            ingresoNeto: ingresoNeto, margen: margen, dias: dias, pesoFinal: pesoFinal
+            ingresoNeto: ingresoNeto, margen: margen, dias: dias, pesoFinal: pesoFinal,
+            infoDestete: infoDestete, ingresoTerneros: ingresoTerneros
         });
     });
 
@@ -82,7 +112,7 @@ function calcularEconomico() {
         htmlDetalle += '<td>' + d.cantidad + '</td>';
         htmlDetalle += '<td>' + d.dias + '</td>';
         htmlDetalle += '<td>' + d.pesoFinal.toFixed(0) + ' kg</td>';
-        htmlDetalle += '<td>' + formatNum(d.kgProducidos) + '</td>';
+        htmlDetalle += '<td>' + formatNum(d.kgProducidos) + (d.infoDestete || '') + '</td>';
         htmlDetalle += '<td>' + formatMoney(d.ingresoBruto) + '</td>';
         htmlDetalle += '<td>' + formatMoney(d.costoCompra + d.costoSanidad + d.costoFlete + d.costoComision) + '</td>';
         htmlDetalle += '<td style="color:' + (d.margen >= 0 ? '#27ae60' : '#e74c3c') + ';font-weight:700;">' + formatMoney(d.margen) + '</td>';
@@ -113,6 +143,96 @@ function calcularEconomico() {
     htmlCostos += '</tbody></table>';
     document.getElementById('tablaComposicionCostos').innerHTML = htmlCostos;
 
+    // Tabla de sensibilidad de precios
+    var variaciones = [-20, -10, 0, 10, 20];
+    var totalKgCompra = detalleGrupos.reduce(function(s,d) { return s + d.kgCompra; }, 0);
+    var totalKgVenta = detalleGrupos.reduce(function(s,d) { return s + d.kgVenta; }, 0);
+    var costosFijos = totalCostosSanidad + totalFlete + gastosGenerales;
+
+    var htmlSens = '<table><thead><tr><th>Precio venta \\ Precio compra</th>';
+    variaciones.forEach(function(vc) {
+        htmlSens += '<th>Compra ' + (vc >= 0 ? '+' : '') + vc + '%</th>';
+    });
+    htmlSens += '</tr></thead><tbody>';
+
+    variaciones.forEach(function(vv) {
+        htmlSens += '<tr><td style="font-weight:600;">Venta ' + (vv >= 0 ? '+' : '') + vv + '%</td>';
+        variaciones.forEach(function(vc) {
+            var precioCompraAdj = 1 + vc / 100;
+            var precioVentaAdj = 1 + vv / 100;
+            var ingAdj = 0; var costoCompraAdj = 0;
+            detalleGrupos.forEach(function(d) {
+                ingAdj += d.ingresoBruto * precioVentaAdj;
+                costoCompraAdj += d.costoCompra * precioCompraAdj;
+            });
+            var comisionAdj = ingAdj * comisionVenta;
+            var margenAdj = ingAdj - costoCompraAdj - comisionAdj - costosFijos;
+            var esBase = (vc === 0 && vv === 0);
+            var bg = esBase ? 'background:#f0f4ff;font-weight:700;' : '';
+            var color = margenAdj >= 0 ? '#27ae60' : '#e74c3c';
+            htmlSens += '<td style="' + bg + 'color:' + color + ';">' + formatMoneyCompact(margenAdj) + '</td>';
+        });
+        htmlSens += '</tr>';
+    });
+    htmlSens += '</tbody></table>';
+    document.getElementById('tablaSensibilidad').innerHTML = htmlSens;
+
     document.getElementById('resultadosEconomico').style.display = 'block';
     document.getElementById('resultadosEconomico').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Valores de referencia orientativos (mercado argentino, actualizar periodicamente)
+var VALORES_REFERENCIA = {
+    costoLabores: 45000,       // $/ha/ano - siembra, fertilizacion, pulverizacion
+    costosEstructura: 30000,   // $/ha/ano - personal, impuestos, mantenimiento
+    costoSuplemento: 200,      // $/kg - maiz, sorgo, etc.
+    kgSuplemento: 0,           // kg/ano - depende del sistema
+    comisionVenta: 4,          // %
+    costoFlete: 15000,         // $/cabeza
+    precioCompra: {            // $/kg vivo por categoria
+        ternero: 2200, ternera: 2000, novillito: 1800, novillo: 1600,
+        vaquillona: 1500, vaca: 900, toro: 800
+    },
+    precioVenta: {
+        ternero: 2400, ternera: 2200, novillito: 2000, novillo: 1800,
+        vaquillona: 1700, vaca: 1000, toro: 900
+    },
+    sanidad: {
+        ternero: 8000, ternera: 8000, novillito: 6000, novillo: 5000,
+        vaquillona: 6000, vaca: 7000, toro: 5000
+    }
+};
+
+function cargarValoresReferencia() {
+    // Campos del modulo economico
+    document.getElementById('costoLabores').value = VALORES_REFERENCIA.costoLabores;
+    document.getElementById('costosEstructura').value = VALORES_REFERENCIA.costosEstructura;
+    document.getElementById('costoSuplemento').value = VALORES_REFERENCIA.costoSuplemento;
+    document.getElementById('kgSuplemento').value = VALORES_REFERENCIA.kgSuplemento;
+    document.getElementById('comisionVenta').value = VALORES_REFERENCIA.comisionVenta;
+    document.getElementById('costoFlete').value = VALORES_REFERENCIA.costoFlete;
+
+    // Actualizar precios de compra/venta/sanidad en cada grupo del escenario activo
+    var esc = getEscenarioActivo();
+    if (esc && esc.grupos.length > 0) {
+        esc.grupos.forEach(function(g) {
+            var cat = g.categoria;
+            if (VALORES_REFERENCIA.precioCompra[cat]) g.costos.compra = VALORES_REFERENCIA.precioCompra[cat];
+            if (VALORES_REFERENCIA.precioVenta[cat]) g.costos.venta = VALORES_REFERENCIA.precioVenta[cat];
+            if (VALORES_REFERENCIA.sanidad[cat]) g.costos.sanidad = VALORES_REFERENCIA.sanidad[cat];
+        });
+        actualizarVistaEscenarios();
+    }
+
+    // Feedback visual
+    var btn = event.target;
+    var textoOriginal = btn.textContent;
+    btn.textContent = 'Valores cargados!';
+    btn.style.background = '#27ae60';
+    btn.style.color = '#fff';
+    setTimeout(function() {
+        btn.textContent = textoOriginal;
+        btn.style.background = '';
+        btn.style.color = '';
+    }, 2000);
 }

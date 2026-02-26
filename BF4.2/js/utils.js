@@ -1,5 +1,7 @@
 // ============================================
 // BALANCE FORRAJERO PRO v6.0 - Utilidades
+// (c) 2025-2026 Santiago Jose Insaurralde.
+// Todos los derechos reservados.
 // ============================================
 
 function formatNum(n) {
@@ -90,26 +92,43 @@ function toggleResumen() {
 
 function actualizarResumenEjecutivo() {
     var container = document.getElementById('resumenEjecutivo');
-    var grid = document.getElementById('resumenGrid');
-    if (!container || !grid) return;
+    var secciones = document.getElementById('resumenSecciones');
+    var semaforo = document.getElementById('resumenSemaforo');
+    if (!container || !secciones) return;
 
-    // Superficie
+    // --- Recopilar datos ---
+
+    // Superficie y recursos activos
     var supTotal = 0;
-    if (datosForrajeros && datosForrajeros.recursos) {
-        datosForrajeros.recursos.forEach(function(r) {
+    var nRecursos = 0;
+    if (typeof recursosActivos !== 'undefined' && recursosActivos.length > 0) {
+        nRecursos = recursosActivos.length;
+        recursosActivos.forEach(function(r) {
             var inputId = 'ha_' + r.replace(/\s+/g, '_');
             var el = document.getElementById(inputId);
             if (el) supTotal += parseFloat(el.value) || 0;
         });
+    } else if (datosForrajeros && datosForrajeros.recursos) {
+        datosForrajeros.recursos.forEach(function(r) {
+            var inputId = 'ha_' + r.replace(/\s+/g, '_');
+            var el = document.getElementById(inputId);
+            var v = el ? (parseFloat(el.value) || 0) : 0;
+            if (v > 0) { supTotal += v; nRecursos++; }
+        });
     }
 
-    // Cabezas
+    // Cabezas y produccion carne
     var totalCab = 0;
     var totalGrupos = 0;
+    var kgCarne = 0;
     var esc = typeof getEscenarioActivo === 'function' ? getEscenarioActivo() : null;
     if (esc && esc.grupos) {
         totalGrupos = esc.grupos.length;
-        esc.grupos.forEach(function(g) { totalCab += g.cantidad; });
+        esc.grupos.forEach(function(g) {
+            totalCab += g.cantidad;
+            var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
+            kgCarne += g.ganancia * dias * g.cantidad;
+        });
     }
 
     // Potreros
@@ -118,16 +137,20 @@ function actualizarResumenEjecutivo() {
     // Balance (si ya se calculo)
     var produccionAnual = 0;
     var cargaMax = 0;
+    var manejo = 'rotativo';
+    var eficiencia = MODELO_CONFIG.eficienciaPastoreo.rotativo;
     if (configuracionCampo && configuracionCampo.produccionMensualTotal) {
         produccionAnual = configuracionCampo.produccionMensualTotal.reduce(function(a, b) { return a + b; }, 0);
-        var manejo = configuracionCampo.manejo || 'rotativo';
+        manejo = configuracionCampo.manejo || 'rotativo';
+        eficiencia = MODELO_CONFIG.eficienciaPastoreo[manejo];
         cargaMax = supTotal > 0 ? calcularCargaMaxima(produccionAnual, supTotal, manejo) : 0;
     }
 
-    // Carga real
+    // Carga real y tasa de uso
     var cargaReal = 0;
+    var demandaAnual = 0;
+    var tasaUso = 0;
     if (esc && esc.grupos && supTotal > 0) {
-        var demandaAnual = 0;
         esc.grupos.forEach(function(g) {
             var cat = CATEGORIAS[g.categoria];
             if (!cat.usaPasto) return;
@@ -136,6 +159,17 @@ function actualizarResumenEjecutivo() {
             demandaAnual += pesoPromedio * cat.consumo * dias * g.cantidad;
         });
         cargaReal = demandaAnual / MODELO_CONFIG.consumoAnualEV / supTotal;
+        var ofertaAprov = produccionAnual * eficiencia;
+        if (ofertaAprov > 0) tasaUso = demandaAnual / ofertaAprov * 100;
+    }
+
+    // Meses deficit (de alertas predictivas)
+    var mesesDeficit = 0;
+    if (typeof alertasPredictivas !== 'undefined' && alertasPredictivas.length > 0) {
+        alertasPredictivas.forEach(function(a) {
+            var match = a.detalle ? a.detalle.match(/(\d+) meses/) : null;
+            if (a.tipo === 'critica' && match) mesesDeficit = parseInt(match[1]);
+        });
     }
 
     // Solo mostrar si hay datos minimos
@@ -145,32 +179,131 @@ function actualizarResumenEjecutivo() {
     }
 
     container.style.display = '';
-    if (!container.classList.contains('abierto')) container.classList.add('abierto');
 
-    var html = '';
-
-    html += '<div class="resumen-item"><div class="ri-valor">' + supTotal.toFixed(0) + '</div><div class="ri-label">Ha totales</div></div>';
-    html += '<div class="resumen-item"><div class="ri-valor">' + totalCab + '</div><div class="ri-label">Cabezas</div></div>';
-    html += '<div class="resumen-item"><div class="ri-valor">' + nPotreros + '</div><div class="ri-label">Potreros</div></div>';
-
-    if (produccionAnual > 0) {
-        html += '<div class="resumen-item"><div class="ri-valor">' + (produccionAnual / 1000).toFixed(0) + 'k</div><div class="ri-label">Prod. (kg MS)</div></div>';
-        html += '<div class="resumen-item"><div class="ri-valor">' + cargaMax.toFixed(2) + '</div><div class="ri-label">Carga max (EV/ha)</div></div>';
+    // --- Semaforo global ---
+    if (semaforo) {
+        if (produccionAnual === 0 || totalCab === 0) {
+            semaforo.className = 'resumen-semaforo semaforo-sin-datos';
+            semaforo.textContent = 'Sin calcular';
+        } else if (tasaUso > 100 || mesesDeficit >= 3) {
+            semaforo.className = 'resumen-semaforo semaforo-critico';
+            semaforo.textContent = 'Sobrecarga';
+        } else if (tasaUso > 85 || mesesDeficit > 0) {
+            semaforo.className = 'resumen-semaforo semaforo-atencion';
+            semaforo.textContent = 'Ajustado';
+        } else {
+            semaforo.className = 'resumen-semaforo semaforo-ok';
+            semaforo.textContent = 'Equilibrado';
+        }
     }
 
-    if (cargaReal > 0) {
+    // --- Construir secciones ---
+    var html = '';
+
+    // SECCION: Campo
+    html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Campo</div><div class="resumen-grid">';
+    html += _riCard(supTotal.toFixed(0), 'Ha totales');
+    html += _riCard(nRecursos, 'Recursos');
+    if (produccionAnual > 0) {
+        html += _riCard(formatNum(Math.round(produccionAnual)), 'Prod. bruta (kg MS)');
+        html += _riCard(supTotal > 0 ? formatNum(Math.round(produccionAnual / supTotal)) : '-', 'kg MS/ha/ano');
+    }
+    if (nPotreros > 0) html += _riCard(nPotreros, 'Potreros');
+    html += '</div></div>';
+
+    // SECCION: Rodeo
+    if (totalCab > 0) {
+        html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Rodeo</div><div class="resumen-grid">';
+        html += _riCard(totalCab, 'Cabezas');
+        html += _riCard(totalGrupos, 'Grupos');
+        if (kgCarne > 0) {
+            html += _riCard(formatNum(Math.round(kgCarne)), 'kg carne prod.');
+            if (supTotal > 0) html += _riCard(Math.round(kgCarne / supTotal), 'kg carne/ha');
+        }
+        html += '</div></div>';
+    }
+
+    // SECCION: Balance
+    if (produccionAnual > 0 && totalCab > 0) {
+        html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Balance</div><div class="resumen-grid">';
+        html += _riCard(cargaMax.toFixed(2), 'Carga max (EV/ha)');
+
         var ratio = cargaMax > 0 ? cargaReal / cargaMax * 100 : 0;
         var claseEstado = ratio > 100 ? 'ri-danger' : ratio > 85 ? 'ri-warning' : 'ri-ok';
         var textoEstado = ratio > 100 ? 'Sobrecarga' : ratio > 85 ? 'Limite' : 'OK';
-        html += '<div class="resumen-item"><div class="ri-valor">' + cargaReal.toFixed(2) + '</div><div class="ri-label">Carga real (EV/ha)</div><span class="ri-estado ' + claseEstado + '">' + textoEstado + '</span></div>';
+        html += _riCard(cargaReal.toFixed(2), 'Carga real (EV/ha)', claseEstado, textoEstado);
+
+        var claseTasa = tasaUso > 100 ? 'ri-danger' : tasaUso > 85 ? 'ri-warning' : 'ri-ok';
+        html += _riCard(tasaUso.toFixed(0) + '%', 'Tasa de uso', claseTasa);
+
+        var manejoLabel = manejo === 'continuo' ? 'Continuo' : manejo === 'intensivo' ? 'Intensivo' : 'Rotativo';
+        html += _riCard(manejoLabel, 'Manejo (' + (eficiencia * 100).toFixed(0) + '%)');
+
+        html += '</div></div>';
     }
 
-    grid.innerHTML = html;
+    secciones.innerHTML = html;
 
     // Renderizar alertas predictivas si existen
     if (typeof alertasPredictivas !== 'undefined' && alertasPredictivas.length > 0) {
         if (typeof renderAlertasPredictivas === 'function') renderAlertasPredictivas();
     }
+
+    // --- Validaciones cruzadas ---
+    var validaciones = [];
+
+    // 1. Superficie recursos vs potreros
+    if (nPotreros > 0 && supTotal > 0) {
+        var supPotreros = 0;
+        if (typeof potreros !== 'undefined') potreros.forEach(function(p) { supPotreros += p.superficie || 0; });
+        if (supPotreros > 0 && Math.abs(supTotal - supPotreros) > 1) {
+            validaciones.push({ tipo: 'warning', msg: 'Superficie de recursos (' + supTotal.toFixed(0) + ' ha) difiere de potreros (' + supPotreros.toFixed(0) + ' ha). Verificar consistencia.' });
+        }
+    }
+
+    // 2. Balance calculado pero sin rodeo
+    if (produccionAnual > 0 && totalCab === 0) {
+        validaciones.push({ tipo: 'info', msg: 'Balance calculado pero sin rodeo cargado. Agrega grupos en Lotes/Rodeo para ver la demanda.' });
+    }
+
+    // 3. Rodeo cargado pero sin balance
+    if (totalCab > 0 && produccionAnual === 0) {
+        validaciones.push({ tipo: 'info', msg: 'Rodeo cargado pero sin balance calculado. Configura los recursos en la pestana Balance.' });
+    }
+
+    // 4. Grupos con ganancia 0 que no son vacas ni toros
+    if (esc && esc.grupos) {
+        var gruposSinGanancia = [];
+        esc.grupos.forEach(function(g) {
+            if (g.ganancia === 0 && g.categoria !== 'vaca' && g.categoria !== 'toro') {
+                gruposSinGanancia.push(CATEGORIAS[g.categoria].nombre);
+            }
+        });
+        if (gruposSinGanancia.length > 0) {
+            validaciones.push({ tipo: 'warning', msg: 'Grupos con ganancia 0: ' + gruposSinGanancia.join(', ') + '. Verificar si es intencional.' });
+        }
+    }
+
+    // Renderizar validaciones
+    if (validaciones.length > 0) {
+        var vHtml = '<div style="margin-top:10px;">';
+        validaciones.forEach(function(v) {
+            var icon = v.tipo === 'warning' ? '&#9888;' : '&#8505;';
+            var bg = v.tipo === 'warning' ? '#fff3e0' : '#e3f2fd';
+            var border = v.tipo === 'warning' ? '#ff9800' : '#2196f3';
+            vHtml += '<div style="padding:8px 12px;margin:4px 0;border-radius:8px;font-size:0.85em;background:' + bg + ';border-left:4px solid ' + border + ';">' + icon + ' ' + v.msg + '</div>';
+        });
+        vHtml += '</div>';
+        secciones.innerHTML += vHtml;
+    }
+}
+
+// Helper para generar card de resumen
+function _riCard(valor, label, claseEstado, textoEstado) {
+    var h = '<div class="resumen-item"><div class="ri-valor">' + valor + '</div><div class="ri-label">' + label + '</div>';
+    if (textoEstado) h += '<span class="ri-estado ' + (claseEstado || '') + '">' + textoEstado + '</span>';
+    h += '</div>';
+    return h;
 }
 
 // --- Validacion inline ---
@@ -265,8 +398,8 @@ function restaurarEstadoAuto() {
         // Restaurar meses de uso ANTES de regenerar inputs
         if (data.mesesUsoRecursos) mesesUsoRecursos = data.mesesUsoRecursos;
 
-        // Regenerar inputs con meses restaurados
-        generarInputsRecursos();
+        // Regenerar inputs con meses restaurados y hectareas guardadas
+        generarInputsRecursos(data.hectareasRecursos || {});
 
         // Restaurar escenarios
         if (data.escenarios && data.escenarios.length > 0) {
@@ -277,15 +410,6 @@ function restaurarEstadoAuto() {
         if (data.potreros) potreros = data.potreros;
         if (data.rotaciones) rotaciones = data.rotaciones;
         if (data.datosClima) datosClima = data.datosClima;
-
-        // Restaurar hectareas en DOM
-        if (data.hectareasRecursos) {
-            Object.keys(data.hectareasRecursos).forEach(function(r) {
-                var inputId = 'ha_' + r.replace(/\s+/g, '_');
-                var el = document.getElementById(inputId);
-                if (el) el.value = data.hectareasRecursos[r];
-            });
-        }
 
         // Restaurar config balance en DOM
         if (data.configuracionBalance) {
@@ -420,17 +544,8 @@ function importarConfiguracion(event) {
             // Restaurar clima
             if (data.datosClima) datosClima = data.datosClima;
 
-            // Regenerar UI
-            generarInputsRecursos();
-
-            // Restaurar hectareas
-            if (data.hectareasRecursos) {
-                Object.keys(data.hectareasRecursos).forEach(function(r) {
-                    var inputId = 'ha_' + r.replace(/\s+/g, '_');
-                    var el = document.getElementById(inputId);
-                    if (el) el.value = data.hectareasRecursos[r];
-                });
-            }
+            // Regenerar UI con hectareas importadas
+            generarInputsRecursos(data.hectareasRecursos || {});
 
             // Restaurar costos
             if (data.costos) {
@@ -454,4 +569,118 @@ function importarConfiguracion(event) {
         }
     };
     reader.readAsText(file);
+}
+
+// Generar informe imprimible
+function generarInforme() {
+    var div = document.getElementById('informeImprimible');
+    if (!div) return;
+    var html = '';
+    var fecha = new Date().toLocaleDateString('es-AR');
+
+    // Header
+    html += '<div class="informe-header">';
+    html += '<h1>Balance Forrajero PRO - Informe</h1>';
+    html += '<p>Generado el ' + fecha + '</p>';
+    html += '</div>';
+
+    // Datos del campo
+    if (configuracionCampo) {
+        html += '<div class="informe-seccion"><h2>Datos del Campo</h2>';
+        html += '<div class="informe-kpi">';
+        html += '<div class="informe-kpi-item"><div class="kpi-label">Superficie</div><div class="kpi-value">' + configuracionCampo.superficie + ' ha</div></div>';
+        var nRec = recursosActivos ? recursosActivos.length : 0;
+        html += '<div class="informe-kpi-item"><div class="kpi-label">Recursos</div><div class="kpi-value">' + nRec + '</div></div>';
+        if (configuracionCampo.produccionAnual) {
+            html += '<div class="informe-kpi-item"><div class="kpi-label">Produccion anual</div><div class="kpi-value">' + formatNumCompact(configuracionCampo.produccionAnual) + ' kg MS</div></div>';
+        }
+        html += '</div>';
+
+        // Tabla de recursos
+        if (configuracionCampo.recursos && configuracionCampo.recursos.length > 0) {
+            html += '<table><thead><tr><th>Recurso</th><th>Hectareas</th></tr></thead><tbody>';
+            configuracionCampo.recursos.forEach(function(rc) {
+                html += '<tr><td>' + rc.recurso + '</td><td>' + rc.hectareas + '</td></tr>';
+            });
+            html += '</tbody></table>';
+        }
+        html += '</div>';
+    }
+
+    // Rodeo
+    var esc = getEscenarioActivo();
+    if (esc && esc.grupos.length > 0) {
+        html += '<div class="informe-seccion"><h2>Rodeo - ' + esc.nombre + '</h2>';
+        var totalCab = esc.grupos.reduce(function(s,g) { return s + g.cantidad; }, 0);
+        html += '<div class="informe-kpi">';
+        html += '<div class="informe-kpi-item"><div class="kpi-label">Grupos</div><div class="kpi-value">' + esc.grupos.length + '</div></div>';
+        html += '<div class="informe-kpi-item"><div class="kpi-label">Cabezas</div><div class="kpi-value">' + totalCab + '</div></div>';
+        html += '</div>';
+
+        html += '<table><thead><tr><th>Categoria</th><th>Cab</th><th>Peso ini</th><th>Ganancia</th><th>Entrada</th><th>Salida</th></tr></thead><tbody>';
+        esc.grupos.forEach(function(g) {
+            var cat = CATEGORIAS[g.categoria];
+            html += '<tr><td>' + cat.nombre + '</td><td>' + g.cantidad + '</td><td>' + g.pesoInicial + ' kg</td>';
+            html += '<td>' + g.ganancia + ' kg/d</td><td>' + g.fechaEntrada + '</td><td>' + g.fechaSalida + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+    }
+
+    // Balance forrajero (copiar tabla de produccion si existe)
+    var tablaProduccion = document.getElementById('tablaProduccionRecursos');
+    if (tablaProduccion && tablaProduccion.innerHTML) {
+        html += '<div class="informe-seccion"><h2>Produccion Forrajera por Recurso</h2>';
+        html += tablaProduccion.innerHTML;
+        html += '</div>';
+    }
+
+    // Tabla detalle mensual (oferta vs demanda)
+    var tablaDetMensual = document.getElementById('tablaDetalleMensualBody');
+    if (tablaDetMensual && tablaDetMensual.innerHTML) {
+        html += '<div class="informe-seccion"><h2>Balance Oferta - Demanda Mensual</h2>';
+        html += '<table><thead><tr><th>Mes</th><th>Oferta (kg MS)</th><th>Demanda (kg MS)</th><th>Balance</th><th>Estado</th></tr></thead><tbody>';
+        html += tablaDetMensual.innerHTML;
+        html += '</tbody></table></div>';
+    }
+
+    // Resultados economicos (copiar tablas si existen)
+    var tablaDetEco = document.getElementById('tablaDetalleEconomico');
+    if (tablaDetEco && tablaDetEco.innerHTML) {
+        html += '<div class="informe-seccion"><h2>Resultado Economico</h2>';
+
+        // KPIs economicos
+        html += '<div class="informe-kpi">';
+        var ecoIds = ['inversionTotal', 'ingresoTotal', 'margenBrutoTotal', 'margenBrutoHa', 'margenNetoTotal'];
+        var ecoLabels = ['Inversion', 'Ingreso Bruto', 'Margen Bruto', 'Margen Bruto/ha', 'Margen Neto'];
+        ecoIds.forEach(function(id, i) {
+            var el = document.getElementById(id);
+            if (el) {
+                var val = el.title || el.textContent;
+                html += '<div class="informe-kpi-item"><div class="kpi-label">' + ecoLabels[i] + '</div><div class="kpi-value" style="color:' + (el.style.color || '#2c3e50') + ';">' + val + '</div></div>';
+            }
+        });
+        html += '</div>';
+
+        html += '<h3 style="font-size:1em;margin:12px 0 6px;">Detalle por grupo</h3>';
+        html += tablaDetEco.innerHTML;
+
+        var tablaCostos = document.getElementById('tablaComposicionCostos');
+        if (tablaCostos && tablaCostos.innerHTML) {
+            html += '<h3 style="font-size:1em;margin:12px 0 6px;">Composicion de costos</h3>';
+            html += tablaCostos.innerHTML;
+        }
+
+        var tablaSens = document.getElementById('tablaSensibilidad');
+        if (tablaSens && tablaSens.innerHTML) {
+            html += '<h3 style="font-size:1em;margin:12px 0 6px;">Sensibilidad de precios</h3>';
+            html += tablaSens.innerHTML;
+        }
+        html += '</div>';
+    }
+
+    // Footer
+    html += '<div class="informe-footer">Balance Forrajero PRO v6.0 | ' + fecha + '</div>';
+
+    div.innerHTML = html;
+    setTimeout(function() { window.print(); }, 100);
 }

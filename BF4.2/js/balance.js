@@ -1,8 +1,40 @@
 // ============================================
 // BALANCE FORRAJERO PRO v6.0 - Balance
+// (c) 2025-2026 Santiago Jose Insaurralde.
+// Todos los derechos reservados.
 // ============================================
 
-function generarInputsRecursos() {
+// Recursos activos (los que el usuario agrego)
+var recursosActivos = [];
+
+// Auto-calculo con debounce
+var _timerAutoCalc = null;
+function autoCalcular() {
+    if (_timerAutoCalc) clearTimeout(_timerAutoCalc);
+    _timerAutoCalc = setTimeout(function() {
+        try {
+            // Solo calcular si hay al menos un recurso con ha > 0
+            var hayRecursos = recursosActivos.some(function(r) {
+                var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+                return el && parseFloat(el.value) > 0;
+            });
+            if (!hayRecursos) return;
+            calcularBalance();
+            // Si ya se habia calculado demanda, recalcularla
+            if (configuracionCampo && configuracionCampo.produccionMensualTotal && typeof calcularDemanda === 'function') {
+                var esc = typeof getEscenarioActivo === 'function' ? getEscenarioActivo() : null;
+                if (esc && esc.grupos && esc.grupos.length > 0) {
+                    calcularDemanda();
+                }
+            }
+        } catch(e) { /* silenciar errores de auto-calculo */ }
+    }, 800);
+}
+
+// hectareasMap es opcional: { 'Campo natural': 10, 'Pastura consociada': 32, ... }
+// Si se pasa, se usa para determinar recursos activos y setear hectareas.
+// Si no se pasa, se detectan del DOM (inputs existentes con ha > 0).
+function generarInputsRecursos(hectareasMap) {
     var container = document.getElementById('recursosContainer');
     if (!container) { console.error('ERROR: recursosContainer no encontrado'); return; }
 
@@ -12,20 +44,64 @@ function generarInputsRecursos() {
         return;
     }
 
+    // Determinar recursos activos
+    recursosActivos = [];
+    if (hectareasMap) {
+        recursos.forEach(function(r) {
+            if (hectareasMap[r] && hectareasMap[r] > 0) {
+                recursosActivos.push(r);
+            }
+        });
+    } else {
+        recursos.forEach(function(r) {
+            var inputId = 'ha_' + r.replace(/\s+/g, '_');
+            var el = document.getElementById(inputId);
+            var ha = el ? parseFloat(el.value) || 0 : 0;
+            if (ha > 0 && recursosActivos.indexOf(r) === -1) recursosActivos.push(r);
+        });
+    }
+
+    renderRecursosActivos();
+    actualizarSelectorRecurso();
+
+    // Si se paso mapa de hectareas, setear valores en los inputs recien creados
+    if (hectareasMap) {
+        recursos.forEach(function(r) {
+            if (hectareasMap[r]) {
+                var inputId = 'ha_' + r.replace(/\s+/g, '_');
+                var el = document.getElementById(inputId);
+                if (el) el.value = hectareasMap[r];
+            }
+        });
+    }
+}
+
+function renderRecursosActivos() {
+    var container = document.getElementById('recursosContainer');
+    if (!container) return;
+
+    if (recursosActivos.length === 0) {
+        container.innerHTML = '<p style="color:#aaa;text-align:center;padding:15px;">No hay recursos cargados. Selecciona uno del desplegable y hace click en "Agregar recurso".</p>';
+        return;
+    }
+
     var html = '';
-    for (var r = 0; r < recursos.length; r++) {
-        var recurso = recursos[r];
+    recursosActivos.forEach(function(recurso) {
         var inputId = 'ha_' + recurso.replace(/\s+/g, '_');
         var promediosRecurso = datosForrajeros.promedios[recurso];
         var prodAnual = promediosRecurso ? promediosRecurso.anual : 0;
         var mesesActivos = mesesUsoRecursos[recurso] || [1,1,1,1,1,1,1,1,1,1,1,1];
 
-        html += '<div class="recurso-row">';
+        // Leer valor previo si existe en DOM
+        var prevEl = document.getElementById(inputId);
+        var prevVal = prevEl ? prevEl.value : '0';
+
+        html += '<div class="recurso-row" id="recursoRow_' + recurso.replace(/\s+/g, '_') + '">';
         html += '<div class="recurso-info">';
         html += '<strong>' + recurso + '</strong>';
         html += '<span class="prod-info">' + Math.round(prodAnual) + ' kg MS/ha/ano</span>';
         html += '</div>';
-        html += '<div class="recurso-ha"><input type="number" id="' + inputId + '" step="0.1" min="0" value="0" placeholder="Ha"></div>';
+        html += '<div class="recurso-ha"><input type="number" id="' + inputId + '" step="0.1" min="0" value="' + prevVal + '" placeholder="Ha" oninput="autoCalcular()"></div>';
         html += '<div class="meses-container">';
         for (var m = 0; m < 12; m++) {
             var activo = mesesActivos[m] ? 'activo' : '';
@@ -34,10 +110,47 @@ function generarInputsRecursos() {
             html += 'onclick="toggleMesRecurso(this)">';
             html += MESES_LABELS[m] + '</button>';
         }
-        html += '</div></div>';
-    }
+        html += '</div>';
+        html += '<button class="btn-eliminar" onclick="quitarRecurso(\'' + recurso.replace(/'/g, "\\'") + '\')" title="Quitar recurso" style="margin-left:8px;padding:4px 10px;border:none;border-radius:5px;cursor:pointer;font-weight:bold;color:white;">X</button>';
+        html += '</div>';
+    });
 
     container.innerHTML = html;
+}
+
+function actualizarSelectorRecurso() {
+    var select = document.getElementById('selectorRecurso');
+    if (!select) return;
+    var recursos = datosForrajeros.recursos;
+    var html = '';
+    recursos.forEach(function(r) {
+        if (recursosActivos.indexOf(r) === -1) {
+            var prod = datosForrajeros.promedios[r] ? datosForrajeros.promedios[r].anual : 0;
+            html += '<option value="' + r + '">' + r + ' (' + Math.round(prod) + ' kg MS/ha/ano)</option>';
+        }
+    });
+    if (html === '') html = '<option value="">-- Todos los recursos agregados --</option>';
+    select.innerHTML = html;
+}
+
+function agregarRecursoSeleccionado() {
+    var select = document.getElementById('selectorRecurso');
+    if (!select || !select.value) return;
+    var recurso = select.value;
+    if (recursosActivos.indexOf(recurso) === -1) {
+        recursosActivos.push(recurso);
+        renderRecursosActivos();
+        actualizarSelectorRecurso();
+        autoCalcular();
+    }
+}
+
+function quitarRecurso(recurso) {
+    recursosActivos = recursosActivos.filter(function(r) { return r !== recurso; });
+    renderRecursosActivos();
+    actualizarSelectorRecurso();
+    if (typeof guardarEstadoAuto === 'function') guardarEstadoAuto();
+    autoCalcular();
 }
 
 function toggleMesRecurso(btn) {
@@ -46,18 +159,16 @@ function toggleMesRecurso(btn) {
     mesesUsoRecursos[recurso][mes] = mesesUsoRecursos[recurso][mes] ? 0 : 1;
     btn.classList.toggle('activo');
     if (typeof guardarEstadoAuto === 'function') guardarEstadoAuto();
+    autoCalcular();
 }
 
 function limpiarRecursos() {
-    datosForrajeros.recursos.forEach(function(r) {
-        var inputId = 'ha_' + r.replace(/\s+/g, '_');
-        var el = document.getElementById(inputId);
-        if (el) el.value = '0';
-    });
+    recursosActivos = [];
+    renderRecursosActivos();
+    actualizarSelectorRecurso();
 }
 
 function calcularBalance() {
-    var recursos = datosForrajeros.recursos;
     var escenario = document.getElementById('escenarioSelect').value;
     var ajuste = parseFloat(document.getElementById('ajusteProductividad').value) / 100;
     var manejo = document.getElementById('manejoPastoreo').value;
@@ -71,9 +182,10 @@ function calcularBalance() {
     var superficieTotal = 0;
     var config = [];
 
-    recursos.forEach(function(recurso) {
+    recursosActivos.forEach(function(recurso) {
         var inputId = 'ha_' + recurso.replace(/\s+/g, '_');
-        var hectareas = parseFloat(document.getElementById(inputId).value) || 0;
+        var el = document.getElementById(inputId);
+        var hectareas = el ? parseFloat(el.value) || 0 : 0;
         if (hectareas > 0) {
             superficieTotal += hectareas;
             config.push({ recurso: recurso, hectareas: hectareas });
