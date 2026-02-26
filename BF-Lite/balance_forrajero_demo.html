@@ -1,3 +1,9 @@
+<!--
+  Balance Forrajero PRO - Lite
+  (c) 2025-2026 Santiago Jose Insaurralde. Todos los derechos reservados.
+  Este software es propiedad de su autor. Queda prohibida su copia,
+  modificacion o distribucion sin autorizacion expresa.
+-->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -274,108 +280,30 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
 .feedback-card p { color: #666; margin-bottom: 20px; line-height: 1.5; font-size: 0.95em; }
 .feedback-card .btn { width: 100%; margin-bottom: 10px; }
 
+/* --- Informe imprimible --- */
+#informeImprimible { display: none; }
+#informeImprimible .informe-header { text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 12px; margin-bottom: 20px; }
+#informeImprimible .informe-header h1 { font-size: 1.5em; color: #2c3e50; margin: 0; }
+#informeImprimible .informe-header p { color: #666; margin: 4px 0 0; font-size: 0.9em; }
+#informeImprimible .informe-seccion { margin-bottom: 20px; page-break-inside: avoid; }
+#informeImprimible .informe-seccion h2 { font-size: 1.15em; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin: 0 0 10px; }
+#informeImprimible .informe-kpi { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+#informeImprimible .informe-kpi-item { background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 8px 14px; flex: 1; min-width: 120px; }
+#informeImprimible .informe-kpi-item .kpi-label { font-size: 0.75em; color: #666; text-transform: uppercase; }
+#informeImprimible .informe-kpi-item .kpi-value { font-size: 1.2em; font-weight: 700; }
+#informeImprimible table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+#informeImprimible th, #informeImprimible td { border: 1px solid #ccc; padding: 4px 8px; text-align: right; }
+#informeImprimible th { background: #f0f0f0; text-align: center; }
+#informeImprimible td:first-child { text-align: left; }
+#informeImprimible .informe-footer { text-align: center; font-size: 0.8em; color: #999; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 8px; }
+
 /* Print */
 @media print {
-    /* --- Reset general --- */
-    * { overflow: visible !important; }
-    body { background: white !important; padding: 0; margin: 0; }
-    .container { box-shadow: none; border-radius: 0; max-width: 100%; overflow: visible !important; }
-    .content { padding: 15px; }
-
-    /* --- Informe header --- */
-    .informe-header {
-        display: block !important;
-        padding: 25px 30px;
-        border-bottom: 3px solid #27ae60;
-        margin-bottom: 0;
-        text-align: center;
-    }
-    .informe-header h1 { font-size: 2em; color: #2c3e50; margin-bottom: 5px; letter-spacing: 1px; }
-    .informe-subtitulo { color: #666; font-size: 1.1em; margin-bottom: 15px; }
-    .informe-datos { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; font-size: 0.95em; }
-    .informe-datos p { margin: 3px 0; }
-
-    /* --- Ocultar UI interactiva --- */
-    .tabs, .btn, .btn-sm, .btn-secondary, .btn-warning, .btn-danger, .btn-editar, .btn-duplicar, .btn-eliminar,
-    .fab-feedback, .feedback-modal, #bienvenida,
-    .acciones-archivo, .informe-inputs, .slider-container,
-    .input-group input, .input-group select, .recurso-ha input, .mes-btn,
-    #btnAgregarGrupo, #btnCancelarEdicion,
-    .criterio-salida, .acordeon,
-    .alert-info, .alert-warning,
-    [data-tooltip]:hover::after, [data-tooltip]:hover::before { display: none !important; }
-
-    /* Ocultar secciones de configuracion/input (solo mostrar resultados) */
-    #balance > .section:first-child { display: none !important; }
-    #lotes > .section:nth-child(1),
-    #lotes > .section:nth-child(2) { display: none !important; }
-    #ofertademanda > .section:first-child { display: none !important; }
-    #economico > .section:first-child { display: none !important; }
-
-    /* Ocultar resultados que no estan calculados */
-    #resultadosBalance[style*="display:none"],
-    #resultadosDemanda[style*="display:none"],
-    #resultadosEconomico[style*="display:none"] { display: none !important; }
-
-    /* --- Mostrar todas las tabs --- */
-    .tab-content { display: block !important; }
-
-    /* --- Estilos de resultados --- */
-    .section {
-        box-shadow: none;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: white;
-        margin-bottom: 15px;
-    }
-    .section h2 { font-size: 1.3em; color: #2c3e50; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; }
-    .section h3 { font-size: 1.1em; }
-
-    .card {
-        box-shadow: none;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: white;
-    }
-    .card:hover { transform: none; }
-    .card-value { font-size: 1.6em; }
-
-    /* --- Charts: imagen estatica generada por JS --- */
-    .chart-container {
-        box-shadow: none;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        page-break-inside: avoid;
-    }
-    .chart-wrapper { height: auto !important; }
-    .chart-print-img {
-        display: block;
-        width: 100% !important;
-        height: auto !important;
-        max-height: 350px;
-        object-fit: contain;
-    }
-
-    /* --- Tablas: forzar que entren en el ancho de pagina --- */
-    .tabla-scroll { overflow: visible !important; }
-    .tabla-scroll table { min-width: 0 !important; width: 100% !important; table-layout: auto; }
-    .tabla-scroll td, .tabla-scroll th { white-space: normal !important; font-size: 0.75em; padding: 5px 4px; }
-    table { box-shadow: none; font-size: 0.8em; }
-    th { background: #27ae60 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tr:hover { background: transparent; }
-
-    .alert, .alerta-predictiva {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-    /* --- Page breaks entre secciones principales --- */
-    #resultadosDemanda { page-break-before: always; }
-    #resultadosEconomico { page-break-before: always; }
-    #lotes .section:last-child { page-break-before: always; }
-
-    /* --- Ocultar header de la app (ya tenemos informe-header) --- */
-    .container > .header { display: none !important; }
+    body { background: white; padding: 0; }
+    .container, .header, .content, .tabs, .tab-content,
+    .fab-feedback, .feedback-modal, footer { display: none !important; }
+    #informeImprimible { display: block !important; padding: 20px; }
+    #informeImprimible .informe-kpi-item { border: 1px solid #999; }
 }
 
 /* Responsive */
@@ -399,6 +327,36 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
     .chart-wrapper { height: 280px; }
     [data-tooltip]:hover::after, [data-tooltip]:hover::before { display: none; }
 }
+/* --- Resumen ejecutivo / Dashboard --- */
+.resumen-ejecutivo { background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e9 100%); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 1px solid #c8e6c9; overflow: hidden; }
+.resumen-header { padding: 12px 18px; cursor: pointer; font-weight: 700; color: #2c3e50; display: flex; justify-content: space-between; align-items: center; user-select: none; font-size: 0.95em; }
+.resumen-header:hover { background: rgba(39,174,96,0.06); }
+.resumen-header .flecha { transition: transform 0.3s; font-size: 0.8em; }
+.resumen-ejecutivo.abierto .resumen-header .flecha { transform: rotate(180deg); }
+.resumen-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 18px; }
+.resumen-ejecutivo.abierto .resumen-body { max-height: 800px; padding: 0 18px 18px 18px; }
+.resumen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.resumen-item { background: white; border-radius: 10px; padding: 10px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.resumen-item .ri-valor { font-size: 1.3em; font-weight: 700; color: #2c3e50; }
+.resumen-item .ri-label { font-size: 0.72em; color: #7f8c8d; margin-top: 2px; text-transform: uppercase; font-weight: 600; }
+.resumen-item .ri-estado { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; font-weight: 600; margin-top: 4px; }
+.ri-ok { background: #e8f5e9; color: #2e7d32; }
+.ri-warning { background: #fff3e0; color: #e65100; }
+.ri-danger { background: #ffebee; color: #c62828; }
+.resumen-semaforo { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 700; margin-left: auto; margin-right: 8px; }
+.semaforo-ok { background: #e8f5e9; color: #2e7d32; }
+.semaforo-atencion { background: #fff3e0; color: #e65100; }
+.semaforo-critico { background: #ffebee; color: #c62828; }
+.semaforo-sin-datos { background: #f5f5f5; color: #999; }
+.resumen-seccion { margin-bottom: 10px; }
+.resumen-seccion-titulo { font-size: 0.72em; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; padding-left: 2px; }
+.alerta-predictiva { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 10px; margin-top: 10px; font-size: 0.9em; line-height: 1.4; }
+.alerta-predictiva .alerta-icono { font-size: 1.5em; flex-shrink: 0; }
+.alerta-predictiva .alerta-texto strong { display: block; margin-bottom: 2px; }
+.alerta-predictiva .alerta-accion { font-size: 0.85em; margin-top: 4px; opacity: 0.85; }
+.alerta-ok { background: #e8f5e9; border-left: 4px solid #4caf50; }
+.alerta-atencion { background: #fff3e0; border-left: 4px solid #ff9800; }
+.alerta-critica { background: #ffebee; border-left: 4px solid #f44336; }
     </style>
 </head>
 <body>
@@ -421,7 +379,9 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
             <p>Planifica la carga de tu campo y analiza oferta vs demanda forrajera con datos del modelo INTA.</p>
             <p style="font-size:0.85em;color:#888;">Se incluyen datos de ejemplo para que veas como funciona.</p>
             <div class="bienvenida-opciones">
-                <button class="btn" onclick="ocultarBienvenida()">Empezar</button>
+                <button class="btn" onclick="cargarEjemploCria()">Ejemplo Cria</button>
+                <button class="btn" onclick="cargarEjemploRecria()">Ejemplo Recria</button>
+                <button class="btn btn-secondary" onclick="ocultarBienvenida()">Empezar de cero</button>
             </div>
         </div>
     </div>
@@ -448,6 +408,8 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
 
         <div class="content">
             <div class="acciones-archivo">
+                <button class="btn btn-sm" onclick="cargarEjemploCria()">Ejemplo Cria</button>
+                <button class="btn btn-sm" onclick="cargarEjemploRecria()">Ejemplo Recria</button>
                 <button class="btn btn-sm btn-secondary" onclick="exportarConfiguracion()">Guardar JSON</button>
                 <label class="btn btn-sm btn-warning" style="margin-bottom:0;">
                     Cargar JSON <input type="file" accept=".json" onchange="importarConfiguracion(event)" style="display:none;">
@@ -462,6 +424,19 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                 <div class="input-group">
                     <label>Asesor</label>
                     <input type="text" id="nombreAsesor" placeholder="Nombre del asesor...">
+                </div>
+            </div>
+
+            <!-- Resumen ejecutivo -->
+            <div id="resumenEjecutivo" class="resumen-ejecutivo" style="display:none;">
+                <div class="resumen-header" onclick="this.parentElement.classList.toggle('abierto')">
+                    <span>Resumen del campo</span>
+                    <span id="resumenSemaforo" class="resumen-semaforo"></span>
+                    <span class="flecha">&#9660;</span>
+                </div>
+                <div class="resumen-body" id="resumenBody">
+                    <div id="resumenSecciones"></div>
+                    <div id="alertasPredictivas"></div>
                 </div>
             </div>
 
@@ -492,8 +467,17 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                         </div>
                     </div>
                     <div class="alert alert-info">
-                        Ingresa las hectareas de cada recurso y marca los meses de uso (click en cada mes).
+                        Selecciona un recurso forrajero y asigna las hectareas. Podes marcar los meses de uso haciendo click en cada mes.
                     </div>
+
+                    <div style="display:flex;gap:10px;align-items:end;margin-bottom:15px;flex-wrap:wrap;">
+                        <div class="input-group" style="flex:1;min-width:200px;">
+                            <label>Recurso forrajero</label>
+                            <select id="selectorRecurso"></select>
+                        </div>
+                        <button class="btn btn-sm" onclick="agregarRecursoSeleccionado()">Agregar recurso</button>
+                    </div>
+
                     <div id="recursosContainer"></div>
 
                     <div class="slider-container">
@@ -502,7 +486,7 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                             <span class="slider-value" id="ajusteValor">100%</span>
                         </div>
                         <input type="range" id="ajusteProductividad" min="50" max="150" value="100" step="5"
-                               oninput="document.getElementById('ajusteValor').textContent = this.value + '%'">
+                               oninput="document.getElementById('ajusteValor').textContent = this.value + '%'; autoCalcular()">
                         <div style="display:flex;justify-content:space-between;font-size:0.8em;color:#7f8c8d;margin-top:5px;">
                             <span>50% (Pobre)</span><span>100% (Promedio)</span><span>150% (Superior)</span>
                         </div>
@@ -511,7 +495,7 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                     <div class="input-grid" style="max-width: 600px; margin-top: 15px;">
                         <div class="input-group">
                             <label>Escenario Climatico</label>
-                            <select id="escenarioSelect">
+                            <select id="escenarioSelect" onchange="autoCalcular()">
                                 <option value="promedio">Ano Promedio</option>
                                 <option value="bueno">Ano Bueno</option>
                                 <option value="malo">Ano Malo</option>
@@ -520,7 +504,7 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                         </div>
                         <div class="input-group">
                             <label>Manejo del Pastoreo</label>
-                            <select id="manejoPastoreo">
+                            <select id="manejoPastoreo" onchange="autoCalcular()">
                                 <option value="continuo">Continuo (55%)</option>
                                 <option value="rotativo" selected>Rotativo (72.5%)</option>
                                 <option value="intensivo">Intensivo (82.5%)</option>
@@ -571,6 +555,7 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                                 <option value="ternero">Ternero</option><option value="ternera">Ternera</option>
                                 <option value="novillito">Novillito</option><option value="novillo" selected>Novillo</option>
                                 <option value="vaquillona">Vaquillona</option><option value="vaca">Vaca</option>
+                                <option value="toro">Toro</option>
                             </select>
                         </div>
                         <div class="input-group"><label>Cantidad</label><input type="number" id="grupoCantidad" min="1" value="50"></div>
@@ -596,10 +581,67 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                             </div>
                         </div>
                     </div>
+                    <!-- Ciclo productivo (transiciones) -->
+                    <div class="acordeon" id="acordeonCiclo" style="display:none;">
+                        <div class="acordeon-header" onclick="toggleAcordeon(this)">Ciclo productivo <span class="flecha">&#9660;</span></div>
+                        <div class="acordeon-body">
+                            <!-- Vaca: ciclo de cria -->
+                            <div id="cicloVaca" style="display:none;">
+                                <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;">
+                                    <input type="checkbox" id="cicloCriaCheck" onchange="toggleCicloCria()"> Incluir ciclo de cria
+                                </label>
+                                <div id="cicloCriaFields" style="display:none;">
+                                    <div class="input-grid">
+                                        <div class="input-group"><label>Fecha de parto</label><input type="date" id="cicloFechaParto"></div>
+                                        <div class="input-group"><label>Fecha de destete</label><input type="date" id="cicloFechaDestete"></div>
+                                        <div class="input-group"><label>% Destete</label><input type="number" id="cicloDestete" min="0" max="100" value="85"></div>
+                                        <div class="input-group"><label>% Machos en terneros</label><input type="number" id="cicloMachos" min="0" max="100" value="50"></div>
+                                    </div>
+                                    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee;">
+                                        <label style="font-weight:600;margin-bottom:8px;display:block;">Destino al destete</label>
+                                        <div style="margin-bottom:10px;">
+                                            <label style="margin-right:15px;"><input type="radio" name="destinoDestete" value="vender" checked onchange="toggleDestinoDestete()"> Vender al destete</label>
+                                            <label><input type="radio" name="destinoDestete" value="retener" onchange="toggleDestinoDestete()"> Retener en campo</label>
+                                        </div>
+                                        <div class="input-grid" id="wrapPrecioTernero">
+                                            <div class="input-group"><label>Precio ternero ($/kg vivo)</label><input type="number" id="cicloPrecioTernero" value="2200" step="10"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Ternero/Ternera: recria -->
+                            <div id="cicloRecria" style="display:none;">
+                                <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;">
+                                    <input type="checkbox" id="cicloRecriaCheck" onchange="toggleCicloRecria()"> Transicion a <span id="cicloRecriaDestino">Novillito</span>
+                                </label>
+                                <div id="cicloRecriaFields" style="display:none;">
+                                    <div style="margin-bottom:10px;">
+                                        <label style="margin-right:15px;"><input type="radio" name="criterioRecria" value="peso" checked onchange="toggleCriterioRecria()"> Al alcanzar peso</label>
+                                        <label><input type="radio" name="criterioRecria" value="fecha" onchange="toggleCriterioRecria()"> En fecha fija</label>
+                                    </div>
+                                    <div class="input-grid">
+                                        <div class="input-group" id="wrapPesoRecria"><label>Peso de transicion (kg)</label><input type="number" id="cicloPesoTransicion" min="100" value="280"></div>
+                                        <div class="input-group" id="wrapFechaRecria" style="display:none;"><label>Fecha de transicion</label><input type="date" id="cicloFechaTransicion"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <button class="btn" id="btnAgregarGrupo" onclick="agregarGrupo()">Agregar al escenario</button>
                     <button class="btn btn-secondary" id="btnCancelarEdicion" style="display:none;" onclick="cancelarEdicion()">Cancelar edicion</button>
                 </div>
                 <div class="section"><h2>Rodeo configurado</h2><div id="escenariosContainer"></div></div>
+                <div class="section" id="seccionEvolucion" style="display:none;">
+                    <h2>Evolucion mensual del rodeo</h2>
+                    <div id="tablaEvolucionContainer" style="overflow-x:auto;"></div>
+                </div>
+                <div class="section" id="seccionComposicion" style="display:none;">
+                    <h2>Composicion del rodeo</h2>
+                    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+                        <div class="chart-wrapper" style="max-width:350px;height:300px;"><canvas id="chartComposicion"></canvas></div>
+                        <div id="composicionDetalle" style="flex:1;min-width:200px;"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- TAB 3: OFERTA/DEMANDA -->
@@ -618,9 +660,12 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                             <div class="card" data-tooltip="EV/ha que genera tu rodeo actual"><div class="card-title">Carga Real</div><div class="card-value" id="cargaAnimalReal">0</div><div class="card-unit">EV/ha</div></div>
                             <div class="card" data-tooltip="Maxima carga segun produccion y eficiencia"><div class="card-title">Carga Max</div><div class="card-value" id="cargaAnimalMaxima">0</div><div class="card-unit">EV/ha</div></div>
                             <div class="card" data-tooltip="Demanda / Oferta. Ideal: 70-85%"><div class="card-title">Tasa de Uso</div><div class="card-value" id="tasaUso">0</div><div class="card-unit">%</div></div>
+                            <div class="card" data-tooltip="Kg MS consumidos por kg de carne producido"><div class="card-title">Ef. Conversion</div><div class="card-value" id="efConversion">-</div><div class="card-unit">kg MS / kg carne</div></div>
+                            <div class="card" data-tooltip="Kg de carne total producidos por el rodeo"><div class="card-title">Prod. Carne</div><div class="card-value" id="kgCarneTotal">0</div><div class="card-unit">kg</div></div>
                         </div>
                         <div class="chart-container"><div class="chart-wrapper"><canvas id="chartOfertaDemanda"></canvas></div></div>
                         <div class="chart-container"><div class="chart-wrapper"><canvas id="chartDiferimiento"></canvas></div></div>
+                        <div class="chart-container"><div class="chart-wrapper"><canvas id="chartDemandaCategoria"></canvas></div></div>
                         <div id="alertasPredictivas"></div>
                         <div id="alertasDemanda"></div>
                         <div class="section"><h3>Detalle mensual</h3>
@@ -656,7 +701,10 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                             </div>
                         </div>
                     </div>
-                    <button class="btn" onclick="calcularEconomico()">Calcular Economico</button>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn" onclick="calcularEconomico()">Calcular Economico</button>
+                        <button class="btn btn-secondary" onclick="cargarValoresReferencia()" title="Carga precios orientativos de labores, estructura, suplementacion, comision y flete">Cargar valores de referencia</button>
+                    </div>
                 </div>
                 <div id="resultadosEconomico" style="display:none;">
                     <div class="section">
@@ -671,6 +719,7 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                         </div>
                         <div class="section"><h3>Detalle por grupo</h3><div class="tabla-scroll" id="tablaDetalleEconomico"></div></div>
                         <div class="section"><h3>Composicion de costos</h3><div class="tabla-scroll" id="tablaComposicionCostos"></div></div>
+                        <div class="section"><h3>Sensibilidad de precios</h3><p style="font-size:0.85em;color:#666;margin-bottom:8px;">Como cambia el margen neto si varian los precios de compra y venta.</p><div class="tabla-scroll" id="tablaSensibilidad"></div></div>
                     </div>
                 </div>
             </div>
@@ -718,12 +767,21 @@ var DATOS_FORRAJEROS_EMBEBIDOS = {
 };
 
 var CATEGORIAS = {
-    ternero:    { nombre: 'Ternero',    consumo: 0.025, pesoDefecto: 180, gananciaDefecto: 0.55, usaPasto: true },
-    ternera:    { nombre: 'Ternera',    consumo: 0.025, pesoDefecto: 170, gananciaDefecto: 0.50, usaPasto: true },
-    novillito:  { nombre: 'Novillito',  consumo: 0.028, pesoDefecto: 280, gananciaDefecto: 0.65, usaPasto: true },
-    novillo:    { nombre: 'Novillo',    consumo: 0.025, pesoDefecto: 380, gananciaDefecto: 0.80, usaPasto: true },
-    vaquillona: { nombre: 'Vaquillona', consumo: 0.025, pesoDefecto: 300, gananciaDefecto: 0.60, usaPasto: true },
-    vaca:       { nombre: 'Vaca',       consumo: 0.022, pesoDefecto: 450, gananciaDefecto: 0.00, usaPasto: true, consumoCria: 0.015, pesoCria: 80 }
+    ternero:    { nombre: 'Ternero',    consumo: 0.025, pesoDefecto: 180, gananciaDefecto: 0.55, usaPasto: true,
+                  transicionDefecto: 'novillito', pesoTransicion: 280 },
+    ternera:    { nombre: 'Ternera',    consumo: 0.025, pesoDefecto: 170, gananciaDefecto: 0.50, usaPasto: true,
+                  transicionDefecto: 'vaquillona', pesoTransicion: 260 },
+    novillito:  { nombre: 'Novillito',  consumo: 0.028, pesoDefecto: 280, gananciaDefecto: 0.65, usaPasto: true,
+                  transicionDefecto: null },
+    novillo:    { nombre: 'Novillo',    consumo: 0.025, pesoDefecto: 380, gananciaDefecto: 0.80, usaPasto: true,
+                  transicionDefecto: null },
+    vaquillona: { nombre: 'Vaquillona', consumo: 0.025, pesoDefecto: 300, gananciaDefecto: 0.60, usaPasto: true,
+                  transicionDefecto: null },
+    vaca:       { nombre: 'Vaca',       consumo: 0.022, pesoDefecto: 450, gananciaDefecto: 0.00, usaPasto: true,
+                  consumoCria: 0.015, pesoCria: 80, pesoDestete: 180,
+                  desteteDefecto: 85, porcentajeMachosDefecto: 50 },
+    toro:       { nombre: 'Toro',       consumo: 0.025, pesoDefecto: 800, gananciaDefecto: 0.00, usaPasto: true,
+                  transicionDefecto: null }
 };
 
 var MESES_LABELS = ['E','F','M','A','M','J','J','A','S','O','N','D'];
@@ -850,15 +908,9 @@ function restaurarEstadoAuto() {
         var saved = localStorage.getItem(STORAGE_KEY); if (!saved) return false;
         var data = JSON.parse(saved); if (!data.version) return false;
         if (data.mesesUsoRecursos) mesesUsoRecursos = data.mesesUsoRecursos;
-        generarInputsRecursos();
+        generarInputsRecursos(data.hectareasRecursos || {});
         if (data.escenarios && data.escenarios.length > 0) { escenarios = data.escenarios; escenarioActivoId = data.escenarioActivoId || escenarios[0].id; }
         if (data.nextId) nextId = data.nextId;
-        if (data.hectareasRecursos) {
-            Object.keys(data.hectareasRecursos).forEach(function(r) {
-                var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
-                if (el) el.value = data.hectareasRecursos[r];
-            });
-        }
         if (data.configuracionBalance) {
             var cb = data.configuracionBalance; var el;
             el = document.getElementById('mesInicioSelect'); if (el && cb.mesInicio) el.value = cb.mesInicio;
@@ -916,13 +968,7 @@ function importarConfiguracion(event) {
                 escenarios.forEach(function(e) { if (e.id > maxId) maxId = e.id; e.grupos.forEach(function(g) { if (g.id > maxId) maxId = g.id; }); });
                 nextId = maxId + 1;
             }
-            generarInputsRecursos();
-            if (data.hectareasRecursos) {
-                Object.keys(data.hectareasRecursos).forEach(function(r) {
-                    var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
-                    if (el) el.value = data.hectareasRecursos[r];
-                });
-            }
+            generarInputsRecursos(data.hectareasRecursos || {});
             if (data.costos) {
                 var c = data.costos;
                 if (document.getElementById('costoLabores')) document.getElementById('costoLabores').value = c.labores || 0;
@@ -941,25 +987,113 @@ function importarConfiguracion(event) {
 }
 
 // --- BALANCE ---
-function generarInputsRecursos() {
+var recursosActivos = [];
+
+var _timerAutoCalc = null;
+function autoCalcular() {
+    if (_timerAutoCalc) clearTimeout(_timerAutoCalc);
+    _timerAutoCalc = setTimeout(function() {
+        try {
+            var hayRecursos = recursosActivos.some(function(r) {
+                var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+                return el && parseFloat(el.value) > 0;
+            });
+            if (!hayRecursos) return;
+            calcularBalance();
+            if (configuracionCampo && configuracionCampo.produccionMensualTotal) {
+                var esc = getEscenarioActivo();
+                if (esc && esc.grupos && esc.grupos.length > 0) calcularDemanda();
+            }
+        } catch(e) {}
+    }, 800);
+}
+
+function generarInputsRecursos(hectareasMap) {
     var container = document.getElementById('recursosContainer'); if (!container) return;
     var recursos = datosForrajeros.recursos;
+    if (!recursos || recursos.length === 0) { container.innerHTML = '<div class="alert alert-danger">No se encontraron recursos forrajeros.</div>'; return; }
+    recursosActivos = [];
+    if (hectareasMap) {
+        recursos.forEach(function(r) { if (hectareasMap[r] && hectareasMap[r] > 0) recursosActivos.push(r); });
+    } else {
+        recursos.forEach(function(r) {
+            var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+            var ha = el ? parseFloat(el.value) || 0 : 0;
+            if (ha > 0 && recursosActivos.indexOf(r) === -1) recursosActivos.push(r);
+        });
+    }
+    renderRecursosActivos();
+    actualizarSelectorRecurso();
+    if (hectareasMap) {
+        recursos.forEach(function(r) {
+            if (hectareasMap[r]) {
+                var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+                if (el) el.value = hectareasMap[r];
+            }
+        });
+    }
+}
+
+function renderRecursosActivos() {
+    var container = document.getElementById('recursosContainer'); if (!container) return;
+    if (recursosActivos.length === 0) {
+        container.innerHTML = '<p style="color:#aaa;text-align:center;padding:15px;">No hay recursos cargados. Selecciona uno del desplegable y hace click en "Agregar recurso".</p>';
+        return;
+    }
     var html = '';
-    for (var r = 0; r < recursos.length; r++) {
-        var recurso = recursos[r];
+    recursosActivos.forEach(function(recurso) {
         var inputId = 'ha_' + recurso.replace(/\s+/g, '_');
         var prodAnual = datosForrajeros.promedios[recurso] ? datosForrajeros.promedios[recurso].anual : 0;
         var mesesActivos = mesesUsoRecursos[recurso] || [1,1,1,1,1,1,1,1,1,1,1,1];
-        html += '<div class="recurso-row"><div class="recurso-info"><strong>' + recurso + '</strong>';
+        var prevEl = document.getElementById(inputId);
+        var prevVal = prevEl ? prevEl.value : '0';
+        html += '<div class="recurso-row">';
+        html += '<div class="recurso-info"><strong>' + recurso + '</strong>';
         html += '<span class="prod-info">' + Math.round(prodAnual) + ' kg MS/ha/ano</span></div>';
-        html += '<div class="recurso-ha"><input type="number" id="' + inputId + '" step="0.1" min="0" value="0" placeholder="Ha"></div>';
+        html += '<div class="recurso-ha"><input type="number" id="' + inputId + '" step="0.1" min="0" value="' + prevVal + '" placeholder="Ha" oninput="autoCalcular()"></div>';
         html += '<div class="meses-container">';
         for (var m = 0; m < 12; m++) {
             html += '<button type="button" class="mes-btn ' + (mesesActivos[m] ? 'activo' : '') + '" data-recurso="' + recurso + '" data-mes="' + m + '" onclick="toggleMesRecurso(this)">' + MESES_LABELS[m] + '</button>';
         }
-        html += '</div></div>';
-    }
+        html += '</div>';
+        html += '<button class="btn-eliminar" onclick="quitarRecurso(\'' + recurso.replace(/'/g, "\\'") + '\')" title="Quitar recurso" style="margin-left:8px;background:#e74c3c;color:white;border:none;border-radius:4px;cursor:pointer;padding:4px 8px;font-weight:bold;">X</button>';
+        html += '</div>';
+    });
     container.innerHTML = html;
+}
+
+function actualizarSelectorRecurso() {
+    var select = document.getElementById('selectorRecurso'); if (!select) return;
+    var recursos = datosForrajeros.recursos;
+    var html = '';
+    recursos.forEach(function(r) {
+        if (recursosActivos.indexOf(r) === -1) {
+            var prod = datosForrajeros.promedios[r] ? datosForrajeros.promedios[r].anual : 0;
+            html += '<option value="' + r + '">' + r + ' (' + Math.round(prod) + ' kg MS/ha/ano)</option>';
+        }
+    });
+    if (html === '') html = '<option value="">-- Todos los recursos agregados --</option>';
+    select.innerHTML = html;
+}
+
+function agregarRecursoSeleccionado() {
+    var select = document.getElementById('selectorRecurso');
+    if (!select || !select.value) return;
+    var recurso = select.value;
+    if (recursosActivos.indexOf(recurso) === -1) {
+        recursosActivos.push(recurso);
+        renderRecursosActivos();
+        actualizarSelectorRecurso();
+        autoCalcular();
+    }
+}
+
+function quitarRecurso(recurso) {
+    recursosActivos = recursosActivos.filter(function(r) { return r !== recurso; });
+    renderRecursosActivos();
+    actualizarSelectorRecurso();
+    guardarEstadoAuto();
+    autoCalcular();
 }
 
 function toggleMesRecurso(btn) {
@@ -968,23 +1102,23 @@ function toggleMesRecurso(btn) {
     mesesUsoRecursos[recurso][mes] = mesesUsoRecursos[recurso][mes] ? 0 : 1;
     btn.classList.toggle('activo');
     guardarEstadoAuto();
+    autoCalcular();
 }
 
 function limpiarRecursos() {
-    datosForrajeros.recursos.forEach(function(r) {
-        var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
-        if (el) el.value = '0';
-    });
+    recursosActivos = [];
+    renderRecursosActivos();
+    actualizarSelectorRecurso();
 }
 
 function calcularBalance() {
-    var recursos = datosForrajeros.recursos;
     var escenario = document.getElementById('escenarioSelect').value;
     var ajuste = parseFloat(document.getElementById('ajusteProductividad').value) / 100;
     var manejo = document.getElementById('manejoPastoreo').value;
     var superficieTotal = 0; var config = [];
-    recursos.forEach(function(recurso) {
-        var hectareas = parseFloat(document.getElementById('ha_' + recurso.replace(/\s+/g, '_')).value) || 0;
+    recursosActivos.forEach(function(recurso) {
+        var el = document.getElementById('ha_' + recurso.replace(/\s+/g, '_'));
+        var hectareas = el ? parseFloat(el.value) || 0 : 0;
         if (hectareas > 0) { superficieTotal += hectareas; config.push({ recurso: recurso, hectareas: hectareas }); }
     });
     if (superficieTotal === 0) {
@@ -1043,6 +1177,7 @@ function calcularBalance() {
     document.getElementById('resultadosBalance').style.display = 'block';
     document.getElementById('resultadosBalance').scrollIntoView({ behavior: 'smooth' });
     guardarEstadoAuto();
+    actualizarResumenEjecutivo();
 }
 
 function generarTablaProduccionRecursos(produccionPorRecurso, config) {
@@ -1104,7 +1239,7 @@ function getEscenarioActivo() { return escenarios.find(function(e) { return e.id
 function nuevoEscenario() { var nombre = prompt('Nombre:', 'Escenario ' + (escenarios.length + 1)); if (nombre) crearEscenario(nombre); }
 function duplicarEscenarioActivo() {
     var esc = getEscenarioActivo(); if (!esc) return;
-    var nuevo = { id: nextId++, nombre: esc.nombre + ' (copia)', grupos: esc.grupos.map(function(g) { return Object.assign({}, g, { id: nextId++, costos: Object.assign({}, g.costos) }); }) };
+    var nuevo = { id: nextId++, nombre: esc.nombre + ' (copia)', grupos: esc.grupos.map(function(g) { return Object.assign({}, g, { id: nextId++, costos: Object.assign({}, g.costos), transicion: g.transicion ? Object.assign({}, g.transicion) : null }); }) };
     escenarios.push(nuevo); escenarioActivoId = nuevo.id; actualizarSelectEscenarios(); actualizarVistaEscenarios();
 }
 function eliminarEscenarioActivo() {
@@ -1118,7 +1253,40 @@ function actualizarSelectEscenarios() {
     var select = document.getElementById('escenarioActivoSelect'); if (!select) return;
     select.innerHTML = escenarios.map(function(e) { return '<option value="' + e.id + '"' + (e.id === escenarioActivoId ? ' selected' : '') + '>' + e.nombre + '</option>'; }).join('');
 }
-function ajustarPesosDefecto() { var info = CATEGORIAS[document.getElementById('grupoCategoria').value]; if (info) { document.getElementById('grupoPesoInicial').value = info.pesoDefecto; document.getElementById('grupoGanancia').value = info.gananciaDefecto; } }
+function ajustarPesosDefecto() {
+    var cat = document.getElementById('grupoCategoria').value;
+    var info = CATEGORIAS[cat];
+    if (info) { document.getElementById('grupoPesoInicial').value = info.pesoDefecto; document.getElementById('grupoGanancia').value = info.gananciaDefecto; }
+    // Mostrar/ocultar ciclo productivo
+    var acordeonCiclo = document.getElementById('acordeonCiclo');
+    var cicloVaca = document.getElementById('cicloVaca');
+    var cicloRecria = document.getElementById('cicloRecria');
+    if (cat === 'vaca') {
+        acordeonCiclo.style.display = ''; cicloVaca.style.display = ''; cicloRecria.style.display = 'none';
+    } else if (cat === 'ternero' || cat === 'ternera') {
+        acordeonCiclo.style.display = ''; cicloVaca.style.display = 'none'; cicloRecria.style.display = '';
+        var destino = CATEGORIAS[cat].transicionDefecto;
+        document.getElementById('cicloRecriaDestino').textContent = CATEGORIAS[destino].nombre;
+        document.getElementById('cicloPesoTransicion').value = CATEGORIAS[cat].pesoTransicion;
+    } else {
+        acordeonCiclo.style.display = 'none'; cicloVaca.style.display = 'none'; cicloRecria.style.display = 'none';
+    }
+    // Reset checkboxes
+    document.getElementById('cicloCriaCheck').checked = false; toggleCicloCria();
+    document.getElementById('cicloRecriaCheck').checked = false; toggleCicloRecria();
+}
+function toggleCicloCria() { document.getElementById('cicloCriaFields').style.display = document.getElementById('cicloCriaCheck').checked ? '' : 'none'; }
+function toggleCicloRecria() { document.getElementById('cicloRecriaFields').style.display = document.getElementById('cicloRecriaCheck').checked ? '' : 'none'; }
+function toggleCriterioRecria() {
+    var criterio = document.querySelector('input[name="criterioRecria"]:checked').value;
+    document.getElementById('wrapPesoRecria').style.display = criterio === 'peso' ? '' : 'none';
+    document.getElementById('wrapFechaRecria').style.display = criterio === 'fecha' ? '' : 'none';
+}
+function toggleDestinoDestete() {
+    var destino = document.querySelector('input[name="destinoDestete"]:checked');
+    var wrap = document.getElementById('wrapPrecioTernero');
+    if (wrap && destino) wrap.style.display = destino.value === 'vender' ? '' : 'none';
+}
 function toggleCriterioSalida() {
     var criterio = document.querySelector('input[name="criterioSalida"]:checked').value;
     document.getElementById('wrapFechaSalida').style.display = criterio === 'fecha' ? '' : 'none';
@@ -1152,12 +1320,28 @@ function agregarGrupo() {
         if (new Date(fechaSalida) <= new Date(fechaEntrada)) { mostrarError('grupoFechaSalida', 'Debe ser posterior a la entrada'); return; }
     }
     var costos = { compra: parseFloat(document.getElementById('grupoPrecioCompra').value)||0, venta: parseFloat(document.getElementById('grupoPrecioVenta').value)||0, sanidad: parseFloat(document.getElementById('grupoSanidad').value)||0 };
+    // Leer transicion
+    var transicion = null;
+    if (categoria === 'vaca' && document.getElementById('cicloCriaCheck').checked) {
+        var destinoEl = document.querySelector('input[name="destinoDestete"]:checked');
+        var destino = destinoEl ? destinoEl.value : 'vender';
+        transicion = { tipo: 'cria', fechaParto: document.getElementById('cicloFechaParto').value, fechaDestete: document.getElementById('cicloFechaDestete').value,
+            porcentajeDestete: parseFloat(document.getElementById('cicloDestete').value) || 85, porcentajeMachos: parseFloat(document.getElementById('cicloMachos').value) || 50,
+            destinoDestete: destino, precioTernero: destino === 'vender' ? (parseFloat(document.getElementById('cicloPrecioTernero').value) || 0) : 0 };
+    } else if ((categoria === 'ternero' || categoria === 'ternera') && document.getElementById('cicloRecriaCheck').checked) {
+        var critRecria = document.querySelector('input[name="criterioRecria"]:checked').value;
+        transicion = { tipo: 'recria', criterioTransicion: critRecria, nuevaCategoria: CATEGORIAS[categoria].transicionDefecto,
+            pesoTransicion: critRecria === 'peso' ? (parseFloat(document.getElementById('cicloPesoTransicion').value) || CATEGORIAS[categoria].pesoTransicion) : null,
+            fechaTransicion: critRecria === 'fecha' ? document.getElementById('cicloFechaTransicion').value : null };
+    }
+    var grupoData = { categoria:categoria, cantidad:cantidad, pesoInicial:pesoInicial, ganancia:ganancia, criterioSalida:criterio, fechaEntrada:fechaEntrada, fechaSalida:fechaSalida, pesoObjetivo:pesoObjetivo, costos:costos, transicion:transicion };
     if (grupoEditandoId !== null) {
         var grupo = esc.grupos.find(function(g) { return g.id === grupoEditandoId; });
-        if (grupo) Object.assign(grupo, { categoria:categoria, cantidad:cantidad, pesoInicial:pesoInicial, ganancia:ganancia, criterioSalida:criterio, fechaEntrada:fechaEntrada, fechaSalida:fechaSalida, pesoObjetivo:pesoObjetivo, costos:costos });
+        if (grupo) Object.assign(grupo, grupoData);
         grupoEditandoId = null; document.getElementById('btnAgregarGrupo').textContent = 'Agregar al escenario'; document.getElementById('btnCancelarEdicion').style.display = 'none';
     } else {
-        esc.grupos.push({ id: nextId++, categoria:categoria, cantidad:cantidad, pesoInicial:pesoInicial, ganancia:ganancia, criterioSalida:criterio, fechaEntrada:fechaEntrada, fechaSalida:fechaSalida, pesoObjetivo:pesoObjetivo, costos:costos });
+        grupoData.id = nextId++;
+        esc.grupos.push(grupoData);
     }
     actualizarVistaEscenarios(); limpiarFormGrupo();
 }
@@ -1178,6 +1362,30 @@ function editarGrupo(escId, grupoId) {
     document.getElementById('grupoPrecioCompra').value = g.costos.compra;
     document.getElementById('grupoPrecioVenta').value = g.costos.venta;
     document.getElementById('grupoSanidad').value = g.costos.sanidad;
+    // Restaurar transicion
+    ajustarPesosDefecto(); // muestra/oculta acordeon segun categoria
+    // Pero no cambiar peso/ganancia (ya los seteo arriba)
+    document.getElementById('grupoPesoInicial').value = g.pesoInicial;
+    document.getElementById('grupoGanancia').value = g.ganancia;
+    if (g.transicion && g.transicion.tipo === 'cria') {
+        document.getElementById('cicloCriaCheck').checked = true; toggleCicloCria();
+        document.getElementById('cicloFechaParto').value = g.transicion.fechaParto || '';
+        document.getElementById('cicloFechaDestete').value = g.transicion.fechaDestete || '';
+        document.getElementById('cicloDestete').value = g.transicion.porcentajeDestete || 85;
+        document.getElementById('cicloMachos').value = g.transicion.porcentajeMachos || 50;
+        var destino = g.transicion.destinoDestete || 'vender';
+        var radioDestino = document.querySelector('input[name="destinoDestete"][value="' + destino + '"]');
+        if (radioDestino) radioDestino.checked = true;
+        toggleDestinoDestete();
+        if (destino === 'vender') document.getElementById('cicloPrecioTernero').value = g.transicion.precioTernero || 2200;
+    } else if (g.transicion && g.transicion.tipo === 'recria') {
+        document.getElementById('cicloRecriaCheck').checked = true; toggleCicloRecria();
+        var crit = g.transicion.criterioTransicion || 'peso';
+        document.querySelector('input[name="criterioRecria"][value="' + crit + '"]').checked = true;
+        toggleCriterioRecria();
+        if (crit === 'peso') document.getElementById('cicloPesoTransicion').value = g.transicion.pesoTransicion || 280;
+        else document.getElementById('cicloFechaTransicion').value = g.transicion.fechaTransicion || '';
+    }
     grupoEditandoId = grupoId; document.getElementById('btnAgregarGrupo').textContent = 'Guardar cambios'; document.getElementById('btnCancelarEdicion').style.display = '';
     document.getElementById('grupoCategoria').scrollIntoView({ behavior: 'smooth' });
 }
@@ -1185,7 +1393,8 @@ function cancelarEdicion() { grupoEditandoId = null; document.getElementById('bt
 function duplicarGrupo(escId, grupoId) {
     var esc = escenarios.find(function(e) { return e.id === escId; }); if (!esc) return;
     var g = esc.grupos.find(function(gr) { return gr.id === grupoId; }); if (!g) return;
-    esc.grupos.push(Object.assign({}, g, { id: nextId++, costos: Object.assign({}, g.costos) })); actualizarVistaEscenarios();
+    var copia = Object.assign({}, g, { id: nextId++, costos: Object.assign({}, g.costos), transicion: g.transicion ? Object.assign({}, g.transicion) : null });
+    esc.grupos.push(copia); actualizarVistaEscenarios();
 }
 function eliminarGrupo(escId, grupoId) {
     if (!confirm('Eliminar este grupo?')) return;
@@ -1214,7 +1423,32 @@ function actualizarVistaEscenarios() {
                 html += '<span><strong>' + cat.nombre + '</strong></span><span>' + g.cantidad + ' cab</span>';
                 html += '<span>' + g.pesoInicial + ' &rarr; ' + pesoFinal.toFixed(0) + ' kg</span>';
                 html += '<span>' + g.ganancia + ' kg/dia</span><span>' + dias + ' dias</span>';
-                html += '<span>' + formatNum(g.ganancia * dias * g.cantidad) + ' kg prod</span></div>';
+                html += '<span>' + formatNum(g.ganancia * dias * g.cantidad) + ' kg prod</span>';
+                // Mostrar info de transicion
+                if (g.transicion && g.transicion.tipo === 'cria') {
+                    var t = g.transicion;
+                    var cantMachos = Math.round(g.cantidad * (t.porcentajeDestete||85)/100 * (t.porcentajeMachos||50)/100);
+                    var cantHembras = Math.round(g.cantidad * (t.porcentajeDestete||85)/100 * (1-(t.porcentajeMachos||50)/100));
+                    var fp = t.fechaParto ? t.fechaParto.substring(5) : '?';
+                    var fd = t.fechaDestete ? t.fechaDestete.substring(5) : '?';
+                    html += '</div><div style="width:100%;font-size:0.82em;color:#2980b9;padding:2px 0 0 10px;border-top:1px dashed #ddd;margin-top:4px;">';
+                    var destinoTxt = (t.destinoDestete || 'vender') === 'vender' ? ' | Venta al destete' : ' | Retener en campo';
+                    html += 'Cria: Parto ' + fp + ' &rarr; Destete ' + fd + ' | ' + (t.porcentajeDestete||85) + '% destete &rarr; ' + cantMachos + '&#9794; + ' + cantHembras + '&#9792;' + destinoTxt;
+                } else if (g.transicion && g.transicion.tipo === 'recria') {
+                    var t = g.transicion;
+                    var destCat = CATEGORIAS[t.nuevaCategoria];
+                    var info = '';
+                    if (t.criterioTransicion === 'peso' && t.pesoTransicion) {
+                        var diasTrans = g.ganancia > 0 ? Math.ceil((t.pesoTransicion - g.pesoInicial) / g.ganancia) : 0;
+                        var fechaTrans = new Date(new Date(g.fechaEntrada).getTime() + diasTrans * 86400000);
+                        info = '&rarr; ' + destCat.nombre + ' a ' + t.pesoTransicion + ' kg (' + fechaTrans.toISOString().substring(0,7) + ')';
+                    } else {
+                        info = '&rarr; ' + destCat.nombre + ' el ' + (t.fechaTransicion || '?');
+                    }
+                    html += '</div><div style="width:100%;font-size:0.82em;color:#8e44ad;padding:2px 0 0 10px;border-top:1px dashed #ddd;margin-top:4px;">';
+                    html += 'Recria: ' + info;
+                }
+                html += '</div>';
                 html += '<div class="grupo-acciones"><button class="btn-editar" onclick="editarGrupo(' + esc.id + ',' + g.id + ')">Editar</button>';
                 html += '<button class="btn-duplicar" onclick="duplicarGrupo(' + esc.id + ',' + g.id + ')">Duplicar</button>';
                 html += '<button class="btn-eliminar" onclick="eliminarGrupo(' + esc.id + ',' + g.id + ')">Eliminar</button></div></div>';
@@ -1223,7 +1457,189 @@ function actualizarVistaEscenarios() {
         html += '</div>';
     });
     container.innerHTML = html;
+    generarTablaEvolucion();
+    generarGraficoComposicion();
     guardarEstadoAuto();
+    actualizarResumenEjecutivo();
+}
+
+// --- Tabla de evolucion mensual ---
+function generarTablaEvolucion() {
+    var seccion = document.getElementById('seccionEvolucion');
+    var container = document.getElementById('tablaEvolucionContainer');
+    if (!seccion || !container) return;
+    var esc = getEscenarioActivo();
+    if (!esc || esc.grupos.length === 0) { seccion.style.display = 'none'; return; }
+    seccion.style.display = '';
+    var minDate = null, maxDate = null;
+    esc.grupos.forEach(function(g) {
+        var ent = new Date(g.fechaEntrada); var sal = new Date(g.fechaSalida);
+        if (!minDate || ent < minDate) minDate = ent;
+        if (!maxDate || sal > maxDate) maxDate = sal;
+    });
+    if (!minDate || !maxDate) { seccion.style.display = 'none'; return; }
+    var meses = [];
+    var cur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    var fin = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+    while (cur <= fin) { meses.push({ year: cur.getFullYear(), month: cur.getMonth() }); cur.setMonth(cur.getMonth() + 1); }
+    if (meses.length === 0 || meses.length > 24) { container.innerHTML = meses.length > 24 ? '<p style="color:#999;">Periodo demasiado largo (>24 meses).</p>' : ''; return; }
+    var html = '<table><thead><tr><th>Grupo</th>';
+    meses.forEach(function(m) { html += '<th>' + MESES_LABELS[m.month] + ' ' + (m.year % 100) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    var totalDemandaMes = {};
+    meses.forEach(function(m) { totalDemandaMes[m.year + '-' + m.month] = 0; });
+    esc.grupos.forEach(function(g) {
+        var cat = CATEGORIAS[g.categoria]; var entrada = new Date(g.fechaEntrada); var salida = new Date(g.fechaSalida);
+        var trans = g.transicion || null;
+        var fechaTransRecria = null;
+        if (trans && trans.tipo === 'recria' && (g.categoria === 'ternero' || g.categoria === 'ternera')) {
+            if (trans.criterioTransicion === 'peso' && trans.pesoTransicion && g.ganancia > 0) {
+                fechaTransRecria = new Date(entrada.getTime() + Math.ceil((trans.pesoTransicion - g.pesoInicial) / g.ganancia) * 86400000);
+            } else if (trans.criterioTransicion === 'fecha' && trans.fechaTransicion) { fechaTransRecria = new Date(trans.fechaTransicion); }
+        }
+        var fechaParto = (trans && trans.tipo === 'cria' && trans.fechaParto) ? new Date(trans.fechaParto) : null;
+        var fechaDestete = (trans && trans.tipo === 'cria' && trans.fechaDestete) ? new Date(trans.fechaDestete) : null;
+        var cantTerneros = 0, cantTerneras = 0;
+        if (trans && trans.tipo === 'cria' && fechaParto && fechaDestete) {
+            cantTerneros = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (trans.porcentajeMachos||50)/100);
+            cantTerneras = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (1-(trans.porcentajeMachos||50)/100));
+        }
+        html += '<tr><td style="white-space:nowrap;font-weight:600;">' + cat.nombre + ' (' + g.cantidad + ')</td>';
+        meses.forEach(function(m) {
+            var mesKey = m.year + '-' + m.month;
+            var inicioMes = new Date(m.year, m.month, 1); var finMes = new Date(m.year, m.month + 1, 0);
+            var diaDesde = entrada > inicioMes ? entrada : inicioMes; var diaHasta = salida < finMes ? salida : finMes;
+            var diasPresente = Math.max(0, Math.floor((diaHasta - diaDesde) / 86400000) + 1);
+            if (diasPresente <= 0) { html += '<td style="color:#ccc;text-align:center;">-</td>'; return; }
+            var mediados = new Date(m.year, m.month, 15);
+            var diasDesdeEntrada = Math.max(0, Math.floor((mediados - entrada) / 86400000));
+            var pesoActual = g.pesoInicial + g.ganancia * diasDesdeEntrada;
+            var catActual = cat.nombre; var consumoCoef = cat.consumo;
+            if (trans && trans.tipo === 'recria' && fechaTransRecria && mediados >= fechaTransRecria) {
+                var catTrans = CATEGORIAS[trans.nuevaCategoria];
+                if (catTrans) { catActual = catTrans.nombre; consumoCoef = catTrans.consumo; }
+            }
+            var consumoDiario = pesoActual * consumoCoef;
+            // Estado de la vaca y cria al pie
+            var infoEstado = '';
+            if (trans && trans.tipo === 'cria' && fechaParto && fechaDestete) {
+                if (mediados < fechaParto) {
+                    infoEstado = '<br><span style="font-size:0.75em;color:#2980b9;font-weight:600;">Prenada</span>';
+                } else if (mediados >= fechaParto && mediados < fechaDestete) {
+                    var pesoCria = (cat.pesoCria || 80) + 0.6 * Math.floor((mediados - fechaParto) / 86400000);
+                    consumoDiario += pesoCria * (cat.consumoCria || 0.015) * (trans.porcentajeDestete || 85) / 100;
+                    infoEstado = '<br><span style="font-size:0.75em;color:#8e44ad;font-weight:600;">Con cria ' + Math.round(pesoCria) + 'kg</span>';
+                } else {
+                    infoEstado = '<br><span style="font-size:0.75em;color:#7f8c8d;">Vacia</span>';
+                }
+            }
+            totalDemandaMes[mesKey] += consumoDiario * diasPresente * g.cantidad;
+            var cellHtml = '<strong>' + Math.round(pesoActual) + '</strong> kg';
+            cellHtml += '<br><span style="font-size:0.8em;color:#666;">' + consumoDiario.toFixed(1) + ' kg MS/d</span>';
+            if (catActual !== cat.nombre) cellHtml += '<br><span style="font-size:0.75em;color:#2980b9;">' + catActual + '</span>';
+            cellHtml += infoEstado;
+            if (diasPresente < 28) cellHtml += '<br><span style="font-size:0.7em;color:#999;">' + diasPresente + 'd</span>';
+            html += '<td style="text-align:center;line-height:1.3;font-size:0.85em;">' + cellHtml + '</td>';
+        });
+        html += '</tr>';
+        // --- Filas virtuales de terneros/terneras post-destete ---
+        if (trans && trans.tipo === 'cria' && fechaDestete && (cantTerneros > 0 || cantTerneras > 0)) {
+            var destinoDestete = trans.destinoDestete || 'vender';
+            var diasLactancia = Math.max(0, Math.floor((fechaDestete - fechaParto) / 86400000));
+            var pesoRealDestete = (cat.pesoCria || 80) + 0.6 * diasLactancia;
+
+            if (destinoDestete === 'vender') {
+                html += '<tr style="background:#fff3e0;"><td style="white-space:nowrap;font-size:0.85em;padding-left:20px;color:#e67e22;">';
+                html += '\u{1F4B0} Venta ' + (cantTerneros + cantTerneras) + ' terneros al destete';
+                html += '<br><span style="font-size:0.8em;color:#999;">' + Math.round(pesoRealDestete) + ' kg prom. | Salen del campo</span></td>';
+                meses.forEach(function(m) {
+                    var mediados = new Date(m.year, m.month, 15);
+                    var mesDestete = fechaDestete.getFullYear() + '-' + fechaDestete.getMonth();
+                    var mesActual = m.year + '-' + m.month;
+                    if (mesActual === mesDestete) {
+                        html += '<td style="text-align:center;font-size:0.8em;color:#e67e22;font-weight:600;">VENTA<br>' + (cantTerneros + cantTerneras) + ' cab</td>';
+                    } else {
+                        html += '<td style="color:#ccc;text-align:center;">-</td>';
+                    }
+                });
+                html += '</tr>';
+            } else {
+                var virtuales = [];
+                if (cantTerneros > 0) virtuales.push({ cant: cantTerneros, cat: CATEGORIAS.ternero, label: 'Terneros', sexo: '\u2642', pesoBase: pesoRealDestete, ganancia: 0.55 });
+                if (cantTerneras > 0) virtuales.push({ cant: cantTerneras, cat: CATEGORIAS.ternera, label: 'Terneras', sexo: '\u2640', pesoBase: pesoRealDestete - 10, ganancia: 0.50 });
+                virtuales.forEach(function(v) {
+                    html += '<tr style="background:#f0f4ff;"><td style="white-space:nowrap;font-size:0.85em;padding-left:20px;color:#8e44ad;">';
+                    html += v.sexo + ' ' + v.label + ' (' + v.cant + ')';
+                    html += '<br><span style="font-size:0.8em;color:#999;">retenidos - post destete</span></td>';
+                    meses.forEach(function(m) {
+                        var mesKey = m.year + '-' + m.month;
+                        var mediados = new Date(m.year, m.month, 15);
+                        var inicioMes = new Date(m.year, m.month, 1); var finMes = new Date(m.year, m.month + 1, 0);
+                        var diaDesde = fechaDestete > inicioMes ? fechaDestete : inicioMes;
+                        var diaHasta = salida < finMes ? salida : finMes;
+                        var diasPresente = Math.max(0, Math.floor((diaHasta - diaDesde) / 86400000) + 1);
+                        if (diasPresente <= 0 || mediados < fechaDestete || mediados > salida) {
+                            html += '<td style="color:#ccc;text-align:center;">-</td>'; return;
+                        }
+                        var diasDesdeDestete = Math.max(0, Math.floor((mediados - fechaDestete) / 86400000));
+                        var pesoActual = v.pesoBase + v.ganancia * diasDesdeDestete;
+                        var consumoDiario = pesoActual * v.cat.consumo;
+                        var demanda = consumoDiario * diasPresente * v.cant;
+                        totalDemandaMes[mesKey] += demanda;
+                        var cellHtml = '<strong>' + Math.round(pesoActual) + '</strong> kg';
+                        cellHtml += '<br><span style="font-size:0.8em;color:#666;">' + consumoDiario.toFixed(1) + ' kg MS/d</span>';
+                        if (diasPresente < 28) cellHtml += '<br><span style="font-size:0.7em;color:#999;">' + diasPresente + 'd</span>';
+                        html += '<td style="text-align:center;line-height:1.3;font-size:0.85em;">' + cellHtml + '</td>';
+                    });
+                    html += '</tr>';
+                });
+            }
+        }
+    });
+    html += '<tr class="fila-total"><td style="font-weight:700;">Demanda total (kg MS)</td>';
+    meses.forEach(function(m) { html += '<td style="text-align:center;font-weight:700;">' + formatNum(Math.round(totalDemandaMes[m.year + '-' + m.month])) + '</td>'; });
+    html += '</tr></tbody></table>';
+    container.innerHTML = html;
+}
+
+// --- Grafico composicion del rodeo ---
+var chartComposicion, chartDemandaCategoria;
+function generarGraficoComposicion() {
+    var seccion = document.getElementById('seccionComposicion');
+    var ctx = document.getElementById('chartComposicion');
+    var detalle = document.getElementById('composicionDetalle');
+    if (!seccion || !ctx) return;
+    var esc = getEscenarioActivo();
+    if (!esc || esc.grupos.length === 0) { seccion.style.display = 'none'; return; }
+    seccion.style.display = '';
+    var porCategoria = {}; var totalCab = 0;
+    esc.grupos.forEach(function(g) {
+        var cat = CATEGORIAS[g.categoria]; var nombre = cat ? cat.nombre : g.categoria;
+        porCategoria[nombre] = (porCategoria[nombre] || 0) + g.cantidad; totalCab += g.cantidad;
+        // Agregar terneros/terneras virtuales de cria (solo si se retienen)
+        var trans = g.transicion || null;
+        if (trans && trans.tipo === 'cria' && trans.fechaDestete && g.categoria === 'vaca' && (trans.destinoDestete || 'vender') === 'retener') {
+            var cantT = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (trans.porcentajeMachos||50)/100);
+            var cantH = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (1-(trans.porcentajeMachos||50)/100));
+            if (cantT > 0) { var nomT = CATEGORIAS.ternero.nombre + ' (retenidos)'; porCategoria[nomT] = (porCategoria[nomT] || 0) + cantT; totalCab += cantT; }
+            if (cantH > 0) { var nomH = CATEGORIAS.ternera.nombre + ' (retenidas)'; porCategoria[nomH] = (porCategoria[nomH] || 0) + cantH; totalCab += cantH; }
+        }
+    });
+    var labels = Object.keys(porCategoria);
+    var valores = labels.map(function(l) { return porCategoria[l]; });
+    var colores = labels.map(function(_, i) { return generarColorGrupo(i); });
+    if (chartComposicion) chartComposicion.destroy();
+    chartComposicion = new Chart(ctx, { type: 'doughnut', data: { labels: labels, datasets: [{ data: valores, backgroundColor: colores, borderWidth: 2, borderColor: '#fff' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+    if (detalle) {
+        var html = '<table><thead><tr><th>Categoria</th><th>Cabezas</th><th>%</th></tr></thead><tbody>';
+        labels.forEach(function(l, i) {
+            html += '<tr><td><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + colores[i] + ';margin-right:6px;vertical-align:middle;"></span>' + l + '</td>';
+            html += '<td style="text-align:right;">' + valores[i] + '</td><td style="text-align:right;">' + (valores[i]/totalCab*100).toFixed(1) + '%</td></tr>';
+        });
+        html += '<tr class="fila-total"><td>Total</td><td style="text-align:right;">' + totalCab + '</td><td style="text-align:right;">100%</td></tr></tbody></table>';
+        detalle.innerHTML = html;
+    }
 }
 
 // --- OFERTA/DEMANDA ---
@@ -1236,9 +1652,30 @@ function calcularDemanda() {
     var stockInicial = parseFloat(document.getElementById('stockInicialInput').value) || 0;
     var ofertaMensual = configuracionCampo.produccionMensualTotal;
     var demandaMensual = Array(12).fill(0);
+    var demandaPorGrupo = [];
     esc.grupos.forEach(function(g) {
         var cat = CATEGORIAS[g.categoria]; if (!cat.usaPasto) return;
         var entrada = new Date(g.fechaEntrada); var salida = new Date(g.fechaSalida);
+        var trans = g.transicion || null;
+        var demandaGrupo = Array(12).fill(0);
+
+        var fechaParto = null, fechaDestete = null, fechaTransRecria = null;
+        var cantTerneros = 0, cantTerneras = 0;
+        if (trans && trans.tipo === 'cria' && g.categoria === 'vaca') {
+            fechaParto = trans.fechaParto ? new Date(trans.fechaParto) : null;
+            fechaDestete = trans.fechaDestete ? new Date(trans.fechaDestete) : null;
+            cantTerneros = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (trans.porcentajeMachos||50)/100);
+            cantTerneras = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (1-(trans.porcentajeMachos||50)/100));
+        }
+        if (trans && trans.tipo === 'recria' && (g.categoria === 'ternero' || g.categoria === 'ternera')) {
+            if (trans.criterioTransicion === 'peso' && trans.pesoTransicion && g.ganancia > 0) {
+                var diasHastaT = Math.ceil((trans.pesoTransicion - g.pesoInicial) / g.ganancia);
+                fechaTransRecria = new Date(entrada.getTime() + diasHastaT * 86400000);
+            } else if (trans.criterioTransicion === 'fecha' && trans.fechaTransicion) {
+                fechaTransRecria = new Date(trans.fechaTransicion);
+            }
+        }
+
         var mesActual = new Date(entrada.getFullYear(), entrada.getMonth(), 1);
         var mesFinal = new Date(salida.getFullYear(), salida.getMonth(), 1);
         while (mesActual <= mesFinal) {
@@ -1249,14 +1686,39 @@ function calcularDemanda() {
             var diaHasta = salida < finMes ? salida : finMes;
             var diasPresente = Math.max(0, Math.floor((diaHasta - diaDesde) / 86400000) + 1);
             if (diasPresente > 0) {
-                var diasDesdeEntrada = Math.max(0, Math.floor((new Date(mesActual.getFullYear(), mesActual.getMonth(), 15) - entrada) / 86400000));
+                var mediados = new Date(mesActual.getFullYear(), mesActual.getMonth(), 15);
+                var diasDesdeEntrada = Math.max(0, Math.floor((mediados - entrada) / 86400000));
                 var pesoPromedio = g.pesoInicial + g.ganancia * diasDesdeEntrada;
-                var consumoDiario = pesoPromedio * cat.consumo;
-                if (g.categoria === 'vaca' && cat.consumoCria) { consumoDiario += (cat.pesoCria + g.ganancia * 0.3 * diasDesdeEntrada) * cat.consumoCria; }
-                demandaMensual[mesIdx] += consumoDiario * diasPresente * g.cantidad;
+                var demandaMes = 0;
+
+                if (trans && trans.tipo === 'cria' && fechaParto && fechaDestete) {
+                    var consumoDiarioVaca = pesoPromedio * cat.consumo;
+                    if (mediados >= fechaParto && mediados < fechaDestete) {
+                        var diasDesdeParto = Math.max(0, Math.floor((mediados - fechaParto) / 86400000));
+                        var pesoCriaActual = (cat.pesoCria || 80) + 0.6 * diasDesdeParto;
+                        consumoDiarioVaca += pesoCriaActual * (cat.consumoCria || 0.015) * (trans.porcentajeDestete||85)/100;
+                    }
+                    demandaMes += consumoDiarioVaca * diasPresente * g.cantidad;
+                    var destinoDestete = trans.destinoDestete || 'vender';
+                    if (destinoDestete === 'retener' && fechaDestete && mediados >= fechaDestete && mediados <= salida) {
+                        var diasDesdeDestete = Math.max(0, Math.floor((mediados - fechaDestete) / 86400000));
+                        if (cantTerneros > 0) { demandaMes += ((cat.pesoDestete || 180) + 0.55 * diasDesdeDestete) * CATEGORIAS.ternero.consumo * diasPresente * cantTerneros; }
+                        if (cantTerneras > 0) { demandaMes += (((cat.pesoDestete || 180) - 10) + 0.50 * diasDesdeDestete) * CATEGORIAS.ternera.consumo * diasPresente * cantTerneras; }
+                    }
+                } else if (trans && trans.tipo === 'recria' && fechaTransRecria) {
+                    var catConsumo = mediados < fechaTransRecria ? cat.consumo : CATEGORIAS[trans.nuevaCategoria].consumo;
+                    demandaMes += pesoPromedio * catConsumo * diasPresente * g.cantidad;
+                } else {
+                    var consumoDiario = pesoPromedio * cat.consumo;
+                    if (g.categoria === 'vaca' && cat.consumoCria) { consumoDiario += (cat.pesoCria + g.ganancia * 0.3 * diasDesdeEntrada) * cat.consumoCria; }
+                    demandaMes += consumoDiario * diasPresente * g.cantidad;
+                }
+                demandaMensual[mesIdx] += demandaMes;
+                demandaGrupo[mesIdx] += demandaMes;
             }
             mesActual.setMonth(mesActual.getMonth() + 1);
         }
+        demandaPorGrupo.push({ nombre: cat.nombre + ' (' + g.cantidad + ')', data: demandaGrupo });
     });
     var balanceMensual = Array(12).fill(0); var diferidoAcumulado = Array(12).fill(0); var disponibilidadMensual = Array(12).fill(0); var diferidoActual = stockInicial;
     for (var i = 0; i < 12; i++) {
@@ -1270,12 +1732,14 @@ function calcularDemanda() {
     }
     mostrarGraficoOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
     mostrarGraficoDiferimiento(diferidoAcumulado, disponibilidadMensual);
+    mostrarGraficoDemandaCategoria(demandaPorGrupo);
     generarTablaDetalleMensual(ofertaMensual, demandaMensual, balanceMensual, diferidoAcumulado, eficiencia, mesInicio);
     generarAlertasDemanda(ofertaMensual, demandaMensual, balanceMensual, diferidoAcumulado, eficiencia, mesInicio);
     calcularIndicadoresOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
     detectarSuplementacionNecesaria(balanceMensual, demandaMensual, mesInicio);
     generarAlertasPredictivas(balanceMensual, demandaMensual, ofertaMensual, eficiencia, mesInicio);
     calcularBalanceHidrico();
+    actualizarResumenEjecutivo();
     document.getElementById('resultadosDemanda').style.display = 'block';
     document.getElementById('resultadosDemanda').scrollIntoView({ behavior: 'smooth' });
 }
@@ -1295,6 +1759,18 @@ function calcularIndicadoresOfertaDemanda(oferta, demanda, balance, eficiencia) 
     var tasa = demandaTotal / produccionAprov * 100;
     document.getElementById('tasaUso').textContent = tasa.toFixed(1);
     document.getElementById('tasaUso').style.color = tasa > 100 ? '#e74c3c' : tasa > 85 ? '#f39c12' : '#27ae60';
+    // Eficiencia de conversion
+    var esc = getEscenarioActivo(); var kgCarne = 0;
+    if (esc && esc.grupos) { esc.grupos.forEach(function(g) {
+        var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
+        kgCarne += g.ganancia * dias * g.cantidad;
+    }); }
+    var elEf = document.getElementById('efConversion'); var elKg = document.getElementById('kgCarneTotal');
+    if (elKg) elKg.textContent = formatNum(kgCarne);
+    if (elEf) {
+        if (kgCarne > 0) { var efConv = demandaTotal / kgCarne; elEf.textContent = efConv.toFixed(1); elEf.style.color = efConv < 10 ? '#27ae60' : efConv < 15 ? '#f39c12' : '#e74c3c'; }
+        else { elEf.textContent = '-'; elEf.style.color = ''; }
+    }
 }
 
 function mostrarGraficoOfertaDemanda(oferta, demanda, balance, eficiencia) {
@@ -1316,6 +1792,20 @@ function mostrarGraficoDiferimiento(diferido, disponibilidad) {
     ]}, options: { responsive: true, maintainAspectRatio: false,
         plugins: { title: { display: true, text: 'Diferimiento (perdida 5%/mes)', font: { size: 14, weight: 'bold' } }, legend: { position: 'top' } },
         scales: { y: { beginAtZero: true, ticks: { callback: function(v){return (v/1000).toFixed(0)+'k';} } } } } });
+}
+
+function mostrarGraficoDemandaCategoria(demandaPorGrupo) {
+    var ctx = document.getElementById('chartDemandaCategoria'); if (!ctx) return;
+    if (chartDemandaCategoria) chartDemandaCategoria.destroy();
+    if (!demandaPorGrupo || demandaPorGrupo.length === 0) return;
+    var datasets = demandaPorGrupo.map(function(g, idx) {
+        var color = generarColorGrupo(idx);
+        return { label: g.nombre, data: g.data, backgroundColor: color + '90', borderColor: color, borderWidth: 1 };
+    });
+    chartDemandaCategoria = new Chart(ctx, { type: 'bar', data: { labels: MESES_NOMBRES, datasets: datasets },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Demanda por grupo (kg MS/mes)', font: { size: 14, weight: 'bold' } }, legend: { position: 'bottom' } },
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: function(v){return (v/1000).toFixed(0)+'k';} } } } } });
 }
 
 function generarTablaDetalleMensual(oferta, demanda, balance, diferido, eficiencia, mesInicio) {
@@ -1455,15 +1945,39 @@ function calcularEconomico() {
     var comisionVenta = (parseFloat(document.getElementById('comisionVenta').value)||0) / 100;
     var costoFleteCab = parseFloat(document.getElementById('costoFlete').value) || 0;
     var inversionTotal = 0; var ingresoTotal = 0; var detalleGrupos = [];
+    var totalCabezas = 0;
     esc.grupos.forEach(function(g) {
         var cat = CATEGORIAS[g.categoria]; var dias = Math.floor((new Date(g.fechaSalida)-new Date(g.fechaEntrada))/86400000);
         var pesoFinal = g.pesoInicial + g.ganancia*dias; var kgCompra = g.pesoInicial*g.cantidad; var kgVenta = pesoFinal*g.cantidad;
+        var kgProducidos = g.ganancia*dias*g.cantidad;
+        // Produccion de terneros destete (se atribuye a la vaca)
+        var kgTerneros = 0; var cantTerneros = 0, cantTerneras = 0; var infoDestete = ''; var ingresoTerneros = 0;
+        var trans = g.transicion || null;
+        if (trans && trans.tipo === 'cria' && trans.fechaDestete && g.categoria === 'vaca') {
+            cantTerneros = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (trans.porcentajeMachos||50)/100);
+            cantTerneras = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (1-(trans.porcentajeMachos||50)/100));
+            var diasLactancia = Math.floor((new Date(trans.fechaDestete) - new Date(trans.fechaParto)) / 86400000);
+            var pesoDesteteMachos = (cat.pesoCria || 80) + 0.6 * Math.max(0, diasLactancia);
+            var pesoDesteteHembras = pesoDesteteMachos - 10;
+            kgTerneros = cantTerneros * pesoDesteteMachos + cantTerneras * pesoDesteteHembras;
+            kgProducidos += kgTerneros;
+            var destinoDestete = trans.destinoDestete || 'vender';
+            if (destinoDestete === 'vender') {
+                var precioTernero = trans.precioTernero || g.costos.venta;
+                ingresoTerneros = kgTerneros * precioTernero;
+                infoDestete = ' (Venta: ' + (cantTerneros+cantTerneras) + ' terneros, ' + formatNum(kgTerneros) + ' kg a $' + formatNum(precioTernero) + '/kg)';
+            } else {
+                infoDestete = ' (Retiene: ' + (cantTerneros+cantTerneras) + ' terneros, ' + formatNum(kgTerneros) + ' kg)';
+            }
+        }
         var costoCompra = kgCompra*g.costos.compra; var costoSanidad = g.costos.sanidad*g.cantidad; var costoFlete = costoFleteCab*g.cantidad;
-        var ingresoBruto = kgVenta*g.costos.venta; var costoComision = ingresoBruto*comisionVenta;
+        var ingresoBruto = kgVenta*g.costos.venta + ingresoTerneros; var costoComision = ingresoBruto*comisionVenta;
         inversionTotal += costoCompra + costoSanidad; ingresoTotal += ingresoBruto;
-        detalleGrupos.push({ nombre:cat.nombre, cantidad:g.cantidad, kgProducidos:g.ganancia*dias*g.cantidad, costoCompra:costoCompra,
+        totalCabezas += g.cantidad;
+        detalleGrupos.push({ nombre:cat.nombre, cantidad:g.cantidad, kgProducidos:kgProducidos, costoCompra:costoCompra,
             costoSanidad:costoSanidad, costoFlete:costoFlete, costoComision:costoComision, ingresoBruto:ingresoBruto,
-            margen:ingresoBruto-costoComision-costoCompra-costoSanidad-costoFlete, dias:dias, pesoFinal:pesoFinal });
+            margen:ingresoBruto-costoComision-costoCompra-costoSanidad-costoFlete, dias:dias, pesoFinal:pesoFinal,
+            infoDestete:infoDestete, ingresoTerneros:ingresoTerneros });
     });
     var totalCostosCompra = detalleGrupos.reduce(function(s,d){return s+d.costoCompra;},0);
     var totalCostosSanidad = detalleGrupos.reduce(function(s,d){return s+d.costoSanidad;},0);
@@ -1487,7 +2001,7 @@ function calcularEconomico() {
     var htmlD = '<table><thead><tr><th>Grupo</th><th>Cab</th><th>Dias</th><th>Peso Final</th><th>Kg Prod</th><th>Ingreso</th><th>Costos</th><th>Margen</th></tr></thead><tbody>';
     detalleGrupos.forEach(function(d) {
         htmlD += '<tr><td>' + d.nombre + '</td><td>' + d.cantidad + '</td><td>' + d.dias + '</td><td>' + d.pesoFinal.toFixed(0) + ' kg</td>';
-        htmlD += '<td>' + formatNum(d.kgProducidos) + '</td><td>' + formatMoney(d.ingresoBruto) + '</td>';
+        htmlD += '<td>' + formatNum(d.kgProducidos) + (d.infoDestete || '') + '</td><td>' + formatMoney(d.ingresoBruto) + '</td>';
         htmlD += '<td>' + formatMoney(d.costoCompra+d.costoSanidad+d.costoFlete+d.costoComision) + '</td>';
         htmlD += '<td style="color:' + (d.margen>=0?'#27ae60':'#e74c3c') + ';font-weight:700;">' + formatMoney(d.margen) + '</td></tr>';
     });
@@ -1498,36 +2012,161 @@ function calcularEconomico() {
     todosLosCostos.forEach(function(c) { if (c.monto>0) htmlC += '<tr><td>' + c.concepto + '</td><td>' + formatMoney(c.monto) + '</td><td>' + (c.monto/costoTotalG*100).toFixed(1) + '%</td></tr>'; });
     htmlC += '<tr class="fila-total"><td>TOTAL</td><td>' + formatMoney(costoTotalG) + '</td><td>100%</td></tr></tbody></table>';
     document.getElementById('tablaComposicionCostos').innerHTML = htmlC;
+    // Tabla de sensibilidad de precios
+    var variaciones = [-20, -10, 0, 10, 20];
+    var costosFijos = totalCostosSanidad + totalFlete + gastosGenerales;
+    var htmlSens = '<table><thead><tr><th>Precio venta \\ Precio compra</th>';
+    variaciones.forEach(function(vc) { htmlSens += '<th>Compra ' + (vc >= 0 ? '+' : '') + vc + '%</th>'; });
+    htmlSens += '</tr></thead><tbody>';
+    variaciones.forEach(function(vv) {
+        htmlSens += '<tr><td style="font-weight:600;">Venta ' + (vv >= 0 ? '+' : '') + vv + '%</td>';
+        variaciones.forEach(function(vc) {
+            var ingAdj = 0, costoCompraAdj = 0;
+            detalleGrupos.forEach(function(d) { ingAdj += d.ingresoBruto * (1+vv/100); costoCompraAdj += d.costoCompra * (1+vc/100); });
+            var comisionAdj = ingAdj * comisionVenta;
+            var margenAdj = ingAdj - costoCompraAdj - comisionAdj - costosFijos;
+            var esBase = (vc === 0 && vv === 0);
+            var bg = esBase ? 'background:#f0f4ff;font-weight:700;' : '';
+            var color = margenAdj >= 0 ? '#27ae60' : '#e74c3c';
+            htmlSens += '<td style="' + bg + 'color:' + color + ';">' + formatMoneyCompact(margenAdj) + '</td>';
+        });
+        htmlSens += '</tr>';
+    });
+    htmlSens += '</tbody></table>';
+    document.getElementById('tablaSensibilidad').innerHTML = htmlSens;
     document.getElementById('resultadosEconomico').style.display = 'block';
     document.getElementById('resultadosEconomico').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Valores de referencia orientativos (mercado argentino)
+var VALORES_REFERENCIA = {
+    costoLabores: 45000, costosEstructura: 30000, costoSuplemento: 200, kgSuplemento: 0,
+    comisionVenta: 4, costoFlete: 15000,
+    precioCompra: { ternero:2200, ternera:2000, novillito:1800, novillo:1600, vaquillona:1500, vaca:900, toro:800 },
+    precioVenta: { ternero:2400, ternera:2200, novillito:2000, novillo:1800, vaquillona:1700, vaca:1000, toro:900 },
+    sanidad: { ternero:8000, ternera:8000, novillito:6000, novillo:5000, vaquillona:6000, vaca:7000, toro:5000 }
+};
+function cargarValoresReferencia() {
+    document.getElementById('costoLabores').value = VALORES_REFERENCIA.costoLabores;
+    document.getElementById('costosEstructura').value = VALORES_REFERENCIA.costosEstructura;
+    document.getElementById('costoSuplemento').value = VALORES_REFERENCIA.costoSuplemento;
+    document.getElementById('kgSuplemento').value = VALORES_REFERENCIA.kgSuplemento;
+    document.getElementById('comisionVenta').value = VALORES_REFERENCIA.comisionVenta;
+    document.getElementById('costoFlete').value = VALORES_REFERENCIA.costoFlete;
+    var esc = getEscenarioActivo();
+    if (esc && esc.grupos.length > 0) {
+        esc.grupos.forEach(function(g) {
+            var cat = g.categoria;
+            if (VALORES_REFERENCIA.precioCompra[cat]) g.costos.compra = VALORES_REFERENCIA.precioCompra[cat];
+            if (VALORES_REFERENCIA.precioVenta[cat]) g.costos.venta = VALORES_REFERENCIA.precioVenta[cat];
+            if (VALORES_REFERENCIA.sanidad[cat]) g.costos.sanidad = VALORES_REFERENCIA.sanidad[cat];
+        });
+        actualizarVistaEscenarios();
+    }
+    var btn = event.target;
+    var textoOriginal = btn.textContent;
+    btn.textContent = 'Valores cargados!'; btn.style.background = '#27ae60'; btn.style.color = '#fff';
+    setTimeout(function() { btn.textContent = textoOriginal; btn.style.background = ''; btn.style.color = ''; }, 2000);
 }
 
 // --- INICIALIZACION ---
 function mostrarBienvenida() { var el = document.getElementById('bienvenida'); if (el) el.style.display = 'flex'; }
 function ocultarBienvenida() { var el = document.getElementById('bienvenida'); if (el) el.style.display = 'none'; }
 
+// --- Control de version de prueba ---
+var FECHA_EXPIRACION = new Date('2026-06-01');
+
+function verificarExpiracion() {
+    if (new Date() > FECHA_EXPIRACION) {
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f6fa;">' +
+            '<div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.10);max-width:500px;">' +
+            '<div style="font-size:3em;margin-bottom:15px;">&#9888;</div>' +
+            '<h2 style="color:#e74c3c;margin-bottom:10px;">Version de prueba expirada</h2>' +
+            '<p style="color:#555;margin-bottom:20px;">Esta version de Balance Forrajero PRO ha expirado el ' + FECHA_EXPIRACION.toLocaleDateString('es-AR') + '.</p>' +
+            '<p style="color:#555;">Contacta al autor para obtener la version actualizada:</p>' +
+            '<p style="margin-top:10px;"><a href="mailto:insau.sj@gmail.com" style="color:#2ecc71;font-weight:600;">insau.sj@gmail.com</a></p>' +
+            '</div></div>';
+        return false;
+    }
+    return true;
+}
+
 function cargarDatos() {
+    if (!verificarExpiracion()) return;
     datosForrajeros = DATOS_FORRAJEROS_EMBEBIDOS;
     datosForrajeros.recursos.forEach(function(r) { mesesUsoRecursos[r] = (MESES_USO_DEFECTO[r] || [1,1,1,1,1,1,1,1,1,1,1,1]).slice(); });
     generarInputsRecursos();
     var restaurado = restaurarEstadoAuto();
     if (!restaurado) {
         crearEscenario('Escenario Base');
-        // Cargar datos de ejemplo por defecto
-        var haInputs = { 'Campo_natural': 10, 'Pastura_consociada': 32, 'Pastura_de_agropiro': 15, 'Pastura_de_festuca': 71 };
-        Object.keys(haInputs).forEach(function(key) { var el = document.getElementById('ha_' + key); if (el) el.value = haInputs[key]; });
-        var esc = getEscenarioActivo();
-        if (esc) {
-            esc.grupos.push({ id: nextId++, categoria: 'novillo', cantidad: 91, pesoInicial: 370, ganancia: 0.800,
-                criterioSalida: 'fecha', fechaEntrada: '2025-01-10', fechaSalida: '2025-10-30', pesoObjetivo: null, costos: { compra: 1200, venta: 1400, sanidad: 5000 } });
-            esc.grupos.push({ id: nextId++, categoria: 'ternera', cantidad: 150, pesoInicial: 180, ganancia: 0.650,
-                criterioSalida: 'fecha', fechaEntrada: '2025-01-01', fechaSalida: '2025-12-31', pesoObjetivo: null, costos: { compra: 800, venta: 1100, sanidad: 4000 } });
-            actualizarVistaEscenarios();
-        }
-        setTimeout(function() { try { calcularBalance(); } catch(e) {} }, 300);
         mostrarBienvenida();
     }
 }
+
+// Funcion auxiliar para limpiar y preparar antes de cargar un ejemplo
+function _prepararEjemplo() {
+    ocultarBienvenida();
+    escenarios = [];
+    crearEscenario('Escenario Base');
+}
+
+function _finalizarEjemplo(nombreEjemplo) {
+    setTimeout(function() {
+        try { calcularBalance(); } catch(e) { console.error('Error auto-calculo:', e); }
+    }, 300);
+    alert(nombreEjemplo + ' cargado.');
+}
+
+// Ejemplo 1: Rodeo de Cria (500 ha, Pampa Humeda)
+function cargarEjemploCria() {
+    _prepararEjemplo();
+    generarInputsRecursos({ 'Campo natural': 80, 'Pastura consociada': 180, 'Pastura de festuca': 150, 'Pastura de agropiro': 90 });
+    var esc = getEscenarioActivo();
+    if (esc) {
+        esc.grupos = [];
+        esc.grupos.push({ id: nextId++, categoria: 'vaca', cantidad: 170, pesoInicial: 430, ganancia: 0.00,
+            criterioSalida: 'fecha', fechaEntrada: '2025-01-01', fechaSalida: '2025-12-31', pesoObjetivo: null,
+            costos: { compra: 900, venta: 800, sanidad: 6000 }, modoGanancia: 'manual',
+            transicion: { tipo: 'cria', fechaParto: '2025-08-01', fechaDestete: '2026-03-15', porcentajeDestete: 88, porcentajeMachos: 50, destinoDestete: 'vender', precioTernero: 2200 } });
+        esc.grupos.push({ id: nextId++, categoria: 'vaca', cantidad: 30, pesoInicial: 400, ganancia: 0.00,
+            criterioSalida: 'fecha', fechaEntrada: '2025-01-01', fechaSalida: '2025-04-30', pesoObjetivo: null,
+            costos: { compra: 900, venta: 750, sanidad: 4000 }, modoGanancia: 'manual', transicion: null });
+        esc.grupos.push({ id: nextId++, categoria: 'toro', cantidad: 7, pesoInicial: 800, ganancia: 0.00,
+            criterioSalida: 'fecha', fechaEntrada: '2025-01-01', fechaSalida: '2025-12-31', pesoObjetivo: null,
+            costos: { compra: 1500, venta: 1000, sanidad: 8000 }, modoGanancia: 'manual', transicion: null });
+        esc.grupos.push({ id: nextId++, categoria: 'vaquillona', cantidad: 30, pesoInicial: 320, ganancia: 0.40,
+            criterioSalida: 'fecha', fechaEntrada: '2025-05-01', fechaSalida: '2025-12-31', pesoObjetivo: null,
+            costos: { compra: 1500, venta: 1200, sanidad: 5000 }, modoGanancia: 'manual', transicion: null });
+        actualizarVistaEscenarios();
+    }
+    _finalizarEjemplo('Ejemplo Cria (500 ha)');
+}
+
+// Ejemplo 2: Rodeo de Recria (250 ha)
+function cargarEjemploRecria() {
+    _prepararEjemplo();
+    generarInputsRecursos({ 'Pastura consociada': 100, 'Pastura de festuca': 80, 'Pastura de agropiro': 70 });
+    var esc = getEscenarioActivo();
+    if (esc) {
+        esc.grupos = [];
+        esc.grupos.push({ id: nextId++, categoria: 'ternero', cantidad: 80, pesoInicial: 180, ganancia: 0.55,
+            criterioSalida: 'fecha', fechaEntrada: '2025-04-01', fechaSalida: '2026-03-31', pesoObjetivo: null,
+            costos: { compra: 2200, venta: 1800, sanidad: 8000 }, modoGanancia: 'manual',
+            transicion: { tipo: 'recria', criterioTransicion: 'peso', pesoTransicion: 280, fechaTransicion: null, nuevaCategoria: 'novillito' } });
+        esc.grupos.push({ id: nextId++, categoria: 'ternera', cantidad: 60, pesoInicial: 170, ganancia: 0.50,
+            criterioSalida: 'fecha', fechaEntrada: '2025-04-01', fechaSalida: '2026-03-31', pesoObjetivo: null,
+            costos: { compra: 2000, venta: 1500, sanidad: 8000 }, modoGanancia: 'manual',
+            transicion: { tipo: 'recria', criterioTransicion: 'peso', pesoTransicion: 260, fechaTransicion: null, nuevaCategoria: 'vaquillona' } });
+        esc.grupos.push({ id: nextId++, categoria: 'novillito', cantidad: 50, pesoInicial: 300, ganancia: 0.70,
+            criterioSalida: 'fecha', fechaEntrada: '2025-01-01', fechaSalida: '2025-09-30', pesoObjetivo: null,
+            costos: { compra: 1800, venta: 1600, sanidad: 5000 }, modoGanancia: 'manual', transicion: null });
+        actualizarVistaEscenarios();
+    }
+    _finalizarEjemplo('Ejemplo Recria (250 ha)');
+}
+
+// Alias para compatibilidad
+function cargarDatosEjemplo() { cargarEjemploCria(); }
 
 var FEEDBACK_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfiLJB8cCuOIQ5CgiCuR64r9ETUlS_dNUgq6RsWhS98OTb7dw/viewform';
 function abrirFeedback() { document.getElementById('feedbackModal').classList.add('activo'); }
@@ -1536,56 +2175,209 @@ function irAlFormulario() { window.open(FEEDBACK_FORM_URL, '_blank'); cerrarFeed
 
 // --- INFORME IMPRIMIBLE ---
 function imprimirInforme() {
-    // 1. Llenar encabezado del informe
-    var nombreCampo = document.getElementById('nombreCampo').value.trim() || 'No especificado';
-    var nombreAsesor = document.getElementById('nombreAsesor').value.trim() || 'No especificado';
-    var hoy = new Date();
-    var fecha = hoy.getDate() + '/' + (hoy.getMonth() + 1) + '/' + hoy.getFullYear();
-    document.getElementById('informeNombreCampo').textContent = nombreCampo;
-    document.getElementById('informeNombreAsesor').textContent = nombreAsesor;
-    document.getElementById('informeFecha').textContent = fecha;
-
-    // 2. Convertir cada chart canvas a imagen estatica
-    var charts = [chartBalance, chartAcumulado, chartOfertaDemanda, chartDiferimiento];
-    var convertidos = 0;
-    var totalCharts = 0;
-
-    charts.forEach(function(c) {
-        if (!c) return;
-        totalCharts++;
-        try {
-            var canvas = c.canvas;
-            var img = new Image();
-            img.className = 'chart-print-img';
-            img.onload = function() {
-                convertidos++;
-                if (convertidos >= totalCharts) {
-                    // Todas las imagenes cargadas, ahora imprimir
-                    window.print();
-                }
-            };
-            img.src = canvas.toDataURL('image/png');
-            canvas.style.display = 'none';
-            canvas.parentNode.insertBefore(img, canvas.nextSibling);
-        } catch(e) { totalCharts--; }
-    });
-
-    // Si no hay charts, imprimir directo
-    if (totalCharts === 0) { window.print(); }
+    generarInforme();
 }
 
-function restaurarCharts() {
-    document.querySelectorAll('.chart-print-img').forEach(function(img) {
-        img.parentNode.removeChild(img);
-    });
-    document.querySelectorAll('.chart-wrapper canvas').forEach(function(canvas) {
-        canvas.style.display = '';
-    });
+function generarInforme() {
+    var div = document.getElementById('informeImprimible');
+    if (!div) return;
+    var html = '';
+    var fecha = new Date().toLocaleDateString('es-AR');
+    html += '<div class="informe-header"><h1>Balance Forrajero PRO - Informe</h1><p>Generado el ' + fecha + '</p></div>';
+    // Datos del campo
+    if (configuracionCampo) {
+        html += '<div class="informe-seccion"><h2>Datos del Campo</h2><div class="informe-kpi">';
+        html += '<div class="informe-kpi-item"><div class="kpi-label">Superficie</div><div class="kpi-value">' + configuracionCampo.superficie + ' ha</div></div>';
+        var nRec = recursosActivos ? recursosActivos.length : 0;
+        html += '<div class="informe-kpi-item"><div class="kpi-label">Recursos</div><div class="kpi-value">' + nRec + '</div></div>';
+        if (configuracionCampo.produccionAnual) html += '<div class="informe-kpi-item"><div class="kpi-label">Produccion anual</div><div class="kpi-value">' + formatNumCompact(configuracionCampo.produccionAnual) + ' kg MS</div></div>';
+        html += '</div>';
+        if (configuracionCampo.recursos && configuracionCampo.recursos.length > 0) {
+            html += '<table><thead><tr><th>Recurso</th><th>Hectareas</th></tr></thead><tbody>';
+            configuracionCampo.recursos.forEach(function(rc) {
+                html += '<tr><td>' + rc.recurso + '</td><td>' + rc.hectareas + '</td></tr>';
+            });
+            html += '</tbody></table>';
+        }
+        html += '</div>';
+    }
+    // Rodeo
+    var esc = getEscenarioActivo();
+    if (esc && esc.grupos.length > 0) {
+        var totalCab = esc.grupos.reduce(function(s,g){ return s+g.cantidad; },0);
+        html += '<div class="informe-seccion"><h2>Rodeo - ' + esc.nombre + '</h2><div class="informe-kpi">';
+        html += '<div class="informe-kpi-item"><div class="kpi-label">Grupos</div><div class="kpi-value">' + esc.grupos.length + '</div></div>';
+        html += '<div class="informe-kpi-item"><div class="kpi-label">Cabezas</div><div class="kpi-value">' + totalCab + '</div></div></div>';
+        html += '<table><thead><tr><th>Categoria</th><th>Cab</th><th>Peso ini</th><th>Ganancia</th><th>Entrada</th><th>Salida</th></tr></thead><tbody>';
+        esc.grupos.forEach(function(g) {
+            var cat = CATEGORIAS[g.categoria];
+            html += '<tr><td>' + cat.nombre + '</td><td>' + g.cantidad + '</td><td>' + g.pesoInicial + ' kg</td>';
+            html += '<td>' + g.ganancia + ' kg/d</td><td>' + g.fechaEntrada + '</td><td>' + g.fechaSalida + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+    }
+    // Produccion forrajera
+    var tablaProduccion = document.getElementById('tablaProduccionRecursos');
+    if (tablaProduccion && tablaProduccion.innerHTML) {
+        html += '<div class="informe-seccion"><h2>Produccion Forrajera por Recurso</h2>' + tablaProduccion.innerHTML + '</div>';
+    }
+    // Balance oferta-demanda
+    var tablaDetMensual = document.getElementById('tablaDetalleMensualBody');
+    if (tablaDetMensual && tablaDetMensual.innerHTML) {
+        html += '<div class="informe-seccion"><h2>Balance Oferta - Demanda Mensual</h2><table><thead><tr><th>Mes</th><th>Oferta (kg MS)</th><th>Demanda (kg MS)</th><th>Balance</th><th>Estado</th></tr></thead><tbody>' + tablaDetMensual.innerHTML + '</tbody></table></div>';
+    }
+    // Economico
+    var tablaDetEco = document.getElementById('tablaDetalleEconomico');
+    if (tablaDetEco && tablaDetEco.innerHTML) {
+        html += '<div class="informe-seccion"><h2>Resultado Economico</h2><div class="informe-kpi">';
+        var ecoIds = ['inversionTotal','ingresoTotal','margenBrutoTotal','margenBrutoHa','margenNetoTotal'];
+        var ecoLabels = ['Inversion','Ingreso Bruto','Margen Bruto','Margen Bruto/ha','Margen Neto'];
+        ecoIds.forEach(function(id,i) {
+            var el = document.getElementById(id);
+            if (el) html += '<div class="informe-kpi-item"><div class="kpi-label">' + ecoLabels[i] + '</div><div class="kpi-value" style="color:' + (el.style.color||'#2c3e50') + ';">' + (el.title||el.textContent) + '</div></div>';
+        });
+        html += '</div><h3 style="font-size:1em;margin:12px 0 6px;">Detalle por grupo</h3>' + tablaDetEco.innerHTML;
+        var tablaCostos = document.getElementById('tablaComposicionCostos');
+        if (tablaCostos && tablaCostos.innerHTML) html += '<h3 style="font-size:1em;margin:12px 0 6px;">Composicion de costos</h3>' + tablaCostos.innerHTML;
+        var tablaSens = document.getElementById('tablaSensibilidad');
+        if (tablaSens && tablaSens.innerHTML) html += '<h3 style="font-size:1em;margin:12px 0 6px;">Sensibilidad de precios</h3>' + tablaSens.innerHTML;
+        html += '</div>';
+    }
+    html += '<div class="informe-footer">Balance Forrajero PRO v6.0 | ' + fecha + '</div>';
+    div.innerHTML = html;
+    setTimeout(function() { window.print(); }, 100);
 }
 
-window.onafterprint = restaurarCharts;
+// --- Resumen ejecutivo / Dashboard ---
+function actualizarResumenEjecutivo() {
+    var container = document.getElementById('resumenEjecutivo');
+    var secciones = document.getElementById('resumenSecciones');
+    var semaforo = document.getElementById('resumenSemaforo');
+    if (!container || !secciones) return;
+
+    var supTotal = 0; var nRecursos = 0;
+    if (typeof recursosActivos !== 'undefined' && recursosActivos.length > 0) {
+        nRecursos = recursosActivos.length;
+        recursosActivos.forEach(function(r) {
+            var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+            if (el) supTotal += parseFloat(el.value) || 0;
+        });
+    }
+
+    var totalCab = 0; var totalGrupos = 0; var kgCarne = 0;
+    var esc = typeof getEscenarioActivo === 'function' ? getEscenarioActivo() : null;
+    if (esc && esc.grupos) {
+        totalGrupos = esc.grupos.length;
+        esc.grupos.forEach(function(g) {
+            totalCab += g.cantidad;
+            var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
+            kgCarne += g.ganancia * dias * g.cantidad;
+        });
+    }
+
+    var produccionAnual = 0; var manejo = 'rotativo'; var eficiencia = MODELO_CONFIG.eficienciaPastoreo.rotativo;
+    if (configuracionCampo && configuracionCampo.produccionMensualTotal) {
+        produccionAnual = configuracionCampo.produccionMensualTotal.reduce(function(a,b){return a+b;},0);
+        manejo = configuracionCampo.manejo || 'rotativo';
+        eficiencia = MODELO_CONFIG.eficienciaPastoreo[manejo];
+    }
+
+    var cargaReal = 0; var demandaAnual = 0; var tasaUso = 0; var cargaMax = 0;
+    if (produccionAnual > 0 && supTotal > 0) cargaMax = calcularCargaMaxima(produccionAnual, supTotal, manejo);
+    if (esc && esc.grupos && supTotal > 0) {
+        esc.grupos.forEach(function(g) {
+            var cat = CATEGORIAS[g.categoria]; if (!cat.usaPasto) return;
+            var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
+            demandaAnual += (g.pesoInicial + g.ganancia * dias / 2) * cat.consumo * dias * g.cantidad;
+        });
+        cargaReal = demandaAnual / MODELO_CONFIG.consumoAnualEV / supTotal;
+        var ofertaAprov = produccionAnual * eficiencia;
+        if (ofertaAprov > 0) tasaUso = demandaAnual / ofertaAprov * 100;
+    }
+
+    if (supTotal === 0 && totalCab === 0) { container.style.display = 'none'; return; }
+    container.style.display = '';
+    // Dashboard colapsado por defecto - el semaforo se ve siempre
+
+    // Semaforo
+    if (semaforo) {
+        if (produccionAnual === 0 || totalCab === 0) { semaforo.className = 'resumen-semaforo semaforo-sin-datos'; semaforo.textContent = 'Sin calcular'; }
+        else if (tasaUso > 100) { semaforo.className = 'resumen-semaforo semaforo-critico'; semaforo.textContent = 'Sobrecarga'; }
+        else if (tasaUso > 85) { semaforo.className = 'resumen-semaforo semaforo-atencion'; semaforo.textContent = 'Ajustado'; }
+        else { semaforo.className = 'resumen-semaforo semaforo-ok'; semaforo.textContent = 'Equilibrado'; }
+    }
+
+    var html = '';
+    html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Campo</div><div class="resumen-grid">';
+    html += _riCard(supTotal.toFixed(0), 'Ha totales');
+    html += _riCard(nRecursos, 'Recursos');
+    if (produccionAnual > 0) {
+        html += _riCard(formatNum(Math.round(produccionAnual)), 'Prod. bruta (kg MS)');
+        html += _riCard(supTotal > 0 ? formatNum(Math.round(produccionAnual / supTotal)) : '-', 'kg MS/ha/ano');
+    }
+    html += '</div></div>';
+
+    if (totalCab > 0) {
+        html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Rodeo</div><div class="resumen-grid">';
+        html += _riCard(totalCab, 'Cabezas');
+        html += _riCard(totalGrupos, 'Grupos');
+        if (kgCarne > 0) {
+            html += _riCard(formatNum(Math.round(kgCarne)), 'kg carne prod.');
+            if (supTotal > 0) html += _riCard(Math.round(kgCarne / supTotal), 'kg carne/ha');
+        }
+        html += '</div></div>';
+    }
+
+    if (produccionAnual > 0 && totalCab > 0) {
+        html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Balance</div><div class="resumen-grid">';
+        html += _riCard(cargaMax.toFixed(2), 'Carga max (EV/ha)');
+        var ratio = cargaMax > 0 ? cargaReal / cargaMax * 100 : 0;
+        var claseE = ratio > 100 ? 'ri-danger' : ratio > 85 ? 'ri-warning' : 'ri-ok';
+        var textoE = ratio > 100 ? 'Sobrecarga' : ratio > 85 ? 'Limite' : 'OK';
+        html += _riCard(cargaReal.toFixed(2), 'Carga real (EV/ha)', claseE, textoE);
+        var claseTasa = tasaUso > 100 ? 'ri-danger' : tasaUso > 85 ? 'ri-warning' : 'ri-ok';
+        html += _riCard(tasaUso.toFixed(0) + '%', 'Tasa de uso', claseTasa);
+        var manejoLabel = manejo === 'continuo' ? 'Continuo' : manejo === 'intensivo' ? 'Intensivo' : 'Rotativo';
+        html += _riCard(manejoLabel, 'Manejo (' + (eficiencia * 100).toFixed(0) + '%)');
+        html += '</div></div>';
+    }
+
+    secciones.innerHTML = html;
+    if (typeof alertasPredictivas !== 'undefined' && alertasPredictivas.length > 0) renderAlertasPredictivas();
+
+    // Validaciones cruzadas
+    var validaciones = [];
+    if (produccionAnual > 0 && totalCab === 0) validaciones.push({ tipo: 'info', msg: 'Balance calculado pero sin rodeo. Agrega grupos en Lotes/Rodeo.' });
+    if (totalCab > 0 && produccionAnual === 0) validaciones.push({ tipo: 'info', msg: 'Rodeo cargado pero sin balance. Configura recursos en Balance.' });
+    if (esc && esc.grupos) {
+        var sinGan = [];
+        esc.grupos.forEach(function(g) { if (g.ganancia === 0 && g.categoria !== 'vaca' && g.categoria !== 'toro') sinGan.push(CATEGORIAS[g.categoria].nombre); });
+        if (sinGan.length > 0) validaciones.push({ tipo: 'warning', msg: 'Grupos con ganancia 0: ' + sinGan.join(', ') + '. Verificar.' });
+    }
+    if (validaciones.length > 0) {
+        var vHtml = '<div style="margin-top:10px;">';
+        validaciones.forEach(function(v) {
+            var icon = v.tipo === 'warning' ? '&#9888;' : '&#8505;';
+            var bg = v.tipo === 'warning' ? '#fff3e0' : '#e3f2fd';
+            var border = v.tipo === 'warning' ? '#ff9800' : '#2196f3';
+            vHtml += '<div style="padding:8px 12px;margin:4px 0;border-radius:8px;font-size:0.85em;background:'+bg+';border-left:4px solid '+border+';">'+icon+' '+v.msg+'</div>';
+        });
+        secciones.innerHTML += vHtml + '</div>';
+    }
+}
+
+function _riCard(valor, label, claseEstado, textoEstado) {
+    var h = '<div class="resumen-item"><div class="ri-valor">' + valor + '</div><div class="ri-label">' + label + '</div>';
+    if (textoEstado) h += '<span class="ri-estado ' + (claseEstado || '') + '">' + textoEstado + '</span>';
+    h += '</div>';
+    return h;
+}
 
 window.onload = cargarDatos;
 </script>
+<div id="informeImprimible"></div>
+<footer style="text-align:center;padding:18px 10px 14px;margin-top:32px;font-size:0.82em;color:#95a5a6;border-top:1px solid #ecf0f1;">
+    &copy; 2025-2026 Santiago Jose Insaurralde. Todos los derechos reservados. | <a href="mailto:insau.sj@gmail.com" style="color:#7f8c8d;">insau.sj@gmail.com</a>
+</footer>
 </body>
 </html>

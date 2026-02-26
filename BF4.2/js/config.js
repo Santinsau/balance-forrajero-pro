@@ -1,6 +1,11 @@
 // ============================================
 // BALANCE FORRAJERO PRO v6.0 - Configuracion
+// (c) 2025-2026 Santiago Jose Insaurralde.
+// Todos los derechos reservados.
 // ============================================
+
+// URL del formulario de feedback (Google Form)
+var FEEDBACK_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfiLJB8cCuOIQ5CgiCuR64r9ETUlS_dNUgq6RsWhS98OTb7dw/viewform';
 
 var MODELO_CONFIG = {
     perdidaDiferido: 0.05,
@@ -21,11 +26,11 @@ var escenarioActivoId = null;
 var grupoEditandoId = null;
 var nextId = 1;
 
-// Potreros (Fase 2)
+// Potreros y rotaciones
 var potreros = [];
 var rotaciones = [];
 
-// Clima (Fase 4)
+// Clima
 var datosClima = {
     latitud: -36.6,
     longitud: -59.8,
@@ -44,4 +49,4 @@ var datosNDVI = {
 
 // Charts refs
 var chartBalance, chartAcumulado, chartOfertaDemanda, chartDiferimiento, chartComparador;
-var chartNutricion, chartClima;
+var chartNutricion, chartClima, chartComposicion, chartDemandaCategoria;
