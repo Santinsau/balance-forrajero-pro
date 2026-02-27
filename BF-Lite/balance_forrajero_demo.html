@@ -506,7 +506,7 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                         </div>
                     </div>
                     <button class="btn" onclick="calcularBalance()">Calcular Balance</button>
-                    <button class="btn btn-secondary" onclick="limpiarRecursos()">Limpiar</button>
+                    <button class="btn btn-secondary" onclick="limpiarTodo()">Limpiar todo</button>
                 </div>
 
                 <div id="resultadosBalance" style="display:none;">
@@ -1099,10 +1099,28 @@ function toggleMesRecurso(btn) {
     autoCalcular();
 }
 
-function limpiarRecursos() {
+function limpiarTodo() {
+    // Recursos forrajeros
     recursosActivos = [];
     renderRecursosActivos();
     actualizarSelectorRecurso();
+
+    // Animales: resetear grupos del escenario activo
+    escenarios = [];
+    crearEscenario('Escenario Base');
+
+    // Estado de calculo
+    configuracionCampo = null;
+    alertasPredictivas = [];
+
+    // Ocultar resultados
+    var ids = ['resultadosBalance', 'resultadosDemanda', 'resultadosEconomico'];
+    ids.forEach(function(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+
+    // Actualizar barra de estado
+    actualizarResumenEjecutivo();
+
+    guardarEstadoAuto();
 }
 
 function calcularBalance() {
