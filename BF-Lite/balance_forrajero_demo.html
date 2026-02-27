@@ -327,29 +327,23 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
     .chart-wrapper { height: 280px; }
     [data-tooltip]:hover::after, [data-tooltip]:hover::before { display: none; }
 }
-/* --- Resumen ejecutivo / Dashboard --- */
-.resumen-ejecutivo { background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e9 100%); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 1px solid #c8e6c9; overflow: hidden; }
-.resumen-header { padding: 12px 18px; cursor: pointer; font-weight: 700; color: #2c3e50; display: flex; justify-content: space-between; align-items: center; user-select: none; font-size: 0.95em; }
-.resumen-header:hover { background: rgba(39,174,96,0.06); }
-.resumen-header .flecha { transition: transform 0.3s; font-size: 0.8em; }
-.resumen-ejecutivo.abierto .resumen-header .flecha { transform: rotate(180deg); }
-.resumen-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 18px; }
-.resumen-ejecutivo.abierto .resumen-body { max-height: 800px; padding: 0 18px 18px 18px; }
-.resumen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-.resumen-item { background: white; border-radius: 10px; padding: 10px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.resumen-item .ri-valor { font-size: 1.3em; font-weight: 700; color: #2c3e50; }
-.resumen-item .ri-label { font-size: 0.72em; color: #7f8c8d; margin-top: 2px; text-transform: uppercase; font-weight: 600; }
-.resumen-item .ri-estado { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; font-weight: 600; margin-top: 4px; }
-.ri-ok { background: #e8f5e9; color: #2e7d32; }
-.ri-warning { background: #fff3e0; color: #e65100; }
-.ri-danger { background: #ffebee; color: #c62828; }
-.resumen-semaforo { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 700; margin-left: auto; margin-right: 8px; }
+/* --- Barra de estado (resumen compacto) --- */
+.resumen-barra { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #f8f9fa; border: 1px solid #c8e6c9; border-radius: 10px; padding: 8px 14px; margin-bottom: 14px; font-size: 0.85em; }
+.resumen-semaforo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 700; white-space: nowrap; }
 .semaforo-ok { background: #e8f5e9; color: #2e7d32; }
 .semaforo-atencion { background: #fff3e0; color: #e65100; }
 .semaforo-critico { background: #ffebee; color: #c62828; }
 .semaforo-sin-datos { background: #f5f5f5; color: #999; }
-.resumen-seccion { margin-bottom: 10px; }
-.resumen-seccion-titulo { font-size: 0.72em; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; padding-left: 2px; }
+.resumen-metricas { display: flex; gap: 0; flex-wrap: wrap; color: #555; align-items: center; }
+.resumen-metrica { padding: 0 10px; border-left: 1px solid #ddd; line-height: 1.4; white-space: nowrap; }
+.resumen-metrica:first-child { border-left: none; padding-left: 4px; }
+.resumen-metrica strong { color: #2c3e50; }
+.resumen-alerta-inline { font-weight: 600; }
+.resumen-alerta-ok { color: #2e7d32; }
+.resumen-alerta-atencion { color: #e65100; }
+.resumen-alerta-critica { color: #c62828; }
+
+/* --- Alertas predictivas (en tab Oferta/Demanda) --- */
 .alerta-predictiva { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 10px; margin-top: 10px; font-size: 0.9em; line-height: 1.4; }
 .alerta-predictiva .alerta-icono { font-size: 1.5em; flex-shrink: 0; }
 .alerta-predictiva .alerta-texto strong { display: block; margin-bottom: 2px; }
@@ -357,6 +351,13 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
 .alerta-ok { background: #e8f5e9; border-left: 4px solid #4caf50; }
 .alerta-atencion { background: #fff3e0; border-left: 4px solid #ff9800; }
 .alerta-critica { background: #ffebee; border-left: 4px solid #f44336; }
+
+/* --- Toast de notificacion --- */
+.toast { position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(8px); background: #2c3e50; color: white; padding: 10px 22px; border-radius: 8px; font-size: 0.9em; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; white-space: nowrap; }
+.toast.toast-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast-success { background: #27ae60; }
+.toast-info { background: #2980b9; }
+.toast-error { background: #c0392b; }
     </style>
 </head>
 <body>
@@ -427,17 +428,10 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                 </div>
             </div>
 
-            <!-- Resumen ejecutivo -->
-            <div id="resumenEjecutivo" class="resumen-ejecutivo" style="display:none;">
-                <div class="resumen-header" onclick="this.parentElement.classList.toggle('abierto')">
-                    <span>Resumen del campo</span>
-                    <span id="resumenSemaforo" class="resumen-semaforo"></span>
-                    <span class="flecha">&#9660;</span>
-                </div>
-                <div class="resumen-body" id="resumenBody">
-                    <div id="resumenSecciones"></div>
-                    <div id="alertasPredictivas"></div>
-                </div>
+            <!-- Barra de estado compacta -->
+            <div id="resumenEjecutivo" class="resumen-barra" style="display:none;">
+                <span id="resumenSemaforo" class="resumen-semaforo semaforo-sin-datos">Sin datos</span>
+                <div id="resumenMetricas" class="resumen-metricas"></div>
             </div>
 
             <div class="tabs">
@@ -2114,7 +2108,19 @@ function _finalizarEjemplo(nombreEjemplo) {
     setTimeout(function() {
         try { calcularBalance(); } catch(e) { console.error('Error auto-calculo:', e); }
     }, 300);
-    alert(nombreEjemplo + ' cargado.');
+    mostrarToast(nombreEjemplo + ' cargado', 'success');
+}
+
+function mostrarToast(msg, tipo) {
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + (tipo || 'info');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.classList.add('toast-visible'); }, 30);
+    setTimeout(function() {
+        t.classList.remove('toast-visible');
+        setTimeout(function() { t.remove(); }, 300);
+    }, 2500);
 }
 
 // Ejemplo 1: Rodeo de Cria (500 ha, Pampa Humeda)
@@ -2251,10 +2257,11 @@ function generarInforme() {
 // --- Resumen ejecutivo / Dashboard ---
 function actualizarResumenEjecutivo() {
     var container = document.getElementById('resumenEjecutivo');
-    var secciones = document.getElementById('resumenSecciones');
+    var metricas = document.getElementById('resumenMetricas');
     var semaforo = document.getElementById('resumenSemaforo');
-    if (!container || !secciones) return;
+    if (!container || !metricas) return;
 
+    // Recopilar datos del campo
     var supTotal = 0; var nRecursos = 0;
     if (typeof recursosActivos !== 'undefined' && recursosActivos.length > 0) {
         nRecursos = recursosActivos.length;
@@ -2264,17 +2271,19 @@ function actualizarResumenEjecutivo() {
         });
     }
 
-    var totalCab = 0; var totalGrupos = 0; var kgCarne = 0;
+    // Recopilar datos del rodeo
+    var totalCab = 0; var totalGrupos = 0;
     var esc = typeof getEscenarioActivo === 'function' ? getEscenarioActivo() : null;
     if (esc && esc.grupos) {
         totalGrupos = esc.grupos.length;
-        esc.grupos.forEach(function(g) {
-            totalCab += g.cantidad;
-            var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
-            kgCarne += g.ganancia * dias * g.cantidad;
-        });
+        esc.grupos.forEach(function(g) { totalCab += g.cantidad; });
     }
 
+    // Si no hay nada, ocultar
+    if (supTotal === 0 && totalCab === 0) { container.style.display = 'none'; return; }
+    container.style.display = 'flex';
+
+    // Calcular tasa de uso
     var produccionAnual = 0; var manejo = 'rotativo'; var eficiencia = MODELO_CONFIG.eficienciaPastoreo.rotativo;
     if (configuracionCampo && configuracionCampo.produccionMensualTotal) {
         produccionAnual = configuracionCampo.produccionMensualTotal.reduce(function(a,b){return a+b;},0);
@@ -2282,95 +2291,61 @@ function actualizarResumenEjecutivo() {
         eficiencia = MODELO_CONFIG.eficienciaPastoreo[manejo];
     }
 
-    var cargaReal = 0; var demandaAnual = 0; var tasaUso = 0; var cargaMax = 0;
-    if (produccionAnual > 0 && supTotal > 0) cargaMax = calcularCargaMaxima(produccionAnual, supTotal, manejo);
-    if (esc && esc.grupos && supTotal > 0) {
+    var demandaAnual = 0; var tasaUso = 0;
+    if (esc && esc.grupos && supTotal > 0 && produccionAnual > 0) {
         esc.grupos.forEach(function(g) {
             var cat = CATEGORIAS[g.categoria]; if (!cat.usaPasto) return;
             var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
             demandaAnual += (g.pesoInicial + g.ganancia * dias / 2) * cat.consumo * dias * g.cantidad;
         });
-        cargaReal = demandaAnual / MODELO_CONFIG.consumoAnualEV / supTotal;
         var ofertaAprov = produccionAnual * eficiencia;
         if (ofertaAprov > 0) tasaUso = demandaAnual / ofertaAprov * 100;
     }
 
-    if (supTotal === 0 && totalCab === 0) { container.style.display = 'none'; return; }
-    container.style.display = '';
-    // Dashboard colapsado por defecto - el semaforo se ve siempre
-
     // Semaforo
-    if (semaforo) {
-        if (produccionAnual === 0 || totalCab === 0) { semaforo.className = 'resumen-semaforo semaforo-sin-datos'; semaforo.textContent = 'Sin calcular'; }
-        else if (tasaUso > 100) { semaforo.className = 'resumen-semaforo semaforo-critico'; semaforo.textContent = 'Sobrecarga'; }
-        else if (tasaUso > 85) { semaforo.className = 'resumen-semaforo semaforo-atencion'; semaforo.textContent = 'Ajustado'; }
-        else { semaforo.className = 'resumen-semaforo semaforo-ok'; semaforo.textContent = 'Equilibrado'; }
+    var semaforoClase, semaforoTexto;
+    if (produccionAnual === 0 || totalCab === 0) {
+        semaforoClase = 'semaforo-sin-datos'; semaforoTexto = 'Sin calcular';
+    } else if (tasaUso > 100) {
+        semaforoClase = 'semaforo-critico'; semaforoTexto = 'Sobrecarga';
+    } else if (tasaUso > 85) {
+        semaforoClase = 'semaforo-atencion'; semaforoTexto = 'Ajustado';
+    } else {
+        semaforoClase = 'semaforo-ok'; semaforoTexto = 'Equilibrado';
     }
+    semaforo.className = 'resumen-semaforo ' + semaforoClase;
+    semaforo.textContent = semaforoTexto;
 
-    var html = '';
-    html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Campo</div><div class="resumen-grid">';
-    html += _riCard(supTotal.toFixed(0), 'Ha totales');
-    html += _riCard(nRecursos, 'Recursos');
-    if (produccionAnual > 0) {
-        html += _riCard(formatNum(Math.round(produccionAnual)), 'Prod. bruta (kg MS)');
-        html += _riCard(supTotal > 0 ? formatNum(Math.round(produccionAnual / supTotal)) : '-', 'kg MS/ha/ano');
-    }
-    html += '</div></div>';
-
-    if (totalCab > 0) {
-        html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Rodeo</div><div class="resumen-grid">';
-        html += _riCard(totalCab, 'Cabezas');
-        html += _riCard(totalGrupos, 'Grupos');
-        if (kgCarne > 0) {
-            html += _riCard(formatNum(Math.round(kgCarne)), 'kg carne prod.');
-            if (supTotal > 0) html += _riCard(Math.round(kgCarne / supTotal), 'kg carne/ha');
-        }
-        html += '</div></div>';
-    }
-
+    // Metricas inline
+    var items = [];
+    if (supTotal > 0) items.push('<span class="resumen-metrica"><strong>' + supTotal.toFixed(0) + ' ha</strong> · ' + nRecursos + ' recurso' + (nRecursos !== 1 ? 's' : '') + '</span>');
+    if (totalCab > 0) items.push('<span class="resumen-metrica"><strong>' + totalCab + ' cab</strong> · ' + totalGrupos + ' grupo' + (totalGrupos !== 1 ? 's' : '') + '</span>');
     if (produccionAnual > 0 && totalCab > 0) {
-        html += '<div class="resumen-seccion"><div class="resumen-seccion-titulo">Balance</div><div class="resumen-grid">';
-        html += _riCard(cargaMax.toFixed(2), 'Carga max (EV/ha)');
-        var ratio = cargaMax > 0 ? cargaReal / cargaMax * 100 : 0;
-        var claseE = ratio > 100 ? 'ri-danger' : ratio > 85 ? 'ri-warning' : 'ri-ok';
-        var textoE = ratio > 100 ? 'Sobrecarga' : ratio > 85 ? 'Limite' : 'OK';
-        html += _riCard(cargaReal.toFixed(2), 'Carga real (EV/ha)', claseE, textoE);
-        var claseTasa = tasaUso > 100 ? 'ri-danger' : tasaUso > 85 ? 'ri-warning' : 'ri-ok';
-        html += _riCard(tasaUso.toFixed(0) + '%', 'Tasa de uso', claseTasa);
-        var manejoLabel = manejo === 'continuo' ? 'Continuo' : manejo === 'intensivo' ? 'Intensivo' : 'Rotativo';
-        html += _riCard(manejoLabel, 'Manejo (' + (eficiencia * 100).toFixed(0) + '%)');
-        html += '</div></div>';
+        var claseT = tasaUso > 100 ? 'resumen-alerta-critica' : tasaUso > 85 ? 'resumen-alerta-atencion' : 'resumen-alerta-ok';
+        items.push('<span class="resumen-metrica">Tasa uso: <strong class="resumen-alerta-inline ' + claseT + '">' + tasaUso.toFixed(0) + '%</strong></span>');
     }
 
-    secciones.innerHTML = html;
-    if (typeof alertasPredictivas !== 'undefined' && alertasPredictivas.length > 0) renderAlertasPredictivas();
-
-    // Validaciones cruzadas
-    var validaciones = [];
-    if (produccionAnual > 0 && totalCab === 0) validaciones.push({ tipo: 'info', msg: 'Balance calculado pero sin rodeo. Agrega grupos en Lotes/Rodeo.' });
-    if (totalCab > 0 && produccionAnual === 0) validaciones.push({ tipo: 'info', msg: 'Rodeo cargado pero sin balance. Configura recursos en Balance.' });
-    if (esc && esc.grupos) {
-        var sinGan = [];
-        esc.grupos.forEach(function(g) { if (g.ganancia === 0 && g.categoria !== 'vaca' && g.categoria !== 'toro') sinGan.push(CATEGORIAS[g.categoria].nombre); });
-        if (sinGan.length > 0) validaciones.push({ tipo: 'warning', msg: 'Grupos con ganancia 0: ' + sinGan.join(', ') + '. Verificar.' });
+    // Alerta predictiva resumida (solo si ya se calculó oferta/demanda)
+    if (typeof alertasPredictivas !== 'undefined' && alertasPredictivas.length > 0) {
+        var ap = alertasPredictivas[0];
+        if (ap.tipo !== 'ok') {
+            var claseAP = ap.tipo === 'critica' ? 'resumen-alerta-critica' : 'resumen-alerta-atencion';
+            items.push('<span class="resumen-metrica resumen-alerta-inline ' + claseAP + '">' + ap.titulo + '</span>');
+        }
+        renderAlertasPredictivas();
     }
-    if (validaciones.length > 0) {
-        var vHtml = '<div style="margin-top:10px;">';
-        validaciones.forEach(function(v) {
-            var icon = v.tipo === 'warning' ? '&#9888;' : '&#8505;';
-            var bg = v.tipo === 'warning' ? '#fff3e0' : '#e3f2fd';
-            var border = v.tipo === 'warning' ? '#ff9800' : '#2196f3';
-            vHtml += '<div style="padding:8px 12px;margin:4px 0;border-radius:8px;font-size:0.85em;background:'+bg+';border-left:4px solid '+border+';">'+icon+' '+v.msg+'</div>';
-        });
-        secciones.innerHTML += vHtml + '</div>';
-    }
-}
 
-function _riCard(valor, label, claseEstado, textoEstado) {
-    var h = '<div class="resumen-item"><div class="ri-valor">' + valor + '</div><div class="ri-label">' + label + '</div>';
-    if (textoEstado) h += '<span class="ri-estado ' + (claseEstado || '') + '">' + textoEstado + '</span>';
-    h += '</div>';
-    return h;
+    // Guia contextual si falta un paso clave
+    var analisisCalculado = typeof alertasPredictivas !== 'undefined' && alertasPredictivas.length > 0;
+    if (supTotal > 0 && totalCab === 0) {
+        items.push('<span class="resumen-metrica" style="color:#2980b9;">Siguiente: agregar animales en Lotes/Rodeo</span>');
+    } else if (supTotal > 0 && totalCab > 0 && produccionAnual === 0) {
+        items.push('<span class="resumen-metrica" style="color:#2980b9;">Siguiente: calcular Balance</span>');
+    } else if (produccionAnual > 0 && totalCab > 0 && !analisisCalculado) {
+        items.push('<span class="resumen-metrica" style="color:#2980b9;">Siguiente: Generar Analisis en Oferta/Demanda</span>');
+    }
+
+    metricas.innerHTML = items.join('');
 }
 
 window.onload = cargarDatos;
