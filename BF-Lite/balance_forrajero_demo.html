@@ -953,7 +953,7 @@ function importarConfiguracion(event) {
     reader.onload = function(e) {
         try {
             var data = JSON.parse(e.target.result);
-            if (!data.version) { alert('Archivo no valido.'); return; }
+            if (!data.version) { mostrarToast('Archivo no valido', 'error'); return; }
             if (data.mesesUsoRecursos) mesesUsoRecursos = data.mesesUsoRecursos;
             if (data.escenarios) {
                 escenarios = data.escenarios;
@@ -974,8 +974,8 @@ function importarConfiguracion(event) {
             }
             actualizarSelectEscenarios();
             actualizarVistaEscenarios();
-            alert('Configuracion importada correctamente.');
-        } catch(err) { alert('Error al leer archivo: ' + err.message); }
+            mostrarToast('Configuracion importada correctamente', 'success');
+        } catch(err) { mostrarToast('Error al leer archivo: ' + err.message, 'error'); }
     };
     reader.readAsText(file);
 }
@@ -1237,7 +1237,7 @@ function duplicarEscenarioActivo() {
     escenarios.push(nuevo); escenarioActivoId = nuevo.id; actualizarSelectEscenarios(); actualizarVistaEscenarios();
 }
 function eliminarEscenarioActivo() {
-    if (escenarios.length <= 1) { alert('Debe haber al menos un escenario.'); return; }
+    if (escenarios.length <= 1) { mostrarToast('Debe haber al menos un escenario', 'error'); return; }
     if (!confirm('Eliminar este escenario?')) return;
     escenarios = escenarios.filter(function(e) { return e.id !== escenarioActivoId; });
     escenarioActivoId = escenarios[0].id; actualizarSelectEscenarios(); actualizarVistaEscenarios();
@@ -1288,7 +1288,7 @@ function toggleCriterioSalida() {
 }
 
 function agregarGrupo() {
-    var esc = getEscenarioActivo(); if (!esc) { alert('Selecciona un escenario.'); return; }
+    var esc = getEscenarioActivo(); if (!esc) { mostrarToast('Selecciona un escenario', 'error'); return; }
     limpiarErrores(['grupoCantidad','grupoPesoInicial','grupoGanancia','grupoFechaEntrada','grupoFechaSalida','grupoPesoObjetivo']);
     var categoria = document.getElementById('grupoCategoria').value;
     var cantidad = parseInt(document.getElementById('grupoCantidad').value);
@@ -1638,9 +1638,9 @@ function generarGraficoComposicion() {
 
 // --- OFERTA/DEMANDA ---
 function calcularDemanda() {
-    if (!configuracionCampo) { alert('Primero calcula el balance forrajero.'); return; }
+    if (!configuracionCampo) { mostrarToast('Primero calcula el balance en la pestana Balance', 'info'); return; }
     var esc = getEscenarioActivo();
-    if (!esc || esc.grupos.length === 0) { alert('Agrega al menos un grupo de animales.'); return; }
+    if (!esc || esc.grupos.length === 0) { mostrarToast('Agrega al menos un grupo en Lotes/Rodeo', 'info'); return; }
     var manejo = configuracionCampo.manejo; var eficiencia = MODELO_CONFIG.eficienciaPastoreo[manejo];
     var mesInicio = parseInt(document.getElementById('mesInicioSelect').value);
     var stockInicial = parseFloat(document.getElementById('stockInicialInput').value) || 0;
@@ -1930,8 +1930,8 @@ function calcularBalanceHidrico() {
 
 // --- ECONOMICO ---
 function calcularEconomico() {
-    if (!configuracionCampo) { alert('Primero calcula el balance.'); return; }
-    var esc = getEscenarioActivo(); if (!esc || esc.grupos.length === 0) { alert('Agrega lotes primero.'); return; }
+    if (!configuracionCampo) { mostrarToast('Primero calcula el balance en la pestana Balance', 'info'); return; }
+    var esc = getEscenarioActivo(); if (!esc || esc.grupos.length === 0) { mostrarToast('Agrega al menos un grupo en Lotes/Rodeo', 'info'); return; }
     var superficie = configuracionCampo.superficie;
     var costoLabores = (parseFloat(document.getElementById('costoLabores').value)||0) * superficie;
     var costosEstructura = (parseFloat(document.getElementById('costosEstructura').value)||0) * superficie;
