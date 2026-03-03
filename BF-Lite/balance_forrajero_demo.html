@@ -553,18 +553,20 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                             </select>
                         </div>
                         <div class="input-group"><label>Cantidad</label><input type="number" id="grupoCantidad" min="1" value="50"></div>
-                        <div class="input-group"><label>Peso inicial (kg)</label><input type="number" id="grupoPesoInicial" min="50" value="380"></div>
+                        <div class="input-group"><label>Peso inicial (kg)</label><input type="number" id="grupoPesoInicial" min="50" value="380" oninput="actualizarHintGanancia()"></div>
                         <div class="input-group"><label>Ganancia diaria (kg/dia)</label><input type="number" id="grupoGanancia" step="0.05" value="0.7"></div>
                     </div>
+                    <div id="hintGanancia" style="display:none;"></div>
                     <div class="criterio-salida">
                         <label><input type="radio" name="criterioSalida" value="fecha" checked onchange="toggleCriterioSalida()"> Fecha de salida</label>
                         <label><input type="radio" name="criterioSalida" value="peso" onchange="toggleCriterioSalida()"> Peso objetivo</label>
                     </div>
                     <div class="input-grid">
-                        <div class="input-group"><label>Fecha entrada</label><input type="date" id="grupoFechaEntrada"></div>
+                        <div class="input-group"><label>Fecha entrada</label><input type="date" id="grupoFechaEntrada" onchange="actualizarSimulacionNRC()"></div>
                         <div class="input-group" id="wrapFechaSalida"><label>Fecha salida</label><input type="date" id="grupoFechaSalida"></div>
-                        <div class="input-group" id="wrapPesoObjetivo" style="display:none;"><label>Peso objetivo (kg)</label><input type="number" id="grupoPesoObjetivo" min="100" value="450"></div>
+                        <div class="input-group" id="wrapPesoObjetivo" style="display:none;"><label>Peso objetivo (kg)</label><input type="number" id="grupoPesoObjetivo" min="100" value="450" oninput="actualizarSimulacionNRC()"></div>
                     </div>
+                    <div id="simNRC" style="display:none;"></div>
                     <div class="acordeon">
                         <div class="acordeon-header" onclick="toggleAcordeon(this)">Datos economicos <span class="flecha">&#9660;</span></div>
                         <div class="acordeon-body">
@@ -624,7 +626,13 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                     <button class="btn" id="btnAgregarGrupo" onclick="agregarGrupo()">Agregar al escenario</button>
                     <button class="btn btn-secondary" id="btnCancelarEdicion" style="display:none;" onclick="cancelarEdicion()">Cancelar edicion</button>
                 </div>
-                <div class="section"><h2>Rodeo configurado</h2><div id="escenariosContainer"></div></div>
+                <div class="section">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                        <h2 style="margin:0;">Rodeo configurado</h2>
+                        <button class="btn btn-sm" onclick="calibrarConNRC()" style="background:#27ae60;color:#fff;border:none;" title="Recalcula la ganancia diaria de cada grupo usando el modelo NRC con tus pasturas reales">Calibrar ganancias con NRC</button>
+                    </div>
+                    <div id="escenariosContainer"></div>
+                </div>
                 <div class="section" id="seccionEvolucion" style="display:none;">
                     <h2>Evolucion mensual del rodeo</h2>
                     <div id="tablaEvolucionContainer" style="overflow-x:auto;"></div>
@@ -662,6 +670,14 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
                         <div class="chart-container"><div class="chart-wrapper"><canvas id="chartDemandaCategoria"></canvas></div></div>
                         <div id="alertasPredictivas"></div>
                         <div id="alertasDemanda"></div>
+                        <div id="panelAnalisis" style="display:none;margin-top:10px;">
+                            <div style="border-top:2px solid #3498db;padding-top:15px;">
+                                <h3 style="color:#2c3e50;margin:0 0 15px 0;">Analisis del Escenario</h3>
+                                <div id="simuladorAnoSeco"></div>
+                                <div id="recomendacionesDeficit" style="display:none;margin-top:12px;"></div>
+                                <div id="decisionCVS" style="display:none;margin-top:12px;"></div>
+                            </div>
+                        </div>
                         <div class="section"><h3>Detalle mensual</h3>
                             <div class="tabla-scroll"><table><thead><tr><th>Mes</th><th>Oferta (kg MS)</th><th>Demanda (kg MS)</th><th>Balance (kg MS)</th><th>Diferido (kg MS)</th><th>Estado</th></tr></thead><tbody id="tablaDetalleMensualBody"></tbody></table></div>
                         </div>
@@ -804,6 +820,23 @@ var MODELO_CONFIG = {
     consumoAnualEV: 3650
 };
 
+// --- PERFIL NUTRICIONAL NRC (FDN % y EM Mcal/kgMS, por estacion) ---
+var PERFIL_NRC = {
+    'Campo natural':                 { fdn: {inv:75, pri:58}, em: {inv:1.60, pri:2.20} },
+    'Campo natural con agropiro':    { fdn: {inv:72, pri:56}, em: {inv:1.70, pri:2.20} },
+    'Pastura base alfalfa':          { fdn: {inv:46, pri:38}, em: {inv:2.30, pri:2.58} },
+    'Pastura consociada':            { fdn: {inv:52, pri:42}, em: {inv:2.15, pri:2.45} },
+    'Pastura de agropiro':           { fdn: {inv:64, pri:55}, em: {inv:1.85, pri:2.15} },
+    'Pastura de festuca':            { fdn: {inv:60, pri:48}, em: {inv:1.96, pri:2.35} },
+    'Promocion de raigras':          { fdn: {inv:44, pri:40}, em: {inv:2.38, pri:2.52} },
+    'Promocion intensiva de raigras':{ fdn: {inv:40, pri:36}, em: {inv:2.50, pri:2.65} },
+    'Verdeo de avena':               { fdn: {inv:45, pri:50}, em: {inv:2.45, pri:2.22} },
+    'Verdeo de invierno':            { fdn: {inv:42, pri:44}, em: {inv:2.45, pri:2.38} },
+    'Verdeo de maiz':                { fdn: {inv:62, pri:55}, em: {inv:1.96, pri:2.25} },
+    'Verdeo de raigras':             { fdn: {inv:40, pri:36}, em: {inv:2.52, pri:2.65} },
+    'Verdeo de sorgo':               { fdn: {inv:65, pri:58}, em: {inv:1.78, pri:2.10} }
+};
+
 // --- ESTADO GLOBAL ---
 var datosForrajeros = null;
 var configuracionCampo = null;
@@ -813,6 +846,7 @@ var escenarioActivoId = null;
 var grupoEditandoId = null;
 var nextId = 1;
 var chartBalance, chartAcumulado, chartOfertaDemanda, chartDiferimiento;
+var ultimaDemandaMensual = null;
 
 // --- UTILIDADES ---
 function formatNum(n) { return Math.round(n).toLocaleString('es-AR'); }
@@ -836,6 +870,7 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
     var tabEl = document.getElementById(tabId);
     if (tabEl) tabEl.classList.add('active');
+    if (tabId === 'lotes') actualizarHintGanancia();
     document.querySelectorAll('.tab').forEach(function(t) {
         var txt = t.textContent.toLowerCase();
         if ((tabId === 'balance' && txt === 'balance') || (tabId === 'lotes' && txt.indexOf('lotes') >= 0) ||
@@ -1286,7 +1321,178 @@ function ajustarPesosDefecto() {
     // Reset checkboxes
     document.getElementById('cicloCriaCheck').checked = false; toggleCicloCria();
     document.getElementById('cicloRecriaCheck').checked = false; toggleCicloRecria();
+    actualizarHintGanancia();
 }
+// --- NRC: Ganancia potencial estimada por nutricion ---
+function calcularGananciaNRC(peso, fdn, em) {
+    var consumoMS = peso * 0.025 * (1 - fdn / 100 * 0.6);
+    var energiaDisponible = consumoMS * em;
+    var energiaMantenimiento = 0.077 * Math.pow(peso, 0.75);
+    var energiaGanancia = energiaDisponible - energiaMantenimiento;
+    if (energiaGanancia <= 0) return 0;
+    var costoPorKg = 5.4 * (1 + energiaGanancia / 15);
+    return Math.min(1.5, energiaGanancia / costoPorKg);
+}
+
+function actualizarHintGanancia() {
+    var hint = document.getElementById('hintGanancia');
+    if (!hint) return;
+    if (!recursosActivos || recursosActivos.length === 0) { hint.style.display = 'none'; return; }
+
+    var peso = parseFloat(document.getElementById('grupoPesoInicial').value) || 350;
+
+    // Promedio ponderado por hectareas para invierno y primavera
+    var totalHa = 0, fdnInvSum = 0, emInvSum = 0, fdnPriSum = 0, emPriSum = 0;
+    recursosActivos.forEach(function(r) {
+        var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+        var ha = el ? (parseFloat(el.value) || 1) : 1;
+        var perf = PERFIL_NRC[r];
+        if (!perf) return;
+        totalHa    += ha;
+        fdnInvSum  += perf.fdn.inv * ha;
+        emInvSum   += perf.em.inv  * ha;
+        fdnPriSum  += perf.fdn.pri * ha;
+        emPriSum   += perf.em.pri  * ha;
+    });
+    if (totalHa === 0) { hint.style.display = 'none'; return; }
+
+    var fdnInv = fdnInvSum / totalHa, emInv = emInvSum / totalHa;
+    var fdnPri = fdnPriSum / totalHa, emPri = emPriSum / totalHa;
+
+    var gInv = calcularGananciaNRC(peso, fdnInv, emInv);
+    var gPri = calcularGananciaNRC(peso, fdnPri, emPri);
+    var ganMin = Math.min(gInv, gPri), ganMax = Math.max(gInv, gPri);
+    var ganProm = (ganMin + ganMax) / 2;
+
+    var color = ganMax < 0.4 ? '#e74c3c' : ganMax < 0.7 ? '#e67e22' : '#27ae60';
+
+    hint.style.display = 'block';
+    hint.innerHTML =
+        '<div style="background:#f0f7f0;border:1px solid #b2dfdb;border-radius:8px;padding:7px 12px;margin-top:5px;font-size:0.86em;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">' +
+        '<span style="color:#555;">Potencial NRC con tus recursos:</span> ' +
+        '<strong style="color:' + color + ';">' + ganMin.toFixed(2) + ' \u2013 ' + ganMax.toFixed(2) + ' kg/d\u00eda</strong>' +
+        '<span style="color:#999;">(invierno / primavera)</span>' +
+        '<button id="btnUsarGanancia" type="button" style="padding:2px 10px;border-radius:5px;border:1px solid ' + color + ';background:#fff;color:' + color + ';cursor:pointer;font-size:0.9em;margin-left:4px;">Usar promedio</button>' +
+        '</div>';
+    document.getElementById('btnUsarGanancia').onclick = function() {
+        document.getElementById('grupoGanancia').value = ganProm.toFixed(2);
+        this.textContent = 'Listo!';
+        this.disabled = true;
+        setTimeout(function() { actualizarHintGanancia(); }, 1200);
+    };
+    actualizarSimulacionNRC();
+}
+
+// --- NRC: Promedio ponderado por hectareas y estacion ---
+function calcularNRCPonderado(mesIndex, recursosOverride) {
+    var res = recursosOverride || recursosActivos;
+    if (!res || res.length === 0) return null;
+    function interpolar(perf, mes) {
+        var fi = perf.fdn.inv, fp = perf.fdn.pri;
+        var ei = perf.em.inv,  ep = perf.em.pri;
+        if (mes >= 5 && mes <= 7)  return { fdn: fi,                em: ei };                // invierno
+        if (mes >= 8 && mes <= 10) return { fdn: fp,                em: ep };                // primavera
+        if (mes >= 2 && mes <= 4)  return { fdn: fi*0.65 + fp*0.35, em: ei*0.65 + ep*0.35}; // otoño
+        return                            { fdn: fi*0.15 + fp*0.85, em: ei*0.15 + ep*0.85}; // verano
+    }
+    var totalHa = 0, fdnSum = 0, emSum = 0;
+    res.forEach(function(r) {
+        var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+        var ha = recursosOverride ? 1 : (el ? (parseFloat(el.value) || 1) : 1);
+        var perf = PERFIL_NRC[r];
+        if (!perf) return;
+        var se = interpolar(perf, mesIndex);
+        totalHa += ha; fdnSum += se.fdn * ha; emSum += se.em * ha;
+    });
+    return totalHa > 0 ? { fdn: fdnSum / totalHa, em: emSum / totalHa } : null;
+}
+
+// --- NRC: Simulacion mes a mes con transicion de categoria ---
+function simularCrecimientoNRC(pesoInicial, pesoObjetivo, categoria, mesInicio, recursosOverride) {
+    var peso = pesoInicial;
+    var dias = 0;
+    var catActual = categoria;
+    var cat = CATEGORIAS[categoria] || {};
+    var pesoTrans = cat.pesoTransicion || null;
+    var catDest   = cat.transicionDefecto || null;
+    var fases = [];
+    var fase = { cat: catActual, pesoInicio: Math.round(peso), dias: 0, ganSum: 0, n: 0 };
+
+    while (peso < pesoObjetivo && dias < 730) {
+        var mes = Math.floor(mesInicio + dias / 30.4) % 12;
+        var nrc = calcularNRCPonderado(mes, recursosOverride);
+        if (!nrc) break;
+        var gan = Math.max(0.05, calcularGananciaNRC(peso, nrc.fdn, nrc.em));
+        var paso = Math.min(30, (pesoObjetivo - peso) / gan);
+        peso = Math.min(peso + gan * paso, pesoObjetivo);
+        dias += paso;
+        fase.dias += paso; fase.ganSum += gan; fase.n++;
+        // Transicion de categoria
+        if (pesoTrans && catDest && catActual === categoria && peso >= pesoTrans) {
+            fase.pesoFin = Math.round(pesoTrans); fase.ganProm = fase.ganSum / fase.n;
+            fases.push(fase);
+            catActual = catDest;
+            fase = { cat: catActual, pesoInicio: Math.round(pesoTrans), dias: 0, ganSum: 0, n: 0 };
+        }
+    }
+    fase.pesoFin = Math.round(Math.min(peso, pesoObjetivo));
+    fase.ganProm = fase.n > 0 ? fase.ganSum / fase.n : 0;
+    fases.push(fase);
+    return { dias: Math.round(dias), fases: fases };
+}
+
+// --- NRC: Mostrar tabla de simulacion dinamica ---
+function actualizarSimulacionNRC() {
+    var div = document.getElementById('simNRC');
+    if (!div) return;
+    var criterio = document.querySelector('input[name="criterioSalida"]:checked');
+    if (!criterio || criterio.value !== 'peso' || !recursosActivos || recursosActivos.length === 0) {
+        div.style.display = 'none'; return;
+    }
+    var pesoInicial  = parseFloat(document.getElementById('grupoPesoInicial').value);
+    var pesoObjetivo = parseFloat(document.getElementById('grupoPesoObjetivo').value);
+    var categoria    = document.getElementById('grupoCategoria').value;
+    var fechaStr     = document.getElementById('grupoFechaEntrada').value;
+    if (!pesoInicial || !pesoObjetivo || pesoObjetivo <= pesoInicial) { div.style.display = 'none'; return; }
+
+    var mesInicio = fechaStr ? new Date(fechaStr + 'T00:00:00').getMonth() : new Date().getMonth();
+    var sim = simularCrecimientoNRC(pesoInicial, pesoObjetivo, categoria, mesInicio);
+
+    // Comparacion con Pastura base alfalfa (referencia techo nutritivo)
+    var refRecurso = PERFIL_NRC['Pastura base alfalfa'] ? 'Pastura base alfalfa' : 'Verdeo de raigras';
+    var simRef = simularCrecimientoNRC(pesoInicial, pesoObjetivo, categoria, mesInicio, [refRecurso]);
+
+    var html = '<div style="background:#f0f7f0;border:1px solid #b2dfdb;border-radius:8px;padding:10px 14px;margin-top:8px;">' +
+        '<div style="font-size:0.84em;font-weight:700;color:#2c7a5a;margin-bottom:7px;">Simulaci\u00f3n NRC \u2013 crecimiento din\u00e1mico</div>' +
+        '<table style="width:100%;font-size:0.81em;border-collapse:collapse;">' +
+        '<thead><tr style="color:#888;border-bottom:1px solid #c8e6c9;">' +
+        '<th style="text-align:left;padding:3px 5px;font-weight:600;">Categor\u00eda</th>' +
+        '<th style="text-align:right;padding:3px 5px;font-weight:600;">Rango (kg)</th>' +
+        '<th style="text-align:right;padding:3px 5px;font-weight:600;">D\u00edas</th>' +
+        '<th style="text-align:right;padding:3px 5px;font-weight:600;">Gan. prom.</th>' +
+        '</tr></thead><tbody>';
+
+    sim.fases.forEach(function(f) {
+        var nom = CATEGORIAS[f.cat] ? CATEGORIAS[f.cat].nombre : f.cat;
+        html += '<tr style="border-top:1px solid #e8f5e9;">' +
+            '<td style="padding:4px 5px;">' + nom + '</td>' +
+            '<td style="text-align:right;padding:4px 5px;color:#555;">' + f.pesoInicio + ' \u2192 ' + f.pesoFin + ' kg</td>' +
+            '<td style="text-align:right;padding:4px 5px;font-weight:700;">~' + Math.round(f.dias) + '</td>' +
+            '<td style="text-align:right;padding:4px 5px;color:#27ae60;">' + f.ganProm.toFixed(2) + ' kg/d</td></tr>';
+    });
+
+    html += '</tbody></table><div style="margin-top:8px;padding-top:7px;border-top:1px solid #c8e6c9;font-size:0.82em;">' +
+        '<strong>Con tus recursos: ~' + sim.dias + ' d\u00edas</strong>';
+    if (simRef.dias < sim.dias - 10) {
+        html += ' &nbsp;|&nbsp; <span style="color:#2980b9;">\u2605 Con ' + refRecurso.toLowerCase() +
+            ': ~' + simRef.dias + ' d\u00edas (' + (sim.dias - simRef.dias) + ' menos)</span>';
+    }
+    html += '</div></div>';
+
+    div.style.display = 'block';
+    div.innerHTML = html;
+}
+
 function toggleCicloCria() { document.getElementById('cicloCriaFields').style.display = document.getElementById('cicloCriaCheck').checked ? '' : 'none'; }
 function toggleCicloRecria() { document.getElementById('cicloRecriaFields').style.display = document.getElementById('cicloRecriaCheck').checked ? '' : 'none'; }
 function toggleCriterioRecria() {
@@ -1303,6 +1509,49 @@ function toggleCriterioSalida() {
     var criterio = document.querySelector('input[name="criterioSalida"]:checked').value;
     document.getElementById('wrapFechaSalida').style.display = criterio === 'fecha' ? '' : 'none';
     document.getElementById('wrapPesoObjetivo').style.display = criterio === 'peso' ? '' : 'none';
+    actualizarSimulacionNRC();
+}
+
+function calibrarConNRC() {
+    if (!recursosActivos || recursosActivos.length === 0) {
+        mostrarToast('Carga recursos forrajeros primero (pestana Balance)', 'info'); return;
+    }
+    var esc = getEscenarioActivo();
+    if (!esc || esc.grupos.length === 0) {
+        mostrarToast('Agrega al menos un grupo al escenario', 'info'); return;
+    }
+    var cambios = [];
+    esc.grupos.forEach(function(g) {
+        if (g.ganancia === 0) return; // mantenimiento intencional (vacas, toros): no tocar
+        var mesInicio = g.fechaEntrada ? new Date(g.fechaEntrada + 'T00:00:00').getMonth() : new Date().getMonth();
+        var nrc = calcularNRCPonderado(mesInicio);
+        if (!nrc) return;
+        var ganAnterior = g.ganancia;
+        var ganNRC = parseFloat(calcularGananciaNRC(g.pesoInicial, nrc.fdn, nrc.em).toFixed(2));
+        g.ganancia = ganNRC;
+        // Si el criterio es peso objetivo, recalcular fechaSalida con la simulacion dinamica
+        if (g.criterioSalida === 'peso' && g.pesoObjetivo) {
+            var sim = simularCrecimientoNRC(g.pesoInicial, g.pesoObjetivo, g.categoria, mesInicio);
+            g.fechaSalida = new Date(new Date(g.fechaEntrada).getTime() + sim.dias * 86400000).toISOString().split('T')[0];
+        }
+        var nom = CATEGORIAS[g.categoria] ? CATEGORIAS[g.categoria].nombre : g.categoria;
+        if (Math.abs(ganNRC - ganAnterior) >= 0.01) {
+            cambios.push(nom + ': ' + ganAnterior.toFixed(2) + ' \u2192 ' + ganNRC.toFixed(2) + ' kg/d');
+        }
+    });
+    actualizarVistaEscenarios();
+    if (cambios.length === 0) {
+        mostrarToast('Las ganancias ya estan alineadas con NRC', 'info'); return;
+    }
+    var resumen = cambios.length <= 3 ? cambios.join(' | ') : cambios.slice(0,3).join(' | ') + ' (+' + (cambios.length-3) + ' mas)';
+    mostrarToast('NRC aplicado \u2014 ' + resumen, 'success');
+    // Recalcular balance + demanda automaticamente
+    setTimeout(function() {
+        try {
+            calcularBalance();
+            setTimeout(function() { try { calcularDemanda(); } catch(e) {} }, 300);
+        } catch(e) {}
+    }, 150);
 }
 
 function agregarGrupo() {
@@ -1399,6 +1648,7 @@ function editarGrupo(escId, grupoId) {
         else document.getElementById('cicloFechaTransicion').value = g.transicion.fechaTransicion || '';
     }
     grupoEditandoId = grupoId; document.getElementById('btnAgregarGrupo').textContent = 'Guardar cambios'; document.getElementById('btnCancelarEdicion').style.display = '';
+    actualizarHintGanancia();
     document.getElementById('grupoCategoria').scrollIntoView({ behavior: 'smooth' });
 }
 function cancelarEdicion() { grupoEditandoId = null; document.getElementById('btnAgregarGrupo').textContent = 'Agregar al escenario'; document.getElementById('btnCancelarEdicion').style.display = 'none'; limpiarFormGrupo(); }
@@ -1742,6 +1992,7 @@ function calcularDemanda() {
         var balance = disponibilidadTotal - demandaMensual[mes];
         balanceMensual[mes] = balance; diferidoActual = balance > 0 ? balance : 0; diferidoAcumulado[mes] = diferidoActual;
     }
+    ultimaDemandaMensual = demandaMensual.slice();
     mostrarGraficoOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
     mostrarGraficoDiferimiento(diferidoAcumulado, disponibilidadMensual);
     mostrarGraficoDemandaCategoria(demandaPorGrupo);
@@ -1750,10 +2001,351 @@ function calcularDemanda() {
     calcularIndicadoresOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
     detectarSuplementacionNecesaria(balanceMensual, demandaMensual, mesInicio);
     generarAlertasPredictivas(balanceMensual, demandaMensual, ofertaMensual, eficiencia, mesInicio);
+    generarRecomendacionesDeficit(balanceMensual, eficiencia);
+    generarDecisionCVS(balanceMensual, demandaMensual, eficiencia);
+    prepararSimuladorSeco();
     calcularBalanceHidrico();
     actualizarResumenEjecutivo();
     document.getElementById('resultadosDemanda').style.display = 'block';
     document.getElementById('resultadosDemanda').scrollIntoView({ behavior: 'smooth' });
+}
+
+function generarRecomendacionesDeficit(balanceMensual, eficiencia) {
+    var div = document.getElementById('recomendacionesDeficit');
+    if (!div || !datosForrajeros) return;
+
+    var mesesNom = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    var mesesDeficit = [];
+    for (var m = 0; m < 12; m++) {
+        if (balanceMensual[m] < 0) mesesDeficit.push(m);
+    }
+
+    if (mesesDeficit.length === 0) {
+        div.innerHTML = '<div style="background:#f0faf5;border:1px solid #b2dfdb;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:0.88em;color:#27ae60;font-weight:600;">Sin deficit: tu oferta cubre la demanda en todos los meses.</div>';
+        div.style.display = 'block';
+        return;
+    }
+
+    var nombresDeficit = mesesDeficit.map(function(m) { return mesesNom[m]; }).join(', ');
+    var deficitTotal = mesesDeficit.reduce(function(s, m) { return s + Math.abs(balanceMensual[m]); }, 0);
+
+    // Ha adicionales necesarias por recurso para cubrir el mes mas critico
+    var opciones = [];
+    datosForrajeros.recursos.forEach(function(r) {
+        var prom = datosForrajeros.promedios[r] ? datosForrajeros.promedios[r].mensual : null;
+        if (!prom) return;
+        var haMax = 0, mesesCubiertos = 0;
+        mesesDeficit.forEach(function(m) {
+            var prod = prom[m] * eficiencia;
+            if (prod <= 0) return;
+            mesesCubiertos++;
+            var haNec = Math.abs(balanceMensual[m]) / prod;
+            if (haNec > haMax) haMax = haNec;
+        });
+        if (mesesCubiertos === 0) return;
+        opciones.push({
+            recurso: r,
+            ha: Math.ceil(haMax),
+            cubiertos: mesesCubiertos,
+            total: mesesDeficit.length,
+            completo: mesesCubiertos === mesesDeficit.length
+        });
+    });
+
+    opciones.sort(function(a, b) {
+        if (a.completo && !b.completo) return -1;
+        if (!a.completo && b.completo) return 1;
+        return a.ha - b.ha;
+    });
+    opciones = opciones.slice(0, 4);
+
+    var html = '<div style="background:#fff9f0;border:1px solid #f0c080;border-radius:8px;padding:11px 14px;margin-top:12px;">';
+    html += '<div style="font-weight:700;color:#c0392b;margin-bottom:6px;font-size:0.88em;">Deficit en ' + nombresDeficit + ' &mdash; ' + formatNum(deficitTotal) + ' kg MS total</div>';
+    html += '<div style="font-size:0.84em;color:#666;margin-bottom:8px;">Para cubrirlo necesitas sumar hectareas de alguno de estos recursos:</div>';
+    html += '<table style="width:100%;font-size:0.82em;border-collapse:collapse;">';
+    html += '<thead><tr style="color:#888;border-bottom:1px solid #e8c880;">' +
+        '<th style="text-align:left;padding:3px 6px;">Recurso</th>' +
+        '<th style="text-align:right;padding:3px 6px;">Ha adicionales</th>' +
+        '<th style="text-align:center;padding:3px 6px;">Cobertura</th></tr></thead><tbody>';
+
+    opciones.forEach(function(op) {
+        var cob = op.completo
+            ? '<span style="color:#27ae60;font-weight:600;">Todo el periodo</span>'
+            : '<span style="color:#e67e22;">' + op.cubiertos + '/' + op.total + ' meses</span>';
+        html += '<tr style="border-top:1px solid #f5e0b0;">' +
+            '<td style="padding:5px 6px;">' + op.recurso + '</td>' +
+            '<td style="text-align:right;padding:5px 6px;font-weight:700;color:#c0392b;">+' + op.ha + ' ha</td>' +
+            '<td style="text-align:center;padding:5px 6px;">' + cob + '</td></tr>';
+    });
+
+    html += '</tbody></table>';
+    html += '<div style="font-size:0.78em;color:#aaa;margin-top:7px;">Ha estimadas para el mes con mayor deficit. Combinaciones de recursos pueden reducir el total.</div>';
+    html += '</div>';
+
+    div.innerHTML = html;
+    div.style.display = 'block';
+}
+
+// --- Asistente de decision: Vender / Suplementar ---
+function generarDecisionCVS(balanceMensual, demandaMensual, eficiencia) {
+    var div = document.getElementById('decisionCVS');
+    if (!div) return;
+    var esc = getEscenarioActivo();
+    if (!esc || esc.grupos.length === 0) { div.style.display = 'none'; return; }
+
+    var mesesNom = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    var mesesDeficit = [];
+    var deficitTotal = 0;
+    for (var m = 0; m < 12; m++) {
+        if (balanceMensual[m] < 0) { mesesDeficit.push(m); deficitTotal += Math.abs(balanceMensual[m]); }
+    }
+    if (mesesDeficit.length === 0) { div.style.display = 'none'; return; }
+
+    var nombresDeficit = mesesDeficit.map(function(m){return mesesNom[m];}).join('-');
+    var precioSuplementoDefault = 200;
+    var kgSuplemento = Math.ceil(deficitTotal / 0.85);
+    var costoSuplemento = kgSuplemento * precioSuplementoDefault;
+    var totalCab = esc.grupos.reduce(function(s,g){return s+g.cantidad;},0);
+
+    // Grupos vendibles presentes en meses de deficit
+    var vendibles = ['novillito','novillo','vaquillona','ternero','ternera'];
+    var candidatos = [];
+    esc.grupos.forEach(function(g) {
+        if (vendibles.indexOf(g.categoria) === -1) return;
+        var entrada = new Date(g.fechaEntrada);
+        var salida  = new Date(g.fechaSalida);
+        var cat = CATEGORIAS[g.categoria];
+
+        // Demanda total de este grupo en los meses de deficit
+        var demGrupoDeficit = 0;
+        mesesDeficit.forEach(function(m) {
+            var inicioMes = new Date(entrada.getFullYear(), m, 1);
+            var finMes    = new Date(entrada.getFullYear(), m + 1, 0);
+            if (inicioMes > salida || finMes < entrada) {
+                // intentar ano siguiente
+                inicioMes = new Date(entrada.getFullYear()+1, m, 1);
+                finMes    = new Date(entrada.getFullYear()+1, m + 1, 0);
+            }
+            if (inicioMes > salida || finMes < entrada) return;
+            var diasPresente = Math.min(30, Math.floor((Math.min(salida,finMes) - Math.max(entrada,inicioMes)) / 86400000) + 1);
+            if (diasPresente <= 0) return;
+            var diasDesdeEntrada = Math.max(0, Math.floor((inicioMes - entrada) / 86400000));
+            var pesoMes = g.pesoInicial + g.ganancia * diasDesdeEntrada;
+            demGrupoDeficit += pesoMes * cat.consumo * diasPresente * g.cantidad;
+        });
+        if (demGrupoDeficit <= 0) return;
+
+        var demPorCabeza = demGrupoDeficit / g.cantidad;
+        var cabVender = Math.min(g.cantidad, Math.ceil(deficitTotal / demPorCabeza));
+
+        // Peso en el primer mes de deficit
+        var primeraDefDate = new Date(entrada.getFullYear(), mesesDeficit[0], 1);
+        if (primeraDefDate < entrada) primeraDefDate = new Date(entrada.getFullYear()+1, mesesDeficit[0], 1);
+        var diasHasta = Math.max(0, Math.floor((primeraDefDate - entrada) / 86400000));
+        var pesoActual  = Math.round(g.pesoInicial + g.ganancia * diasHasta);
+        var diasTotales = Math.max(0, Math.floor((salida - entrada) / 86400000));
+        var pesoFinal   = Math.round(g.pesoInicial + g.ganancia * diasTotales);
+
+        candidatos.push({
+            cat: cat, g: g, cabVender: cabVender,
+            pesoActual: pesoActual, pesoFinal: pesoFinal,
+            ingresoAhora:  cabVender * pesoActual * g.costos.venta,
+            ingresoEsperar: cabVender * pesoFinal  * g.costos.venta
+        });
+    });
+    candidatos.sort(function(a,b){ return a.cabVender - b.cabVender; });
+    var mejor = candidatos[0] || null;
+
+    // Render
+    var html = '<div style="background:#f5f0ff;border:1px solid #c5aff0;border-radius:8px;padding:12px 14px;margin-top:12px;">';
+    html += '<div style="font-weight:700;color:#6c3fc5;margin-bottom:10px;font-size:0.88em;">';
+    html += '\u00bfC\u00f3mo cubr\u00eds el d\u00e9ficit de ' + nombresDeficit + '? (' + formatNum(deficitTotal) + ' kg MS)</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.83em;">';
+
+    // Opcion A: Suplementar
+    html += '<div style="background:#fff8e6;border:1px solid #f0d080;border-radius:8px;padding:10px;">';
+    html += '<div style="font-weight:700;color:#b07800;margin-bottom:6px;">A) Suplementar</div>';
+    html += '<div style="color:#555;">' + formatNum(kgSuplemento) + ' kg de suplemento</div>';
+    html += '<div id="costoSuplDisplay" style="font-size:1.1em;font-weight:700;color:#b07800;margin:4px 0;">' + formatMoney(costoSuplemento) + ' total</div>';
+    html += '<div id="costoSuplAnimal" style="color:#888;font-size:0.88em;">' + formatMoney(Math.round(costoSuplemento/Math.max(1,totalCab))) + '/animal</div>';
+    html += '<div style="margin-top:8px;display:flex;align-items:center;gap:5px;">';
+    html += '<input type="number" id="precioSuplInput" value="' + precioSuplementoDefault + '" min="0" step="10" ';
+    html += 'style="width:68px;padding:3px 6px;border:1px solid #ddd;border-radius:5px;font-size:0.9em;" oninput="actualizarCostoSupl()">';
+    html += '<span style="color:#888;">$/kg</span></div></div>';
+
+    // Opcion B: Vender
+    html += '<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px;">';
+    html += '<div style="font-weight:700;color:#2e7d32;margin-bottom:6px;">B) Vender animales</div>';
+    if (mejor) {
+        html += '<div style="color:#555;">Vender <strong>' + mejor.cabVender + ' ' + mejor.cat.nombre.toLowerCase() + (mejor.cabVender > 1 ? 's' : '') + '</strong> ahora</div>';
+        html += '<div style="color:#888;font-size:0.88em;margin-bottom:4px;">~' + mejor.pesoActual + ' kg/cab \xb7 $' + formatNum(mejor.g.costos.venta) + '/kg</div>';
+        html += '<div style="font-size:1.1em;font-weight:700;color:#2e7d32;margin:4px 0;">' + formatMoney(mejor.ingresoAhora) + ' ingreso</div>';
+        if (mejor.pesoFinal > mejor.pesoActual) {
+            html += '<div style="color:#888;font-size:0.88em;">Si esperás a salida (' + mejor.pesoFinal + ' kg): ' + formatMoney(mejor.ingresoEsperar) + '</div>';
+            html += '<div style="color:#e67e22;font-size:0.88em;">Diferencial: ' + formatMoney(mejor.ingresoEsperar - mejor.ingresoAhora) + ' menos si vendés ahora</div>';
+        }
+    } else {
+        html += '<div style="color:#888;">No hay categor\u00edas vendibles en los meses de d\u00e9ficit.</div>';
+    }
+    html += '</div>';
+    html += '</div>'; // grid
+
+    // Conclusion
+    if (mejor && mejor.pesoFinal > mejor.pesoActual) {
+        var diferencial = mejor.ingresoEsperar - mejor.ingresoAhora;
+        var conclusion, colorC;
+        if (costoSuplemento < diferencial) {
+            conclusion = 'Suplementar conviene: cuesta ' + formatMoney(costoSuplemento) + ' y preserva ' + formatMoney(diferencial) + ' de ganancia futura. Diferencia a favor: ' + formatMoney(diferencial - costoSuplemento) + '.';
+            colorC = '#2e7d32';
+        } else {
+            conclusion = 'Vender conviene: la ganancia futura de esperar (' + formatMoney(diferencial) + ') no compensa el costo de suplementar (' + formatMoney(costoSuplemento) + '). Diferencia a favor: ' + formatMoney(costoSuplemento - diferencial) + '.';
+            colorC = '#b07800';
+        }
+        html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #d0c0f0;font-size:0.82em;color:' + colorC + ';font-weight:600;">\u2605 ' + conclusion + '</div>';
+    }
+    html += '</div>';
+
+    div.setAttribute('data-kgsupl', kgSuplemento);
+    div.setAttribute('data-totalcab', totalCab);
+    div.innerHTML = html;
+    div.style.display = 'block';
+}
+
+function actualizarCostoSupl() {
+    var div = document.getElementById('decisionCVS');
+    if (!div) return;
+    var kgSupl    = parseFloat(div.getAttribute('data-kgsupl'))   || 0;
+    var totalCab  = parseFloat(div.getAttribute('data-totalcab')) || 1;
+    var precio    = parseFloat(document.getElementById('precioSuplInput').value) || 0;
+    var costo     = Math.round(kgSupl * precio);
+    var el1 = document.getElementById('costoSuplDisplay');
+    var el2 = document.getElementById('costoSuplAnimal');
+    if (el1) el1.textContent = formatMoney(costo) + ' total';
+    if (el2) el2.textContent = formatMoney(Math.round(costo / totalCab)) + '/animal';
+}
+
+function prepararSimuladorSeco() {
+    var div = document.getElementById('simuladorAnoSeco');
+    if (!div || !configuracionCampo) return;
+    var panel = document.getElementById('panelAnalisis');
+    if (panel) panel.style.display = 'block';
+    div.innerHTML =
+        '<div style="border-left:4px solid #e67e22;padding:15px;background:#fff8f0;border-radius:0 8px 8px 0;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
+        '<h3 style="margin:0;color:#e67e22;">Simulacion: Ano Seco</h3>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+        '<label style="font-weight:600;color:#555;">Reduccion de produccion:</label>' +
+        '<input type="range" id="sliderAnoSeco" min="10" max="40" value="20" step="5"' +
+        ' oninput="actualizarSimulacionSeca(this.value)" style="width:150px;accent-color:#e67e22;">' +
+        '<span id="labelSliderSeco" style="font-weight:700;color:#e67e22;font-size:1.1em;min-width:40px;">-20%</span>' +
+        '</div></div>' +
+        '<div id="resultadosSeco"></div>' +
+        '</div>';
+    actualizarSimulacionSeca(20);
+}
+
+function actualizarSimulacionSeca(pct) {
+    pct = parseInt(pct);
+    var label = document.getElementById('labelSliderSeco');
+    if (label) label.textContent = '-' + pct + '%';
+    var div = document.getElementById('resultadosSeco');
+    if (!div || !configuracionCampo || !configuracionCampo.produccionMensualTotal) return;
+    var mesesNom = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    var reduccion = pct / 100;
+    var prodNormal = configuracionCampo.produccionMensualTotal;
+    var prodSeca = prodNormal.map(function(p) { return p * (1 - reduccion); });
+    var manejo = configuracionCampo.manejo;
+    var eficiencia = MODELO_CONFIG.eficienciaPastoreo[manejo];
+    var produccionAnualNormal = prodNormal.reduce(function(a,b){return a+b;},0);
+    var produccionAnualSeca = prodSeca.reduce(function(a,b){return a+b;},0);
+    var html = '';
+
+    if (ultimaDemandaMensual) {
+        var mesesDeficitNormal = 0, mesesDeficitSeco = 0, kgDeficitSeco = 0, kgDeficitNormal = 0;
+        var mesesNuevosDeficit = [];
+        for (var i = 0; i < 12; i++) {
+            var bNorm = prodNormal[i] * eficiencia - ultimaDemandaMensual[i];
+            var bSeco = prodSeca[i] * eficiencia - ultimaDemandaMensual[i];
+            if (bNorm < 0) { mesesDeficitNormal++; kgDeficitNormal += Math.abs(bNorm); }
+            if (bSeco < 0) { mesesDeficitSeco++; kgDeficitSeco += Math.abs(bSeco); if (bNorm >= 0) mesesNuevosDeficit.push(mesesNom[i]); }
+        }
+        var extraMeses = mesesDeficitSeco - mesesDeficitNormal;
+        var extraKg = kgDeficitSeco - kgDeficitNormal;
+        var consumoMensualEV = MODELO_CONFIG.consumoAnualEV / 12;
+        var animalesEquiv = (mesesDeficitSeco > 0 && extraKg > 0)
+            ? Math.round(extraKg / (consumoMensualEV * mesesDeficitSeco))
+            : 0;
+
+        html += '<div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:14px;">';
+        var colMeses = extraMeses > 0 ? '#e74c3c' : '#27ae60';
+        html += '<div class="card" style="border-top:3px solid ' + colMeses + ';">' +
+            '<div class="card-title">Meses en Deficit</div>' +
+            '<div style="display:flex;justify-content:center;align-items:center;gap:12px;margin:8px 0;">' +
+            '<div style="text-align:center;"><div style="font-size:0.75em;color:#888;">Normal</div><div style="font-size:1.5em;font-weight:700;color:#27ae60;">' + mesesDeficitNormal + '</div></div>' +
+            '<div style="color:#bbb;font-size:1.1em;">\u2192</div>' +
+            '<div style="text-align:center;"><div style="font-size:0.75em;color:#888;">A\xf1o seco</div><div style="font-size:1.5em;font-weight:700;color:' + colMeses + ';">' + mesesDeficitSeco + '</div></div>' +
+            '</div>' +
+            (extraMeses > 0 ? '<div style="font-size:0.8em;color:#e74c3c;text-align:center;">+' + extraMeses + ' mes' + (extraMeses > 1 ? 'es' : '') + ' m\xe1s</div>'
+                            : '<div style="font-size:0.8em;color:#27ae60;text-align:center;">Sin cambio cr\xedtico</div>') +
+            '</div>';
+
+        html += '<div class="card" style="border-top:3px solid #e67e22;">' +
+            '<div class="card-title">Pasto que Faltaria</div>' +
+            '<div class="card-value" style="color:#e67e22;">' + formatNum(kgDeficitSeco) + '</div>' +
+            '<div class="card-unit">kg MS en d\xe9ficit</div>' +
+            (extraKg > 0 ? '<div style="font-size:0.8em;color:#e74c3c;text-align:center;margin-top:4px;">+' + formatNum(extraKg) + ' kg vs a\xf1o normal</div>' : '') +
+            '</div>';
+
+        html += '<div class="card" style="border-top:3px solid #8e44ad;">' +
+            '<div class="card-title">Vender / Suplementar</div>' +
+            '<div class="card-value" style="color:#8e44ad;">~' + Math.max(0, animalesEquiv) + ' vacas</div>' +
+            '<div class="card-unit">durante ' + mesesDeficitSeco + ' mes' + (mesesDeficitSeco !== 1 ? 'es' : '') + ' de d\xe9ficit</div>' +
+            '<div style="font-size:0.78em;color:#888;text-align:center;margin-top:4px;">o suplementarlas el tiempo de d\xe9ficit</div>' +
+            '</div>';
+        html += '</div>';
+
+        if (mesesNuevosDeficit.length > 0) {
+            html += '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;margin-bottom:12px;">' +
+                '<strong>Meses que pasan a d\xe9ficit solo en a\xf1o seco:</strong> ' + mesesNuevosDeficit.join(', ') + '</div>';
+        }
+
+        html += '<div class="tabla-scroll"><table><thead><tr>' +
+            '<th>Mes</th><th>Oferta normal (kg MS)</th><th>Oferta seca (kg MS)</th><th>Balance normal</th><th>Balance a\xf1o seco</th>' +
+            '</tr></thead><tbody>';
+        for (var i = 0; i < 12; i++) {
+            var bn = prodNormal[i] * eficiencia - ultimaDemandaMensual[i];
+            var bs = prodSeca[i] * eficiencia - ultimaDemandaMensual[i];
+            var nuevo = bn >= 0 && bs < 0;
+            html += '<tr style="' + (nuevo ? 'background:#fff3cd;' : '') + '">' +
+                '<td style="font-weight:600;">' + mesesNom[i] + (nuevo ? ' \u26a0\ufe0f' : '') + '</td>' +
+                '<td>' + formatNum(prodNormal[i]) + '</td>' +
+                '<td style="color:#e67e22;">' + formatNum(prodSeca[i]) + '</td>' +
+                '<td style="color:' + (bn >= 0 ? '#27ae60' : '#e74c3c') + ';font-weight:600;">' + (bn >= 0 ? '+' : '') + formatNum(bn) + '</td>' +
+                '<td style="color:' + (bs >= 0 ? '#27ae60' : '#e74c3c') + ';font-weight:600;">' + (bs >= 0 ? '+' : '') + formatNum(bs) + '</td>' +
+                '</tr>';
+        }
+        html += '</tbody></table></div>';
+
+    } else {
+        var superficie = configuracionCampo.superficie;
+        var cargaMaxNormal = (produccionAnualNormal * eficiencia / MODELO_CONFIG.consumoAnualEV / superficie).toFixed(2);
+        var cargaMaxSeca   = (produccionAnualSeca   * eficiencia / MODELO_CONFIG.consumoAnualEV / superficie).toFixed(2);
+        html += '<div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:12px;">';
+        html += '<div class="card"><div class="card-title">Produccion Normal</div><div class="card-value">' + formatNum(produccionAnualNormal) + '</div><div class="card-unit">kg MS/a\xf1o</div></div>';
+        html += '<div class="card" style="border-top:3px solid #e74c3c;"><div class="card-title">Produccion A\xf1o Seco</div><div class="card-value" style="color:#e74c3c;">' + formatNum(produccionAnualSeca) + '</div><div class="card-unit">kg MS/a\xf1o (' + formatNum(produccionAnualSeca - produccionAnualNormal) + ' kg)</div></div>';
+        html += '<div class="card" style="border-top:3px solid #8e44ad;"><div class="card-title">Carga M\xe1x (seco)</div><div class="card-value" style="color:#8e44ad;">' + cargaMaxSeca + '</div><div class="card-unit">EV/ha (vs ' + cargaMaxNormal + ' normal)</div></div>';
+        html += '</div>';
+        html += '<div class="alert alert-info">Para ver el impacto mes a mes y cu\xe1ntos animales reducir, primero calculá la demanda en la pesta\xf1a Rodeo.</div>';
+        html += '<div class="tabla-scroll"><table><thead><tr><th>Mes</th><th>Normal (kg MS)</th><th>A\xf1o seco (kg MS)</th><th>Diferencia</th></tr></thead><tbody>';
+        for (var i = 0; i < 12; i++) {
+            html += '<tr><td style="font-weight:600;">' + mesesNom[i] + '</td>' +
+                '<td>' + formatNum(prodNormal[i]) + '</td>' +
+                '<td style="color:#e67e22;">' + formatNum(prodSeca[i]) + '</td>' +
+                '<td style="color:#e74c3c;">' + formatNum(prodSeca[i] - prodNormal[i]) + '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+    }
+    div.innerHTML = html;
 }
 
 function calcularIndicadoresOfertaDemanda(oferta, demanda, balance, eficiencia) {
