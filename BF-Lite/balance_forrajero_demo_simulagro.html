@@ -517,6 +517,14 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
         <div class="content">
             <div class="informe-inputs">
                 <div class="input-group">
+                    <label>Zona forrajera</label>
+                    <select id="regionForrajeraSelect" onchange="cambiarRegionForrajera()">
+                        <option value="sudeste_ba">Sudeste BA</option>
+                        <option value="mar_y_sierras">Mar y sierras</option>
+                        <option value="sudoeste_ba">Sudoeste BA</option>
+                    </select>
+                </div>
+                <div class="input-group">
                     <label>Establecimiento</label>
                     <input type="text" id="nombreCampo" placeholder="Nombre del campo...">
                 </div>
@@ -874,6 +882,74 @@ var DATOS_FORRAJEROS_EMBEBIDOS = {
   }
 };
 
+function clonarDatosForrajeros(data) {
+    return JSON.parse(JSON.stringify(data));
+}
+
+function construirDatosRegion(promedios, ordenRecursos) {
+    var recursos = (ordenRecursos && ordenRecursos.length ? ordenRecursos.slice() : Object.keys(promedios)).filter(function(r) {
+        return !!promedios[r];
+    });
+    var resumen = {};
+    recursos.forEach(function(recurso) {
+        var mensual = (promedios[recurso].mensual || []).slice(0, 12).map(function(v) { return Number(v) || 0; });
+        var anual = promedios[recurso].anual || mensual.reduce(function(a, b) { return a + b; }, 0);
+        var promedio = anual / 12;
+        resumen[recurso] = {
+            promedio: Number(promedio.toFixed(2)),
+            produccion_mejor: Number((promedio * 1.15).toFixed(1)),
+            produccion_peor: Number((promedio * 0.85).toFixed(1))
+        };
+        promedios[recurso] = { mensual: mensual, anual: Number(anual.toFixed ? anual.toFixed(1) : anual) };
+    });
+    return { recursos: recursos, promedios: promedios, resumen: resumen };
+}
+
+var ORDEN_RECURSOS_REGION = ['Campo natural','Campo natural con agropiro','Campo natural con festuca','Pastura base alfalfa','Pastura de alfalfa pura','Pastura consociada','Pastura de agropiro','Agropiro','Pastura de agropiro y festuca','Pastura de festuca','Pastura de lloron','Pastura de gramma','Promocion de raigras','Promocion intensiva de raigras','Verdeo de avena','Verdeo de avena y vicia','Verdeo de invierno','Verdeo de maiz','Verdeo de raigras','Verdeo de sorgo','Verdeo de triticale','Verdeo de verano'];
+var REGION_FORRAJERA_ACTIVA = 'sudeste_ba';
+var DATOS_FORRAJEROS_POR_REGION = {
+    sudeste_ba: { nombre: 'Sudeste BA', data: clonarDatosForrajeros(DATOS_FORRAJEROS_EMBEBIDOS) },
+    mar_y_sierras: { nombre: 'Mar y sierras', data: construirDatosRegion({
+        'Campo natural': { mensual: [488.5,517.0,517.5,400.9,301.7,255.0,254.8,292.3,371.7,509.6,590.4,520.5], anual: 5019.9 },
+        'Campo natural con agropiro': { mensual: [362.1,375.0,389.5,351.4,293.9,254.8,254.5,293.1,374.7,481.6,486.1,379.5], anual: 4296.2 },
+        'Pastura base alfalfa': { mensual: [684.7,756.2,782.9,661.5,462.2,362.4,362.7,480.7,680.6,980.0,1054.9,805.6], anual: 8074.4 },
+        'Pastura consociada': { mensual: [719.6,808.9,850.2,747.1,565.9,476.7,488.8,651.5,907.9,1258.7,1082.2,742.9], anual: 9300.4 },
+        'Pastura de agropiro y festuca': { mensual: [925.6,888.2,867.9,698.8,540.7,422.5,419.0,546.8,741.1,1098.5,1331.4,1203.6], anual: 9684.1 },
+        'Pastura de festuca': { mensual: [304.8,225.8,238.2,177.5,179.8,153.3,249.0,448.8,479.0,611.8,455.2,376.9], anual: 3900.1 },
+        'Promocion intensiva de raigras': { mensual: [0.0,0.0,884.3,914.1,670.5,511.5,481.4,623.8,867.6,1354.0,1561.6,104.6], anual: 7973.4 },
+        'Verdeo de avena': { mensual: [666.3,677.2,597.4,827.4,738.0,511.9,438.4,525.5,702.2,595.5,544.5,335.2], anual: 7159.5 },
+        'Verdeo de invierno': { mensual: [0.0,569.6,725.5,932.7,719.6,509.4,471.9,604.1,847.5,943.7,872.5,0.0], anual: 7196.5 },
+        'Verdeo de maiz': { mensual: [2299.8,2958.3,2423.0,1478.9,0.0,0.0,0.0,0.0,0.0,0.0,1660.7,1591.4], anual: 12412.1 },
+        'Verdeo de raigras': { mensual: [449.4,440.9,687.9,1232.5,1044.5,833.9,794.8,1002.3,1253.0,1842.8,680.4,544.0], anual: 10806.4 },
+        'Verdeo de sorgo': { mensual: [1431.4,1639.3,1516.0,984.3,521.9,268.5,487.7,1188.0,2165.9,1797.1,959.1,838.0], anual: 13797.2 },
+        'Verdeo de verano': { mensual: [2124.3,2215.8,2024.5,1437.6,1001.7,0.0,0.0,0.0,0.0,0.0,1846.4,1503.6], anual: 12153.9 }
+    }, ORDEN_RECURSOS_REGION) },
+    sudoeste_ba: { nombre: 'Sudoeste BA', data: construirDatosRegion({
+        'Agropiro': { mensual: [294.6,292.4,330.3,344.0,314.3,268.4,258.3,294.5,356.1,424.6,451.8,338.8], anual: 3968.1 },
+        'Campo natural': { mensual: [361.1,367.5,387.6,343.1,280.4,244.2,239.1,264.0,321.8,424.0,479.5,393.9], anual: 4106.2 },
+        'Campo natural con agropiro': { mensual: [375.0,377.2,407.8,363.3,294.4,252.9,242.1,268.1,334.3,442.3,495.5,404.9], anual: 4257.8 },
+        'Campo natural con festuca': { mensual: [470.5,557.9,574.0,492.4,377.3,292.8,281.5,362.6,485.9,702.8,890.2,590.0], anual: 6077.9 },
+        'Pastura base alfalfa': { mensual: [788.3,725.1,690.0,668.9,534.9,413.8,384.6,480.4,722.2,1067.9,1242.8,826.6], anual: 8545.5 },
+        'Pastura consociada': { mensual: [747.0,760.1,784.3,669.0,505.9,407.1,386.4,459.4,658.8,959.6,1070.0,773.0], anual: 8180.6 },
+        'Pastura de agropiro': { mensual: [522.3,548.2,657.5,606.8,490.2,393.6,366.0,423.9,555.7,765.2,846.5,632.7], anual: 6808.6 },
+        'Pastura de agropiro y festuca': { mensual: [642.4,664.7,741.6,632.4,469.4,372.4,359.8,422.8,566.0,805.4,891.0,638.2], anual: 7206.1 },
+        'Pastura de alfalfa pura': { mensual: [1297.9,1330.0,1419.9,1216.5,1090.3,939.5,929.5,1027.6,1295.1,1600.6,1641.7,1262.9], anual: 15051.5 },
+        'Pastura de festuca': { mensual: [686.5,715.1,781.5,654.1,487.4,396.7,374.8,446.1,616.8,899.6,1047.4,801.5], anual: 7907.5 },
+        'Pastura de gramma': { mensual: [527.7,495.6,601.0,255.6,0.0,0.0,0.0,0.0,0.0,0.0,332.1,495.0], anual: 2707.0 },
+        'Pastura de lloron': { mensual: [288.1,290.9,307.8,284.5,248.0,220.6,216.9,237.2,279.9,347.3,361.7,302.1], anual: 3385.0 },
+        'Promocion de raigras': { mensual: [418.0,468.7,735.1,654.4,552.7,475.9,448.9,550.7,730.4,990.2,1091.4,518.4], anual: 7634.8 },
+        'Promocion intensiva de raigras': { mensual: [0.0,156.0,824.4,855.5,629.7,460.2,390.7,505.7,778.1,1557.7,2017.5,93.7], anual: 8269.2 },
+        'Verdeo de avena': { mensual: [1053.2,663.8,828.6,725.7,484.2,325.4,300.6,360.9,565.0,463.7,336.3,1039.4], anual: 7146.8 },
+        'Verdeo de avena y vicia': { mensual: [0.0,326.8,340.9,468.2,539.1,480.6,447.8,508.9,649.3,868.3,712.1,0.0], anual: 5342.0 },
+        'Verdeo de invierno': { mensual: [0.0,603.0,843.0,1038.6,756.6,486.7,391.7,435.7,585.1,1247.3,1258.7,62.6], anual: 7709.0 },
+        'Verdeo de maiz': { mensual: [1766.6,2024.8,1892.8,1199.3,257.4,0.0,0.0,0.0,0.0,959.5,1412.6,1233.9], anual: 10746.9 },
+        'Verdeo de raigras': { mensual: [0.0,981.8,926.4,999.9,743.8,661.4,571.8,681.4,972.2,0.0,0.0,0.0], anual: 6538.7 },
+        'Verdeo de sorgo': { mensual: [1303.4,1517.4,1454.1,867.7,623.6,0.0,0.0,0.0,798.3,817.5,1036.0,862.8], anual: 9280.8 },
+        'Verdeo de triticale': { mensual: [0.0,394.5,349.7,262.1,322.8,359.4,363.2,468.0,619.4,446.4,323.5,0.0], anual: 3909.0 },
+        'Verdeo de verano': { mensual: [1777.0,2234.0,2007.0,1247.3,917.8,488.3,421.9,560.8,1210.8,1327.0,1747.0,1344.3], anual: 15283.2 }
+    }, ORDEN_RECURSOS_REGION) }
+};
+
 var CATEGORIAS = {
     ternero:    { nombre: 'Ternero',    consumo: 0.025, pesoDefecto: 180, gananciaDefecto: 0.55, usaPasto: true,
                   transicionDefecto: 'novillito', pesoTransicion: 280 },
@@ -898,17 +974,26 @@ var MESES_NOMBRES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT'
 var MESES_USO_DEFECTO = {
     'Campo natural': [1,1,1,1,1,1,1,1,1,1,1,1],
     'Campo natural con agropiro': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Campo natural con festuca': [1,1,1,1,1,1,1,1,1,1,1,1],
     'Pastura base alfalfa': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Pastura de alfalfa pura': [1,1,1,1,1,1,1,1,1,1,1,1],
     'Pastura consociada': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Agropiro': [1,1,1,1,1,1,1,1,1,1,1,1],
     'Pastura de agropiro': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Pastura de agropiro y festuca': [1,1,1,1,1,1,1,1,1,1,1,1],
     'Pastura de festuca': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Pastura de lloron': [1,1,1,1,1,1,1,1,1,1,1,1],
+    'Pastura de gramma': [1,1,1,1,1,1,1,1,1,1,1,1],
     'Promocion de raigras': [0,0,0,1,1,1,1,1,1,1,1,0],
     'Promocion intensiva de raigras': [0,0,0,1,1,1,1,1,1,1,1,0],
     'Verdeo de avena': [0,1,1,1,1,1,1,1,1,1,1,0],
+    'Verdeo de avena y vicia': [0,1,1,1,1,1,1,1,1,1,1,0],
     'Verdeo de invierno': [0,1,1,1,1,1,1,1,1,1,1,0],
     'Verdeo de maiz': [1,1,1,1,1,0,0,0,0,1,0,1],
     'Verdeo de raigras': [0,1,1,1,1,1,1,1,1,1,0,0],
-    'Verdeo de sorgo': [1,0,0,1,1,0,0,0,0,1,1,1]
+    'Verdeo de sorgo': [1,0,0,1,1,0,0,0,0,1,1,1],
+    'Verdeo de triticale': [0,1,1,1,1,1,1,1,1,1,1,0],
+    'Verdeo de verano': [1,1,1,1,1,0,0,0,0,1,1,1]
 };
 
 // --- CONFIGURACION ---
@@ -922,17 +1007,26 @@ var MODELO_CONFIG = {
 var PERFIL_NRC = {
     'Campo natural':                 { fdn: {inv:75, pri:58}, em: {inv:1.60, pri:2.20} },
     'Campo natural con agropiro':    { fdn: {inv:72, pri:56}, em: {inv:1.70, pri:2.20} },
+    'Campo natural con festuca':     { fdn: {inv:68, pri:54}, em: {inv:1.75, pri:2.28} },
     'Pastura base alfalfa':          { fdn: {inv:46, pri:38}, em: {inv:2.30, pri:2.58} },
+    'Pastura de alfalfa pura':       { fdn: {inv:42, pri:34}, em: {inv:2.40, pri:2.65} },
     'Pastura consociada':            { fdn: {inv:52, pri:42}, em: {inv:2.15, pri:2.45} },
+    'Agropiro':                      { fdn: {inv:64, pri:55}, em: {inv:1.85, pri:2.15} },
     'Pastura de agropiro':           { fdn: {inv:64, pri:55}, em: {inv:1.85, pri:2.15} },
+    'Pastura de agropiro y festuca': { fdn: {inv:58, pri:48}, em: {inv:1.95, pri:2.28} },
     'Pastura de festuca':            { fdn: {inv:60, pri:48}, em: {inv:1.96, pri:2.35} },
+    'Pastura de lloron':             { fdn: {inv:70, pri:60}, em: {inv:1.75, pri:2.10} },
+    'Pastura de gramma':             { fdn: {inv:72, pri:62}, em: {inv:1.70, pri:2.00} },
     'Promocion de raigras':          { fdn: {inv:44, pri:40}, em: {inv:2.38, pri:2.52} },
     'Promocion intensiva de raigras':{ fdn: {inv:40, pri:36}, em: {inv:2.50, pri:2.65} },
     'Verdeo de avena':               { fdn: {inv:45, pri:50}, em: {inv:2.45, pri:2.22} },
+    'Verdeo de avena y vicia':       { fdn: {inv:44, pri:42}, em: {inv:2.45, pri:2.35} },
     'Verdeo de invierno':            { fdn: {inv:42, pri:44}, em: {inv:2.45, pri:2.38} },
     'Verdeo de maiz':                { fdn: {inv:62, pri:55}, em: {inv:1.96, pri:2.25} },
     'Verdeo de raigras':             { fdn: {inv:40, pri:36}, em: {inv:2.52, pri:2.65} },
-    'Verdeo de sorgo':               { fdn: {inv:65, pri:58}, em: {inv:1.78, pri:2.10} }
+    'Verdeo de sorgo':               { fdn: {inv:65, pri:58}, em: {inv:1.78, pri:2.10} },
+    'Verdeo de triticale':           { fdn: {inv:46, pri:44}, em: {inv:2.35, pri:2.30} },
+    'Verdeo de verano':              { fdn: {inv:58, pri:52}, em: {inv:2.00, pri:2.25} }
 };
 
 // --- ESTADO GLOBAL ---
@@ -964,6 +1058,40 @@ function prepararCanvasChart(canvasId, mensajeFallback) {
         return null;
     }
     return canvas;
+}
+function obtenerDatosForrajerosRegion(regionId) {
+    var config = DATOS_FORRAJEROS_POR_REGION[regionId] || DATOS_FORRAJEROS_POR_REGION.sudeste_ba;
+    return clonarDatosForrajeros(config.data);
+}
+function aplicarRegionForrajera(regionId, opciones) {
+    opciones = opciones || {};
+    REGION_FORRAJERA_ACTIVA = DATOS_FORRAJEROS_POR_REGION[regionId] ? regionId : 'sudeste_ba';
+    datosForrajeros = obtenerDatosForrajerosRegion(REGION_FORRAJERA_ACTIVA);
+    var select = document.getElementById('regionForrajeraSelect');
+    if (select) select.value = REGION_FORRAJERA_ACTIVA;
+    datosForrajeros.recursos.forEach(function(r) {
+        if (!mesesUsoRecursos[r]) mesesUsoRecursos[r] = (MESES_USO_DEFECTO[r] || [1,1,1,1,1,1,1,1,1,1,1,1]).slice();
+    });
+    if (opciones.hectareasRecursos) generarInputsRecursos(opciones.hectareasRecursos);
+    else if (opciones.conservarHectareas) {
+        var hectareasActuales = {};
+        if (typeof recursosActivos !== 'undefined' && recursosActivos.length > 0) {
+            recursosActivos.forEach(function(r) {
+                var el = document.getElementById('ha_' + r.replace(/\s+/g, '_'));
+                if (el) hectareasActuales[r] = parseFloat(el.value) || 0;
+            });
+        }
+        generarInputsRecursos(hectareasActuales);
+    } else generarInputsRecursos();
+    if (!opciones.silencioso) {
+        limpiarEstadoResultados();
+        guardarEstadoAuto();
+        mostrarToast('Zona forrajera activa: ' + DATOS_FORRAJEROS_POR_REGION[REGION_FORRAJERA_ACTIVA].nombre, 'info');
+    }
+}
+function cambiarRegionForrajera() {
+    var select = document.getElementById('regionForrajeraSelect');
+    aplicarRegionForrajera(select ? select.value : 'sudeste_ba', { conservarHectareas: true });
 }
 
 // --- UTILIDADES ---
@@ -1038,6 +1166,7 @@ function guardarEstadoAuto() {
     try {
         var data = { version: 'lite', fecha: new Date().toISOString(), mesesUsoRecursos: mesesUsoRecursos,
             escenarios: escenarios, escenarioActivoId: escenarioActivoId, nextId: nextId, hectareasRecursos: {}, configuracionBalance: {}, costos: {},
+            regionForrajera: REGION_FORRAJERA_ACTIVA,
             nombreCampo: (document.getElementById('nombreCampo').value || '').trim(),
             nombreAsesor: (document.getElementById('nombreAsesor').value || '').trim() };
         datosForrajeros.recursos.forEach(function(r) {
@@ -1057,9 +1186,9 @@ function restaurarEstadoAuto() {
         var saved = localStorage.getItem(STORAGE_KEY); if (!saved) return false;
         var data = JSON.parse(saved); if (!data.version) return false;
         if (data.mesesUsoRecursos) mesesUsoRecursos = data.mesesUsoRecursos;
+        aplicarRegionForrajera(data.regionForrajera || 'sudeste_ba', { silencioso: true, hectareasRecursos: data.hectareasRecursos || {} });
         if (data.nombreCampo) { var elCampo = document.getElementById('nombreCampo'); if (elCampo) elCampo.value = data.nombreCampo; }
         if (data.nombreAsesor) { var elAsesor = document.getElementById('nombreAsesor'); if (elAsesor) elAsesor.value = data.nombreAsesor; }
-        generarInputsRecursos(data.hectareasRecursos || {});
         if (data.escenarios && data.escenarios.length > 0) { escenarios = data.escenarios; escenarioActivoId = data.escenarioActivoId || escenarios[0].id; }
         if (data.nextId) nextId = data.nextId;
         if (data.configuracionBalance) {
@@ -1084,7 +1213,7 @@ function restaurarEstadoAuto() {
 
 function exportarConfiguracion() {
     var data = { version: 'lite', fecha: new Date().toISOString(), mesesUsoRecursos: mesesUsoRecursos,
-        escenarios: escenarios, escenarioActivoId: escenarioActivoId, hectareasRecursos: {}, costos: {},
+        escenarios: escenarios, escenarioActivoId: escenarioActivoId, hectareasRecursos: {}, costos: {}, regionForrajera: REGION_FORRAJERA_ACTIVA,
         nombreCampo: (document.getElementById('nombreCampo').value || '').trim(),
         nombreAsesor: (document.getElementById('nombreAsesor').value || '').trim() };
     datosForrajeros.recursos.forEach(function(r) {
@@ -1114,6 +1243,7 @@ function importarConfiguracion(event) {
             var data = JSON.parse(e.target.result);
             if (!data.version) { mostrarToast('Archivo no valido', 'error'); return; }
             if (data.mesesUsoRecursos) mesesUsoRecursos = data.mesesUsoRecursos;
+            aplicarRegionForrajera(data.regionForrajera || 'sudeste_ba', { silencioso: true, hectareasRecursos: data.hectareasRecursos || {} });
             if (data.nombreCampo) { var elC = document.getElementById('nombreCampo'); if (elC) elC.value = data.nombreCampo; }
             if (data.nombreAsesor) { var elA = document.getElementById('nombreAsesor'); if (elA) elA.value = data.nombreAsesor; }
             if (data.escenarios) {
@@ -1123,7 +1253,6 @@ function importarConfiguracion(event) {
                 escenarios.forEach(function(e) { if (e.id > maxId) maxId = e.id; e.grupos.forEach(function(g) { if (g.id > maxId) maxId = g.id; }); });
                 nextId = maxId + 1;
             }
-            generarInputsRecursos(data.hectareasRecursos || {});
             if (data.costos) {
                 var c = data.costos;
                 if (document.getElementById('costoLabores')) document.getElementById('costoLabores').value = c.labores || 0;
@@ -2924,9 +3053,7 @@ function verificarExpiracion() {
 
 function cargarDatos() {
     if (!verificarExpiracion()) return;
-    datosForrajeros = DATOS_FORRAJEROS_EMBEBIDOS;
-    datosForrajeros.recursos.forEach(function(r) { mesesUsoRecursos[r] = (MESES_USO_DEFECTO[r] || [1,1,1,1,1,1,1,1,1,1,1,1]).slice(); });
-    generarInputsRecursos();
+    aplicarRegionForrajera(REGION_FORRAJERA_ACTIVA, { silencioso: true });
     var restaurado = restaurarEstadoAuto();
     if (!restaurado) {
         crearEscenario('Escenario Base');
