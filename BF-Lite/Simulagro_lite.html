@@ -43,14 +43,14 @@ body {
     /* Verde oscuro de la marca, igual al fondo del logo */
     background: linear-gradient(160deg, #0d2e20 0%, #1a4a35 50%, #143d2c 100%);
     color: white;
-    padding: 32px 30px 24px;
+    padding: 18px 24px 14px;
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 100;
     border-radius: 24px 24px 0 0;
     border-bottom: 3px solid #3dba5e;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.26);
 }
 
 /* Logotipo tipográfico que replica el logo SimulAgro */
@@ -58,11 +58,17 @@ body {
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 0;
     margin-bottom: 0;
+    max-width: 100%;
 }
 .header-logo img {
     display: block;
+    width: min(240px, 50vw);
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.22));
 }
 .header-logo .logo-nombre {
     font-size: 2.8em;
@@ -120,7 +126,7 @@ body {
 .tab.active { color: #1a4a35; border-bottom-color: #3dba5e; font-weight: 700; }
 .tabs-header {
     justify-content: center;
-    margin: 2px 0 0;
+    margin: 0;
     border-bottom: none;
     margin-bottom: 0;
     padding-bottom: 0;
@@ -136,8 +142,8 @@ body {
     border: 1.5px solid rgba(61,186,94,0.38);
     border-bottom: 1.5px solid rgba(61,186,94,0.38) !important;
     border-radius: 999px;
-    padding: 8px 14px;
-    font-size: 0.9em;
+    padding: 7px 12px;
+    font-size: 0.86em;
 }
 .tabs-header .tab:hover {
     color: white;
@@ -149,12 +155,6 @@ body {
     border-color: #3dba5e;
     background: #3dba5e;
     box-shadow: 0 8px 22px rgba(61,186,94,0.32);
-}
-.header-logo img {
-    display: block;
-    width: min(300px, 62vw);
-    height: auto;
-    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.22));
 }
 .tab-content { display: none; }
 .tab-content.active { display: block; animation: fadeIn 0.4s; }
@@ -404,11 +404,13 @@ tr.fila-total { background: #e8f5e9; font-weight: 700; }
 /* Responsive */
 @media (max-width: 768px) {
     body { padding: 8px; }
-    .header { padding: 20px 15px; }
+    .header { padding: 14px 12px 10px; }
     .header h1 { font-size: 1.5em; }
     .content { padding: 15px; }
     .tabs { gap: 2px; }
     .tab { padding: 8px 10px; font-size: 0.8em; }
+    .header-logo img { width: min(210px, 62vw); }
+    .tabs-header .tab { padding: 6px 10px; font-size: 0.8em; }
     .input-grid { grid-template-columns: 1fr; }
     .recurso-row { flex-direction: column; align-items: stretch; }
     .recurso-ha { width: 100%; }
@@ -687,7 +689,7 @@ footer { background: #f7faf8; border-top: 1px solid #e0ebe3; padding: 14px 30px;
     <div class="container">
         <div class="header">
             <div class="header-logo">
-                <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iQ2FwYV8xIiBkYXRhLW5hbWU9IkNhcGEgMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMzUyLjQgMTEyLjk0Ij4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBsZXR0ZXItc3BhY2luZzogLS4wM2VtOwogICAgICB9CgogICAgICAuY2xzLTEsIC5jbHMtMiB7CiAgICAgICAgZm9udC1mYW1pbHk6IFNwYWNlR3JvdGVzay1Cb2xkLCAnU3BhY2UgR3JvdGVzayc7CiAgICAgICAgZm9udC12YXJpYXRpb24tc2V0dGluZ3M6ICd3Z2h0JyA3MDA7CiAgICAgIH0KCiAgICAgIC5jbHMtMSwgLmNscy0yLCAuY2xzLTMgewogICAgICAgIGZvbnQtd2VpZ2h0OiA3MDA7CiAgICAgIH0KCiAgICAgIC5jbHMtMiwgLmNscy00IHsKICAgICAgICBsZXR0ZXItc3BhY2luZzogLS4wMWVtOwogICAgICB9CgogICAgICAuY2xzLTUgewogICAgICAgIGZvbnQtc2l6ZTogNzQuMjFweDsKICAgICAgfQoKICAgICAgLmNscy01LCAuY2xzLTMgewogICAgICAgIGZpbGw6ICNmZmY7CiAgICAgIH0KCiAgICAgIC5jbHMtMyB7CiAgICAgICAgZm9udC1mYW1pbHk6IEludGVyLUJvbGQsIEludGVyOwogICAgICAgIGZvbnQtc2l6ZTogMjcuMjNweDsKICAgICAgICBsZXR0ZXItc3BhY2luZzogLjE0ZW07CiAgICAgIH0KCiAgICAgIC5jbHMtNiB7CiAgICAgICAgbGV0dGVyLXNwYWNpbmc6IC0uMDJlbTsKICAgICAgfQoKICAgICAgLmNscy02LCAuY2xzLTQgewogICAgICAgIGZvbnQtZmFtaWx5OiBTcGFjZUdyb3Rlc2stUmVndWxhciwgJ1NwYWNlIEdyb3Rlc2snOwogICAgICAgIGZvbnQtdmFyaWF0aW9uLXNldHRpbmdzOiAnd2dodCcgNDAwOwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8dGV4dCBjbGFzcz0iY2xzLTMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMuMTcgMTAzLjg0KSBzY2FsZSguOTUgMSkiPjx0c3BhbiB4PSIwIiB5PSIwIj5CQUxBTkNFIEZPUlJBSkVSTzwvdHNwYW4+PC90ZXh0PgogIDx0ZXh0IGNsYXNzPSJjbHMtNSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCA2My4wNykiPjx0c3BhbiBjbGFzcz0iY2xzLTQiIHg9IjAiIHk9IjAiPlNpPC90c3Bhbj48dHNwYW4gY2xhc3M9ImNscy02IiB4PSI2Mi4xOCIgeT0iMCI+bTwvdHNwYW4+PHRzcGFuIGNsYXNzPSJjbHMtNCIgeD0iMTI0LjY2IiB5PSIwIj51bDwvdHNwYW4+PHRzcGFuIGNsYXNzPSJjbHMtMiIgeD0iMTg2Ljc3IiB5PSIwIj5BZzwvdHNwYW4+PHRzcGFuIGNsYXNzPSJjbHMtMSIgeD0iMjc5LjY4IiB5PSIwIj5yPC90c3Bhbj48dHNwYW4gY2xhc3M9ImNscy0yIiB4PSIzMDYuOTkiIHk9IjAiPm88L3RzcGFuPjwvdGV4dD4KPC9zdmc+" alt="SimulAgro - Balance Forrajero" style="height:90px;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3));">
+                <img src="../Marca%20y%20logo/logoblanco%20Final.svg" alt="SimulAgro - Balance Forrajero">
             </div>
             <div class="tabs tabs-header" style="border-bottom:none;margin-bottom:0;box-shadow:none;">
                 <button class="tab active" onclick="switchTab('inicio')">Inicio</button>
