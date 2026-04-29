@@ -244,6 +244,23 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20p
 .card-title { color: #7f8c8d; font-size: 0.85em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
 .card-value { color: #1a4a35; font-size: 1.95em; font-weight: 700; margin-bottom: 3px; overflow-wrap: anywhere; word-break: break-word; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .card-unit { color: #95a5a6; font-size: 0.85em; }
+.card.card-profit-good { border-left-color: #48b14c; background: linear-gradient(180deg, #ffffff 0%, #f5fbf6 100%); }
+.card.card-profit-good .card-value { color: #2f8f45; }
+.card.card-profit-warn { border-left-color: #e0a203; background: linear-gradient(180deg, #ffffff 0%, #fffaf0 100%); }
+.card.card-profit-warn .card-value { color: #b07800; }
+.card.card-profit-bad { border-left-color: #d64545; background: linear-gradient(180deg, #ffffff 0%, #fff4f4 100%); }
+.card.card-profit-bad .card-value { color: #c0392b; }
+.metric-footnote { font-size: 0.88em; color: #5f6f67; margin: -8px 0 18px; line-height: 1.5; }
+.chart-grid-economico { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+.heatmap-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.heatmap-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; font-size: 0.82em; font-weight: 600; }
+.heatmap-chip::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: currentColor; opacity: 0.85; }
+.heatmap-chip.good { background: #e8f5e9; color: #2e7d32; }
+.heatmap-chip.warn { background: #fff8e1; color: #b07800; }
+.heatmap-chip.bad { background: #ffebee; color: #c62828; }
+.tabla-heatmap table td { text-align: center; font-weight: 700; min-width: 88px; }
+.tabla-heatmap table th:first-child { position: sticky; left: 0; z-index: 2; background: #1a4a35; }
+.tabla-heatmap table td:first-child { position: sticky; left: 0; z-index: 1; background: white; }
 
 /* Charts */
 .chart-container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
@@ -806,6 +823,8 @@ footer { background: #f7faf8; border-top: 1px solid #e0ebe3; padding: 14px 30px;
                                 <option value="sudeste_ba">Sudeste BA</option>
                                 <option value="mar_y_sierras">Mar y sierras</option>
                                 <option value="sudoeste_ba">Sudoeste BA</option>
+                                <option value="centro_argentina">Centro Argentina</option>
+                                <option value="noroeste_ba">Noroeste BA</option>
                             </select>
                         </div>
                         <div class="input-group">
@@ -1044,268 +1063,238 @@ footer { background: #f7faf8; border-top: 1px solid #e0ebe3; padding: 14px 30px;
                 </div>
             </div>
 
-            <!-- TAB 4: ECONOMICO -->
+            <!-- TAB 4: ECONOMICO — diseño simplificado en 3 capas -->
             <div id="economico" class="tab-content">
+
+                <!-- ══════════════════════════════════════════════════
+                     SECCIÓN DE ENTRADA
+                     ══════════════════════════════════════════════════ -->
                 <div class="section">
-                    <h2>Costos de Producción</h2>
-                    <div class="alert alert-info">Completa los costos para obtener margenes. Los costos de compra, venta y sanidad se cargan en cada lote.</div>
-                    <h3>Costos por hectárea</h3>
-                    <div class="input-grid">
-                        <div class="input-group"><label>Labores ($/ha/año)</label><input type="number" id="costoLabores" value="0" step="100" oninput="guardarEstadoAuto(); programarRecalculoResultados();"></div>
-                        <div class="input-group"><label>Estructura ($/ha/año)</label><input type="number" id="costosEstructura" value="0" step="100" oninput="guardarEstadoAuto(); programarRecalculoResultados();"></div>
+                    <h2>Resultado Económico</h2>
+
+                    <!-- Panel "precios que vas a usar" — se actualiza al entrar a la tab -->
+                    <div id="ecoResumenPrecios" style="
+                        background:#f0f7f2; border:1px solid #c8e0d0; border-radius:12px;
+                        padding:14px 18px; margin-bottom:16px; display:none;">
+                        <div style="font-size:0.82em;font-weight:700;color:#1a4a35;text-transform:uppercase;
+                             letter-spacing:0.8px;margin-bottom:8px;">
+                            Precios cargados en tu rodeo
+                        </div>
+                        <div id="ecoResumenPreciosDetalle" style="font-size:0.88em;color:#444;line-height:1.8;"></div>
+                        <div style="font-size:0.78em;color:#888;margin-top:6px;">
+                            Para cambiar los precios, andá a <strong>Lotes / Rodeo</strong> → editá cada grupo → sección "Datos económicos".
+                        </div>
                     </div>
-                    <h3>Suplementacion</h3>
-                    <div class="input-grid">
-                        <div class="input-group"><label>Costo suplemento ($/kg)</label><input type="number" id="costoSuplemento" value="0" step="10" oninput="guardarEstadoAuto(); programarRecalculoResultados();"></div>
-                        <div class="input-group"><label>Kg suplemento total/año</label><input type="number" id="kgSuplemento" value="0" step="100" oninput="guardarEstadoAuto(); programarRecalculoResultados();"></div>
+
+                    <div class="alert alert-info" id="ecoAlertaSinRodeo" style="margin-bottom:14px;">
+                        Primero cargá el rodeo en <strong>Lotes / Rodeo</strong> y calculá el balance. Los precios de compra y venta se toman de cada grupo.
                     </div>
-                    <div class="acordeon">
-                        <div class="acordeon-header" onclick="toggleAcordeon(this)">Comercializacion (comision, flete) <span class="flecha">&#9660;</span></div>
+
+                    <!-- Costos opcionales: colapsados por defecto -->
+                    <div class="acordeon" style="margin-bottom:14px;">
+                        <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                            ⚙️ Agregar costos del campo para un resultado más preciso (opcional)
+                            <span class="flecha">&#9660;</span>
+                        </div>
                         <div class="acordeon-body">
+                            <p style="font-size:0.85em;color:#666;margin-bottom:14px;line-height:1.5;">
+                                Si los dejás en cero el resultado igual es válido — muestra la diferencia entre lo que compraste y vendiste.
+                                Cargalos cuando quieras comparar con agricultura (margen/ha más preciso).
+                            </p>
                             <div class="input-grid">
-                                <div class="input-group"><label>Comision venta (%)</label><input type="number" id="comisionVenta" value="4" step="0.5" min="0" max="100" oninput="guardarEstadoAuto(); programarRecalculoResultados();"></div>
-                                <div class="input-group"><label>Flete ($/cabeza)</label><input type="number" id="costoFlete" value="0" step="100" oninput="guardarEstadoAuto(); programarRecalculoResultados();"></div>
+                                <div class="input-group">
+                                    <label>Labores ($/ha/año)</label>
+                                    <input type="number" id="costoLabores" value="0" step="100" placeholder="Ej: 45.000"
+                                        oninput="guardarEstadoAuto(); programarRecalculoResultados(); actualizarResumenPrecios();">
+                                </div>
+                                <div class="input-group">
+                                    <label>Estructura ($/ha/año)</label>
+                                    <input type="number" id="costosEstructura" value="0" step="100" placeholder="Ej: 30.000"
+                                        oninput="guardarEstadoAuto(); programarRecalculoResultados(); actualizarResumenPrecios();">
+                                </div>
+                                <div class="input-group">
+                                    <label>Costo suplemento ($/kg)</label>
+                                    <input type="number" id="costoSuplemento" value="0" step="10" placeholder="Ej: 200"
+                                        oninput="guardarEstadoAuto(); programarRecalculoResultados();">
+                                </div>
+                                <div class="input-group">
+                                    <label>Kg suplemento total/año</label>
+                                    <input type="number" id="kgSuplemento" value="0" step="100" placeholder="Ej: 5.000"
+                                        oninput="guardarEstadoAuto(); programarRecalculoResultados();">
+                                </div>
+                                <div class="input-group">
+                                    <label>Comisión venta (%)</label>
+                                    <input type="number" id="comisionVenta" value="4" step="0.5" min="0" max="100"
+                                        oninput="guardarEstadoAuto(); programarRecalculoResultados();">
+                                </div>
+                                <div class="input-group">
+                                    <label>Flete ($/cabeza)</label>
+                                    <input type="number" id="costoFlete" value="0" step="100" placeholder="Ej: 15.000"
+                                        oninput="guardarEstadoAuto(); programarRecalculoResultados();">
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="cargarValoresReferencia(this)" style="margin-top:4px;">
+                                Usar valores de referencia del mercado
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="calcularEconomico()">Calcular resultado económico</button>
+                </div>
+
+                <!-- ══════════════════════════════════════════════════
+                     RESULTADOS — se muestra después de calcular
+                     ══════════════════════════════════════════════════ -->
+                <div id="resultadosEconomico" style="display:none;">
+
+                    <!-- ── CAPA 2: Veredicto principal ── -->
+                    <div class="section">
+                        <h2>¿Convino el ejercicio?</h2>
+
+                        <!-- Card grande de veredicto -->
+                        <div id="ecoVeredicto" style="
+                            display:flex; align-items:flex-start; gap:18px; flex-wrap:wrap;
+                            border-radius:16px; padding:22px 24px; border-left:6px solid #ccc;
+                            background:#f8f9fa; margin-bottom:20px;">
+                            <div id="ecoVeredictoIcono" style="font-size:3em; flex-shrink:0; line-height:1;">⏳</div>
+                            <div style="flex:1; min-width:200px;">
+                                <div id="ecoVeredictoTitulo"
+                                     style="font-size:1.45em; font-weight:800; color:#2c3e50; margin-bottom:6px;">
+                                    Calculando...
+                                </div>
+                                <!-- Líneas de contexto con los 3 datos clave en lenguaje natural -->
+                                <div id="ecoVeredictoDetalle"
+                                     style="font-size:0.92em; color:#555; line-height:1.7;"></div>
+                                <!-- Déficit forrajero: aparece solo si hubo baches de pasto -->
+                                <div id="ecoDeficitForraje" style="display:none;
+                                     margin-top:10px; padding:8px 12px;
+                                     background:#fff3cd; border-left:3px solid #e0a203;
+                                     border-radius:0 8px 8px 0; font-size:0.87em; color:#7a5000;">
+                                </div>
+                                <!-- Precio mínimo de equilibrio -->
+                                <div id="ecoPrecioEquilibrio" style="display:none;
+                                     margin-top:10px; padding:8px 12px;
+                                     background:#e8f4fd; border-left:3px solid #1a7ab5;
+                                     border-radius:0 8px 8px 0; font-size:0.87em; color:#0d4a7a;">
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button class="btn" onclick="calcularEconomico()">Calcular Económico</button>
-                        <button class="btn btn-secondary" onclick="cargarValoresReferencia(this)" title="Carga precios orientativos de labores, estructura, suplementacion, comision y flete">Cargar valores de referencia</button>
-                    </div>
-                </div>
-                <div id="resultadosEconomico" style="display:none;">
-                    <div class="section">
-                        <h2>Resumen Económico</h2>
-                        <div class="card-grid">
-                            <div class="card" data-tooltip="Compra de hacienda + sanidad"><div class="card-title">Inversión Total</div><div class="card-value" id="inversionTotal">0</div><div class="card-unit">$</div></div>
-                            <div class="card" data-tooltip="Peso final x cantidad x precio venta"><div class="card-title">Ingreso Bruto</div><div class="card-value" id="ingresoTotal">0</div><div class="card-unit">$</div></div>
-                            <div class="card" data-tooltip="Compra + sanidad + comision + flete"><div class="card-title">Costos Directos</div><div class="card-value" id="costosDirectosTotal">0</div><div class="card-unit">$</div></div>
-                            <div class="card" data-tooltip="Ingreso bruto menos costos directos"><div class="card-title">Margen Bruto</div><div class="card-value" id="margenBrutoTotal">0</div><div class="card-unit">$</div></div>
-                            <div class="card" data-tooltip="Util para comparar con agricultura"><div class="card-title">Margen Bruto/ha</div><div class="card-value" id="margenBrutoHa">0</div><div class="card-unit">$/ha</div></div>
-                            <div class="card" data-tooltip="Margen bruto menos gastos generales"><div class="card-title">Margen Neto</div><div class="card-value" id="margenNetoTotal">0</div><div class="card-unit">$</div></div>
+
+                        <!-- Fila de 3 números clave: ingreso / costos / margen -->
+                        <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:14px;">
+                            <div class="card" data-tooltip="Lo que ingresó por ventas de hacienda (y terneros si aplica)">
+                                <div class="card-title">Ingreso bruto</div>
+                                <div class="card-value" id="ecoRevenue" style="font-size:1.5em;">0</div>
+                                <div class="card-unit">$</div>
+                            </div>
+                            <div class="card" data-tooltip="Compra de hacienda + todos los costos del año">
+                                <div class="card-title">Total costos</div>
+                                <div class="card-value" id="ecoTotalCostos" style="font-size:1.5em;">0</div>
+                                <div class="card-unit">$</div>
+                            </div>
+                            <div class="card" data-tooltip="Ingreso menos todos los costos. Verde = ganaste, rojo = perdiste">
+                                <div class="card-title">Margen del ejercicio</div>
+                                <div class="card-value" id="ecoTotalMargin" style="font-size:1.75em; font-weight:800;">0</div>
+                                <div class="card-unit">$</div>
+                            </div>
                         </div>
-                        <div class="section"><h3>Detalle por grupo</h3><div class="tabla-scroll" id="tablaDetalleEconomico"></div></div>
-                        <div class="section"><h3>Composicion de costos</h3><div class="tabla-scroll" id="tablaComposicionCostos"></div></div>
-                        <div class="section"><h3>Sensibilidad de precios</h3><p style="font-size:0.85em;color:#666;margin-bottom:8px;">Como cambia el margen neto si varian los precios de compra y venta.</p><div class="tabla-scroll" id="tablaSensibilidad"></div></div>
+
+                        <!-- Fila de 4 indicadores de contexto -->
+                        <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px;">
+                            <div class="card" data-tooltip="Margen por hectárea — para comparar con agricultura">
+                                <div class="card-title">Margen / ha</div>
+                                <div class="card-value" id="ecoMarginHa">0</div>
+                                <div class="card-unit">$/ha</div>
+                            </div>
+                            <div class="card" data-tooltip="Margen por cada cabeza vendida">
+                                <div class="card-title">Margen / cabeza</div>
+                                <div class="card-value" id="ecoMarginHead">0</div>
+                                <div class="card-unit">$/cab</div>
+                            </div>
+                            <div class="card" data-tooltip="Kg de carne producidos (ganancia de peso de todos los animales)">
+                                <div class="card-title">Kg producidos</div>
+                                <div class="card-value" id="ecoKgProducidos">0</div>
+                                <div class="card-unit">kg</div>
+                            </div>
+                            <div class="card" data-tooltip="Kg producidos por hectárea total del campo">
+                                <div class="card-title">Kg / ha</div>
+                                <div class="card-value" id="ecoKgHa">0</div>
+                                <div class="card-unit">kg/ha</div>
+                            </div>
+                        </div>
+
+                        <!-- Nota de forraje (solo si hay déficit) -->
+                        <div class="metric-footnote" id="economicoSupuestoForrajero" style="margin-top:10px;"></div>
                     </div>
-                </div>
-            </div>
+
+                    <!-- ── CAPA 3: Análisis completo — colapsado ── -->
+                    <div class="acordeon">
+                        <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                            📊 Ver análisis completo (sensibilidad de precios, desglose de costos, gráficos)
+                            <span class="flecha">&#9660;</span>
+                        </div>
+                        <div class="acordeon-body">
+
+                            <!-- IDs legacy ocultos para compatibilidad con informe y otros cálculos -->
+                            <span id="ecoPurchaseCost"      style="display:none;"></span>
+                            <span id="ecoOperatingCosts"    style="display:none;"></span>
+                            <span id="ecoCapitalInvested"   style="display:none;"></span>
+                            <span id="ecoCostPerKg"         style="display:none;"></span>
+                            <span id="ecoSalePrice"         style="display:none;"></span>
+                            <span id="ecoPurchaseSaleRatio" style="display:none;"></span>
+                            <span id="ecoRoi"               style="display:none;"></span>
+
+                            <div id="dashboardRentabilidad" class="alert alert-info" style="margin-bottom:16px;">
+                                Calculá el económico para ver el análisis completo.
+                            </div>
+
+                            <div style="margin-bottom:20px;">
+                                <h3 style="margin-bottom:10px;">Desglose por grupo</h3>
+                                <div class="tabla-scroll" id="tablaDetalleEconomico"></div>
+                            </div>
+
+                            <div style="margin-bottom:20px;">
+                                <h3 style="margin-bottom:10px;">Composición de costos</h3>
+                                <div class="tabla-scroll" id="tablaComposicionCostos"></div>
+                            </div>
+
+                            <div class="chart-grid-economico" style="margin-bottom:20px;">
+                                <div class="chart-container">
+                                    <h3>De dónde viene el margen</h3>
+                                    <div class="chart-wrapper"><canvas id="chartWaterfallEconomico"></canvas></div>
+                                </div>
+                                <div class="chart-container">
+                                    <h3>Margen vs balance forrajero mensual</h3>
+                                    <div class="chart-wrapper"><canvas id="chartForageMargin"></canvas></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 style="margin-bottom:6px;">Sensibilidad de precios</h3>
+                                <p style="font-size:0.85em;color:#666;margin-bottom:8px;line-height:1.4;">
+                                    Cómo cambia el margen si los precios varían ±10% ó ±20%. La celda del medio es tu situación actual.
+                                </p>
+                                <div class="heatmap-legend">
+                                    <span class="heatmap-chip good">Rentable</span>
+                                    <span class="heatmap-chip warn">Cerca del equilibrio</span>
+                                    <span class="heatmap-chip bad">Margen negativo</span>
+                                </div>
+                                <div class="tabla-scroll tabla-heatmap" id="tablaSensibilidad"></div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div><!-- fin resultadosEconomico -->
+            </div><!-- fin tab economico -->
         </div>
     </div>
 
+<script src="datos_forrajeros.js"></script>
 <script>
 // ============================================
 // BALANCE FORRAJERO PRO - Lite
 // ============================================
-
-// --- DATOS FORRAJEROS (INTA 2008) ---
-var DATOS_FORRAJEROS_EMBEBIDOS = {
-  "recursos": ["Campo natural","Campo natural con agropiro","Pastura base alfalfa","Pastura consociada","Pastura de agropiro","Pastura de festuca","Promocion de raigras","Promocion intensiva de raigras","Verdeo de avena","Verdeo de invierno","Verdeo de maiz","Verdeo de raigras","Verdeo de sorgo"],
-  "promedios": {
-    "Campo natural":{"mensual":[525.9,534.0,524.9,417.0,303.5,256.5,251.2,287.1,362.2,498.6,618.8,563.3],"anual":5143.0},
-    "Campo natural con agropiro":{"mensual":[488.4,487.1,513.9,432.8,322.6,271.0,270.6,311.5,395.1,535.7,622.7,522.8],"anual":5174.2},
-    "Pastura base alfalfa":{"mensual":[892.9,843.1,682.4,625.3,495.2,412.7,388.9,505.6,607.7,602.7,814.8,758.7],"anual":7630.0},
-    "Pastura consociada":{"mensual":[736.3,798.4,785.8,740.2,574.0,484.1,503.1,618.2,774.0,832.9,876.0,764.9],"anual":8487.9},
-    "Pastura de agropiro":{"mensual":[663.7,702.8,702.3,619.7,498.4,421.0,414.3,491.0,600.4,654.2,929.6,814.4],"anual":7511.8},
-    "Pastura de festuca":{"mensual":[742.1,830.4,832.3,792.0,540.4,405.9,395.0,483.6,670.7,899.3,931.4,781.0],"anual":8304.1},
-    "Promocion de raigras":{"mensual":[503.6,491.4,683.1,655.4,548.4,455.0,442.0,513.6,609.7,797.8,872.4,548.3],"anual":7120.7},
-    "Promocion intensiva de raigras":{"mensual":[681.3,655.2,742.0,665.9,807.4,732.5,706.4,784.4,919.0,907.1,668.5,630.9],"anual":8900.6},
-    "Verdeo de avena":{"mensual":[0,767.0,894.6,815.4,601.0,389.7,471.8,692.0,773.3,541.4,968.2,0],"anual":6914.4},
-    "Verdeo de invierno":{"mensual":[0,682.2,699.7,678.3,770.1,671.3,664.9,795.4,846.6,903.0,933.9,0],"anual":7645.4},
-    "Verdeo de maiz":{"mensual":[0,673.5,615.9,579.9,673.7,0,0,0,0,741.3,0,945.6],"anual":4229.9},
-    "Verdeo de raigras":{"mensual":[0,761.6,802.7,541.4,646.2,597.9,618.9,679.6,721.2,864.2,0,0],"anual":6233.7},
-    "Verdeo de sorgo":{"mensual":[817.1,0,0,679.4,771.8,0,0,0,0,608.7,899.2,830.0],"anual":4606.2}
-  },
-  "resumen": {
-    "Campo natural":{"promedio":427.91,"produccion_mejor":481.5,"produccion_peor":357.1},
-    "Campo natural con agropiro":{"promedio":430.79,"produccion_mejor":562.9,"produccion_peor":322.9},
-    "Pastura base alfalfa":{"promedio":584.36,"produccion_mejor":645.9,"produccion_peor":498.8},
-    "Pastura consociada":{"promedio":674.56,"produccion_mejor":767.4,"produccion_peor":551.2},
-    "Pastura de agropiro":{"promedio":609.77,"produccion_mejor":658.4,"produccion_peor":540.3},
-    "Pastura de festuca":{"promedio":622.68,"produccion_mejor":710.6,"produccion_peor":532.0},
-    "Promocion de raigras":{"promedio":578.01,"produccion_mejor":657.2,"produccion_peor":485.6},
-    "Promocion intensiva de raigras":{"promedio":728.39,"produccion_mejor":863.9,"produccion_peor":555.4},
-    "Verdeo de avena":{"promedio":611.13,"produccion_mejor":750.7,"produccion_peor":375.8},
-    "Verdeo de invierno":{"promedio":723.99,"produccion_mejor":897.7,"produccion_peor":341.7},
-    "Verdeo de maiz":{"promedio":723.13,"produccion_mejor":961.8,"produccion_peor":467.6},
-    "Verdeo de raigras":{"promedio":664.65,"produccion_mejor":851.1,"produccion_peor":432.4},
-    "Verdeo de sorgo":{"promedio":708.12,"produccion_mejor":969.3,"produccion_peor":412.9}
-  }
-};
-
-function clonarDatosForrajeros(data) {
-    return JSON.parse(JSON.stringify(data));
-}
-
-function construirDatosRegion(promedios, ordenRecursos) {
-    var recursos = (ordenRecursos && ordenRecursos.length ? ordenRecursos.slice() : Object.keys(promedios)).filter(function(r) {
-        return !!promedios[r];
-    });
-    var resumen = {};
-    recursos.forEach(function(recurso) {
-        var mensual = (promedios[recurso].mensual || []).slice(0, 12).map(function(v) { return Number(v) || 0; });
-        var anual = promedios[recurso].anual || mensual.reduce(function(a, b) { return a + b; }, 0);
-        var promedio = anual / 12;
-        resumen[recurso] = {
-            promedio: Number(promedio.toFixed(2)),
-            produccion_mejor: Number((promedio * 1.15).toFixed(1)),
-            produccion_peor: Number((promedio * 0.85).toFixed(1))
-        };
-        promedios[recurso] = { mensual: mensual, anual: Number(anual.toFixed ? anual.toFixed(1) : anual) };
-    });
-    return { recursos: recursos, promedios: promedios, resumen: resumen };
-}
-
-var ORDEN_RECURSOS_REGION = ['Campo natural','Campo natural con agropiro','Campo natural con festuca','Pastura base alfalfa','Pastura de alfalfa pura','Pastura consociada','Pastura de agropiro','Agropiro','Pastura de agropiro y festuca','Pastura de festuca','Pastura de lloron','Pastura de gramma','Promocion de raigras','Promocion intensiva de raigras','Verdeo de avena','Verdeo de avena y vicia','Verdeo de invierno','Verdeo de maiz','Maiz diferido','Verdeo de raigras','Verdeo de sorgo','Sorgo diferido','Verdeo de triticale','Verdeo de verano'];
-var REGION_FORRAJERA_ACTIVA = 'sudeste_ba';
-var DATOS_FORRAJEROS_POR_REGION = {
-    sudeste_ba: { nombre: 'Sudeste BA', data: clonarDatosForrajeros(DATOS_FORRAJEROS_EMBEBIDOS) },
-    mar_y_sierras: { nombre: 'Mar y sierras', data: construirDatosRegion({
-        'Campo natural': { mensual: [488.5,517.0,517.5,400.9,301.7,255.0,254.8,292.3,371.7,509.6,590.4,520.5], anual: 5019.9 },
-        'Campo natural con agropiro': { mensual: [362.1,375.0,389.5,351.4,293.9,254.8,254.5,293.1,374.7,481.6,486.1,379.5], anual: 4296.2 },
-        'Pastura base alfalfa': { mensual: [684.7,756.2,782.9,661.5,462.2,362.4,362.7,480.7,680.6,980.0,1054.9,805.6], anual: 8074.4 },
-        'Pastura consociada': { mensual: [719.6,808.9,850.2,747.1,565.9,476.7,488.8,651.5,907.9,1258.7,1082.2,742.9], anual: 9300.4 },
-        'Pastura de agropiro y festuca': { mensual: [925.6,888.2,867.9,698.8,540.7,422.5,419.0,546.8,741.1,1098.5,1331.4,1203.6], anual: 9684.1 },
-        'Pastura de festuca': { mensual: [304.8,225.8,238.2,177.5,179.8,153.3,249.0,448.8,479.0,611.8,455.2,376.9], anual: 3900.1 },
-        'Promocion intensiva de raigras': { mensual: [0.0,0.0,884.3,914.1,670.5,511.5,481.4,623.8,867.6,1354.0,1561.6,104.6], anual: 7973.4 },
-        'Verdeo de avena': { mensual: [666.3,677.2,597.4,827.4,738.0,511.9,438.4,525.5,702.2,595.5,544.5,335.2], anual: 7159.5 },
-        'Verdeo de invierno': { mensual: [0.0,569.6,725.5,932.7,719.6,509.4,471.9,604.1,847.5,943.7,872.5,0.0], anual: 7196.5 },
-        'Verdeo de maiz': { mensual: [2299.8,2958.3,2423.0,1478.9,0.0,0.0,0.0,0.0,0.0,0.0,1660.7,1591.4], anual: 12412.1 },
-        'Verdeo de raigras': { mensual: [449.4,440.9,687.9,1232.5,1044.5,833.9,794.8,1002.3,1253.0,1842.8,680.4,544.0], anual: 10806.4 },
-        'Verdeo de sorgo': { mensual: [1431.4,1639.3,1516.0,984.3,521.9,268.5,487.7,1188.0,2165.9,1797.1,959.1,838.0], anual: 13797.2 },
-        'Verdeo de verano': { mensual: [2124.3,2215.8,2024.5,1437.6,1001.7,0.0,0.0,0.0,0.0,0.0,1846.4,1503.6], anual: 12153.9 }
-    }, ORDEN_RECURSOS_REGION) },
-    sudoeste_ba: { nombre: 'Sudoeste BA', data: construirDatosRegion({
-        'Agropiro': { mensual: [294.6,292.4,330.3,344.0,314.3,268.4,258.3,294.5,356.1,424.6,451.8,338.8], anual: 3968.1 },
-        'Campo natural': { mensual: [361.1,367.5,387.6,343.1,280.4,244.2,239.1,264.0,321.8,424.0,479.5,393.9], anual: 4106.2 },
-        'Campo natural con agropiro': { mensual: [375.0,377.2,407.8,363.3,294.4,252.9,242.1,268.1,334.3,442.3,495.5,404.9], anual: 4257.8 },
-        'Campo natural con festuca': { mensual: [470.5,557.9,574.0,492.4,377.3,292.8,281.5,362.6,485.9,702.8,890.2,590.0], anual: 6077.9 },
-        'Pastura base alfalfa': { mensual: [788.3,725.1,690.0,668.9,534.9,413.8,384.6,480.4,722.2,1067.9,1242.8,826.6], anual: 8545.5 },
-        'Pastura consociada': { mensual: [747.0,760.1,784.3,669.0,505.9,407.1,386.4,459.4,658.8,959.6,1070.0,773.0], anual: 8180.6 },
-        'Pastura de agropiro': { mensual: [522.3,548.2,657.5,606.8,490.2,393.6,366.0,423.9,555.7,765.2,846.5,632.7], anual: 6808.6 },
-        'Pastura de agropiro y festuca': { mensual: [642.4,664.7,741.6,632.4,469.4,372.4,359.8,422.8,566.0,805.4,891.0,638.2], anual: 7206.1 },
-        'Pastura de alfalfa pura': { mensual: [1297.9,1330.0,1419.9,1216.5,1090.3,939.5,929.5,1027.6,1295.1,1600.6,1641.7,1262.9], anual: 15051.5 },
-        'Pastura de festuca': { mensual: [686.5,715.1,781.5,654.1,487.4,396.7,374.8,446.1,616.8,899.6,1047.4,801.5], anual: 7907.5 },
-        'Pastura de gramma': { mensual: [527.7,495.6,601.0,255.6,0.0,0.0,0.0,0.0,0.0,0.0,332.1,495.0], anual: 2707.0 },
-        'Pastura de lloron': { mensual: [288.1,290.9,307.8,284.5,248.0,220.6,216.9,237.2,279.9,347.3,361.7,302.1], anual: 3385.0 },
-        'Promocion de raigras': { mensual: [418.0,468.7,735.1,654.4,552.7,475.9,448.9,550.7,730.4,990.2,1091.4,518.4], anual: 7634.8 },
-        'Promocion intensiva de raigras': { mensual: [0.0,156.0,824.4,855.5,629.7,460.2,390.7,505.7,778.1,1557.7,2017.5,93.7], anual: 8269.2 },
-        'Verdeo de avena': { mensual: [1053.2,663.8,828.6,725.7,484.2,325.4,300.6,360.9,565.0,463.7,336.3,1039.4], anual: 7146.8 },
-        'Verdeo de avena y vicia': { mensual: [0.0,326.8,340.9,468.2,539.1,480.6,447.8,508.9,649.3,868.3,712.1,0.0], anual: 5342.0 },
-        'Verdeo de invierno': { mensual: [0.0,603.0,843.0,1038.6,756.6,486.7,391.7,435.7,585.1,1247.3,1258.7,62.6], anual: 7709.0 },
-        'Verdeo de maiz': { mensual: [1766.6,2024.8,1892.8,1199.3,257.4,0.0,0.0,0.0,0.0,959.5,1412.6,1233.9], anual: 10746.9 },
-        'Verdeo de raigras': { mensual: [0.0,981.8,926.4,999.9,743.8,661.4,571.8,681.4,972.2,0.0,0.0,0.0], anual: 6538.7 },
-        'Verdeo de sorgo': { mensual: [1303.4,1517.4,1454.1,867.7,623.6,0.0,0.0,0.0,798.3,817.5,1036.0,862.8], anual: 9280.8 },
-        'Verdeo de triticale': { mensual: [0.0,394.5,349.7,262.1,322.8,359.4,363.2,468.0,619.4,446.4,323.5,0.0], anual: 3909.0 },
-        'Verdeo de verano': { mensual: [1777.0,2234.0,2007.0,1247.3,917.8,488.3,421.9,560.8,1210.8,1327.0,1747.0,1344.3], anual: 15283.2 }
-    }, ORDEN_RECURSOS_REGION) }
-};
-
-var RECURSOS_DERIVADOS_REGION = {
-    // Maiz diferido: aprovechamiento concentrado en otoño-invierno (ABR-AGO), pico JUN.
-    // Se pierde más calidad que el sorgo diferido por el tiempo que lleva parado.
-    // ENE FEB MAR ABR MAY JUN JUL AGO SEP OCT NOV DIC
-    'Maiz diferido': {
-        base: 'Verdeo de maiz',
-        factorAnual: 0.72,
-        pesosDisponibilidad: [0, 0, 0, 0.15, 0.20, 0.25, 0.20, 0.12, 0.05, 0.03, 0, 0]
-    },
-    // Sorgo diferido: aprovechamiento concentrado en otoño-invierno (MAR-JUL), algo más temprano que el maíz.
-    // ENE FEB MAR ABR MAY JUN JUL AGO SEP OCT NOV DIC
-    'Sorgo diferido': {
-        base: 'Verdeo de sorgo',
-        factorAnual: 0.78,
-        pesosDisponibilidad: [0, 0, 0.08, 0.18, 0.22, 0.20, 0.15, 0.10, 0.05, 0.02, 0, 0]
-    }
-};
-
-var RECURSOS_ASISTIDOS_BASE = [
-    { value: 'Campo natural', label: 'Campo natural', descripcion: 'Base simple para ambientes naturales y promociones.' },
-    { value: 'Pastura base alfalfa', label: 'Pastura base alfalfa', descripcion: 'Sirve para alfalfa y pasturas de alta producción.' },
-    { value: 'Pastura consociada', label: 'Pastura consociada', descripcion: 'Buena base para mezclas templadas y planteos equilibrados.' },
-    { value: 'Pastura de festuca', label: 'Pastura de festuca', descripcion: 'Útil para recursos dominados por festuca o templadas invernales.' },
-    { value: 'Pastura de agropiro', label: 'Pastura de agropiro', descripcion: 'Referencia para bajos salinos o ambientes más duros.' },
-    { value: 'Agropiro', label: 'Agropiro', descripcion: 'Opción simple cuando el recurso es prácticamente agropiro puro.' },
-    { value: 'Verdeo de invierno', label: 'Verdeo de invierno', descripcion: 'Base general para avena, raigrás, centeno o mezclas invernales.' },
-    { value: 'Verdeo de raigras', label: 'Verdeo de raigrás', descripcion: 'Mejor cuando el recurso se parece más a un verdeo/raigrás de alta calidad.' },
-    { value: 'Verdeo de maiz', label: 'Verdeo de maíz', descripcion: 'Para maíces de aprovechamiento directo en verano-otoño.' },
-    { value: 'Maiz diferido', label: 'Maíz diferido', descripcion: 'Pensado para maíces diferidos con oferta concentrada en otoño-invierno.' },
-    { value: 'Verdeo de sorgo', label: 'Verdeo de sorgo', descripcion: 'Para sorgos de pastoreo o aprovechamiento directo.' },
-    { value: 'Sorgo diferido', label: 'Sorgo diferido', descripcion: 'Pensado para sorgos diferidos o reservados para otoño-invierno.' }
-];
-
-var FACTOR_PRODUCTIVIDAD_ASISTIDA = { baja: 0.8, media: 1, alta: 1.2 };
-
-function construirMensualDerivado(baseMensual, factorAnual, pesosDisponibilidad) {
-    var totalBase = (baseMensual || []).reduce(function(a, b) { return a + (Number(b) || 0); }, 0);
-    var totalObjetivo = totalBase * (factorAnual || 1);
-    var pesos = (pesosDisponibilidad || []).slice(0, 12).map(function(v) { return Number(v) || 0; });
-    while (pesos.length < 12) pesos.push(0);
-    var sumaPesos = pesos.reduce(function(a, b) { return a + b; }, 0);
-    if (sumaPesos <= 0) return { mensual: Array(12).fill(0), anual: 0 };
-    var mensual = pesos.map(function(peso) {
-        return Number((totalObjetivo * peso / sumaPesos).toFixed(1));
-    });
-    var totalMensual = mensual.reduce(function(a, b) { return a + b; }, 0);
-    var diferencia = Number((totalObjetivo - totalMensual).toFixed(1));
-    if (Math.abs(diferencia) >= 0.1) {
-        var idx = -1;
-        for (var i = mensual.length - 1; i >= 0; i--) {
-            if (mensual[i] > 0 || pesos[i] > 0) { idx = i; break; }
-        }
-        if (idx === -1) idx = 0;
-        mensual[idx] = Number((mensual[idx] + diferencia).toFixed(1));
-    }
-    return {
-        mensual: mensual,
-        anual: Number(mensual.reduce(function(a, b) { return a + b; }, 0).toFixed(1))
-    };
-}
-
-function asegurarResumenRegionRecurso(data, recurso) {
-    if (!data || !data.promedios || !data.promedios[recurso]) return;
-    if (!data.resumen) data.resumen = {};
-    var anual = Number(data.promedios[recurso].anual) || 0;
-    var promedio = anual / 12;
-    data.resumen[recurso] = {
-        promedio: Number(promedio.toFixed(2)),
-        produccion_mejor: Number((promedio * 1.15).toFixed(1)),
-        produccion_peor: Number((promedio * 0.85).toFixed(1))
-    };
-}
-
-function reordenarRecursosRegion(data) {
-    if (!data || !data.promedios) return;
-    var vistos = {};
-    var ordenados = [];
-    ORDEN_RECURSOS_REGION.forEach(function(recurso) {
-        if (data.promedios[recurso] && !vistos[recurso]) {
-            ordenados.push(recurso);
-            vistos[recurso] = true;
-        }
-    });
-    Object.keys(data.promedios).forEach(function(recurso) {
-        if (!vistos[recurso]) ordenados.push(recurso);
-    });
-    data.recursos = ordenados;
-}
-
-function enriquecerRegionConRecursosDerivados(data) {
-    if (!data || !data.promedios) return;
-    Object.keys(RECURSOS_DERIVADOS_REGION).forEach(function(nombreDerivado) {
-        if (data.promedios[nombreDerivado]) return;
-        var definicion = RECURSOS_DERIVADOS_REGION[nombreDerivado];
-        var base = data.promedios[definicion.base];
-        if (!base || !base.mensual) return;
-        data.promedios[nombreDerivado] = construirMensualDerivado(base.mensual, definicion.factorAnual, definicion.pesosDisponibilidad);
-        asegurarResumenRegionRecurso(data, nombreDerivado);
-    });
-    reordenarRecursosRegion(data);
-}
-
-Object.keys(DATOS_FORRAJEROS_POR_REGION).forEach(function(regionId) {
-    enriquecerRegionConRecursosDerivados(DATOS_FORRAJEROS_POR_REGION[regionId].data);
-});
 
 var CATEGORIAS = {
     ternero:    { nombre: 'Ternero',    consumo: 0.025, pesoDefecto: 180, gananciaDefecto: 0.55, usaPasto: true,
@@ -1328,96 +1317,11 @@ var CATEGORIAS = {
 var MESES_LABELS = ['E','F','M','A','M','J','J','A','S','O','N','D'];
 var MESES_NOMBRES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 
-var MESES_USO_DEFECTO = {
-    'Campo natural': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Campo natural con agropiro': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Campo natural con festuca': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Pastura base alfalfa': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Pastura de alfalfa pura': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Pastura consociada': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Agropiro': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Pastura de agropiro': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Pastura de agropiro y festuca': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Pastura de festuca': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Pastura de lloron': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Pastura de gramma': [1,1,1,1,1,1,1,1,1,1,1,1],
-    'Promocion de raigras': [0,0,0,1,1,1,1,1,1,1,1,0],
-    'Promocion intensiva de raigras': [0,0,0,1,1,1,1,1,1,1,1,0],
-    'Verdeo de avena': [0,1,1,1,1,1,1,1,1,1,1,0],
-    'Verdeo de avena y vicia': [0,1,1,1,1,1,1,1,1,1,1,0],
-    'Verdeo de invierno': [0,1,1,1,1,1,1,1,1,1,1,0],
-    'Verdeo de maiz': [1,1,1,1,1,0,0,0,0,1,0,1],
-    'Maiz diferido': [0,0,0,1,1,1,1,1,0,0,0,0],
-    'Verdeo de raigras': [0,1,1,1,1,1,1,1,1,1,0,0],
-    'Verdeo de sorgo': [1,0,0,1,1,0,0,0,0,1,1,1],
-    'Sorgo diferido': [0,0,1,1,1,1,1,0,0,0,0,0],
-    'Verdeo de triticale': [0,1,1,1,1,1,1,1,1,1,1,0],
-    'Verdeo de verano': [1,1,1,1,1,0,0,0,0,1,1,1]
-};
-
-// MESES_PASTOREO_DEFECTO: inicio y fin de pastoreo por recurso.
-// Se aplica al agregar un lote nuevo. null = sin restriccion (todo el año).
-// Indices: 0=ENE 1=FEB 2=MAR 3=ABR 4=MAY 5=JUN 6=JUL 7=AGO 8=SEP 9=OCT 10=NOV 11=DIC
-var MESES_PASTOREO_DEFECTO = {
-    'Campo natural':                    { inicio: null, fin: null },
-    'Campo natural con agropiro':       { inicio: null, fin: null },
-    'Campo natural con festuca':        { inicio: null, fin: null },
-    'Pastura base alfalfa':             { inicio: null, fin: null },
-    'Pastura de alfalfa pura':          { inicio: null, fin: null },
-    'Pastura consociada':               { inicio: null, fin: null },
-    'Agropiro':                         { inicio: null, fin: null },
-    'Pastura de agropiro':              { inicio: null, fin: null },
-    'Pastura de agropiro y festuca':    { inicio: null, fin: null },
-    'Pastura de festuca':               { inicio: null, fin: null },
-    'Pastura de lloron':                { inicio: null, fin: null },
-    'Pastura de gramma':                { inicio: null, fin: null },
-    'Promocion de raigras':             { inicio: 3,    fin: 10   },
-    'Promocion intensiva de raigras':   { inicio: 3,    fin: 10   },
-    'Verdeo de avena':                  { inicio: 1,    fin: 10   },
-    'Verdeo de avena y vicia':          { inicio: 1,    fin: 10   },
-    'Verdeo de invierno':               { inicio: 1,    fin: 10   },
-    'Verdeo de triticale':              { inicio: 1,    fin: 10   },
-    'Verdeo de raigras':                { inicio: 1,    fin: 9    },
-    'Verdeo de maiz':                   { inicio: 11,   fin: 3    },
-    'Verdeo de sorgo':                  { inicio: 11,   fin: 4    },
-    'Verdeo de verano':                 { inicio: 11,   fin: 4    },
-    'Maiz diferido':                    { inicio: 3,    fin: 7    },
-    'Sorgo diferido':                   { inicio: 2,    fin: 6    }
-};
-
 // --- CONFIGURACION ---
 var MODELO_CONFIG = {
     perdidaDiferido: 0.05,
     eficienciaPastoreo: { continuo: 0.55, rotativo: 0.725, intensivo: 0.825 },
     consumoAnualEV: 3650
-};
-
-// --- PERFIL NUTRICIONAL NRC (FDN % y EM Mcal/kgMS, por estacion) ---
-var PERFIL_NRC = {
-    'Campo natural':                 { fdn: {inv:75, pri:58}, em: {inv:1.60, pri:2.20} },
-    'Campo natural con agropiro':    { fdn: {inv:72, pri:56}, em: {inv:1.70, pri:2.20} },
-    'Campo natural con festuca':     { fdn: {inv:68, pri:54}, em: {inv:1.75, pri:2.28} },
-    'Pastura base alfalfa':          { fdn: {inv:46, pri:38}, em: {inv:2.30, pri:2.58} },
-    'Pastura de alfalfa pura':       { fdn: {inv:42, pri:34}, em: {inv:2.40, pri:2.65} },
-    'Pastura consociada':            { fdn: {inv:52, pri:42}, em: {inv:2.15, pri:2.45} },
-    'Agropiro':                      { fdn: {inv:64, pri:55}, em: {inv:1.85, pri:2.15} },
-    'Pastura de agropiro':           { fdn: {inv:64, pri:55}, em: {inv:1.85, pri:2.15} },
-    'Pastura de agropiro y festuca': { fdn: {inv:58, pri:48}, em: {inv:1.95, pri:2.28} },
-    'Pastura de festuca':            { fdn: {inv:60, pri:48}, em: {inv:1.96, pri:2.35} },
-    'Pastura de lloron':             { fdn: {inv:70, pri:60}, em: {inv:1.75, pri:2.10} },
-    'Pastura de gramma':             { fdn: {inv:72, pri:62}, em: {inv:1.70, pri:2.00} },
-    'Promocion de raigras':          { fdn: {inv:44, pri:40}, em: {inv:2.38, pri:2.52} },
-    'Promocion intensiva de raigras':{ fdn: {inv:40, pri:36}, em: {inv:2.50, pri:2.65} },
-    'Verdeo de avena':               { fdn: {inv:45, pri:50}, em: {inv:2.45, pri:2.22} },
-    'Verdeo de avena y vicia':       { fdn: {inv:44, pri:42}, em: {inv:2.45, pri:2.35} },
-    'Verdeo de invierno':            { fdn: {inv:42, pri:44}, em: {inv:2.45, pri:2.38} },
-    'Verdeo de maiz':                { fdn: {inv:62, pri:55}, em: {inv:1.96, pri:2.25} },
-    'Maiz diferido':                 { fdn: {inv:70, pri:64}, em: {inv:1.62, pri:1.92} },
-    'Verdeo de raigras':             { fdn: {inv:40, pri:36}, em: {inv:2.52, pri:2.65} },
-    'Verdeo de sorgo':               { fdn: {inv:65, pri:58}, em: {inv:1.78, pri:2.10} },
-    'Sorgo diferido':                { fdn: {inv:72, pri:64}, em: {inv:1.55, pri:1.88} },
-    'Verdeo de triticale':           { fdn: {inv:46, pri:44}, em: {inv:2.35, pri:2.30} },
-    'Verdeo de verano':              { fdn: {inv:58, pri:52}, em: {inv:2.00, pri:2.25} }
 };
 
 // --- ESTADO GLOBAL ---
@@ -1431,7 +1335,8 @@ var escenarios = [];
 var escenarioActivoId = null;
 var grupoEditandoId = null;
 var nextId = 1;
-var chartBalance, chartAcumulado, chartOfertaDemanda, chartDiferimiento;
+var chartBalance, chartAcumulado, chartOfertaDemanda, chartDiferimiento, chartWaterfallEconomico, chartForageMargin;
+var ultimoAnalisisForrajero = null;
 function prepararCanvasChart(canvasId, mensajeFallback) {
     var canvas = document.getElementById(canvasId);
     if (!canvas) return null;
@@ -1521,6 +1426,245 @@ function formatNumCompact(n) {
     if (abs >= 100000) return (n/1000).toFixed(0) + ' K';
     return formatNum(n);
 }
+function formatRatio(n) {
+    if (!isFinite(n)) return '-';
+    return n.toFixed(2).replace('.', ',') + 'x';
+}
+function formatPercent(n) {
+    if (!isFinite(n)) return '-';
+    return (n * 100).toFixed(1).replace('.', ',') + '%';
+}
+function safeDivide(num, den) {
+    return den ? (num / den) : 0;
+}
+function obtenerEstadoRentabilidad(valor, referencia) {
+    var banda = Math.max(Math.abs(referencia || 0) * 0.02, 1);
+    if (valor < -banda) return 'bad';
+    if (Math.abs(valor) <= banda) return 'warn';
+    return 'good';
+}
+function obtenerEstadoRelacion(compraVentaRatio) {
+    if (!isFinite(compraVentaRatio) || compraVentaRatio <= 0) return '';
+    if (compraVentaRatio > 1.02) return 'bad';
+    if (compraVentaRatio >= 0.95) return 'warn';
+    return 'good';
+}
+function obtenerEstadoCostoKg(costoKg, precioVenta) {
+    if (!isFinite(costoKg) || !isFinite(precioVenta) || precioVenta <= 0) return '';
+    var ratio = costoKg / precioVenta;
+    if (ratio > 1.02) return 'bad';
+    if (ratio >= 0.95) return 'warn';
+    return 'good';
+}
+function aplicarEstadoCard(metricId, estado) {
+    var el = document.getElementById(metricId);
+    if (!el) return;
+    var card = el.closest('.card');
+    if (!card) return;
+    card.classList.remove('card-profit-good', 'card-profit-warn', 'card-profit-bad');
+    if (estado === 'good') card.classList.add('card-profit-good');
+    else if (estado === 'warn') card.classList.add('card-profit-warn');
+    else if (estado === 'bad') card.classList.add('card-profit-bad');
+}
+function obtenerColoresHeatmap(margen, referencia) {
+    var estado = obtenerEstadoRentabilidad(margen, referencia);
+    if (estado === 'good') return { bg: '#e8f5e9', color: '#2e7d32' };
+    if (estado === 'warn') return { bg: '#fff8e1', color: '#a56a00' };
+    return { bg: '#ffebee', color: '#c62828' };
+}
+function renderizarResumenRentabilidad(totalMargin, revenue, forageData) {
+    var el = document.getElementById('dashboardRentabilidad');
+    if (!el) return;
+    var estado = obtenerEstadoRentabilidad(totalMargin, revenue);
+    var deficitMeses = forageData ? forageData.mesesDeficit.length : 0;
+    var costoExtra = forageData ? forageData.additionalFeedCost : 0;
+    if (estado === 'good') {
+        el.className = 'alert alert-success';
+        el.innerHTML = '<strong>Planteo rentable.</strong> El margen total se mantiene positivo y soporta la estructura de costos actual.';
+    } else if (estado === 'warn') {
+        el.className = 'alert alert-warning';
+        el.innerHTML = '<strong>Planteo cerca del punto de equilibrio.</strong> Pequeños cambios de precio o costos pueden volver negativo el margen.';
+    } else {
+        el.className = 'alert alert-danger';
+        el.innerHTML = '<strong>Margen negativo.</strong> El planteo no cubre compra y costos operativos con los supuestos actuales.';
+    }
+    if (deficitMeses > 0) {
+        el.innerHTML += ' Se detectaron ' + deficitMeses + ' mes(es) con déficit forrajero y un costo extra potencial de ' + formatMoney(costoExtra) + '.';
+    }
+}
+function actualizarMetricaEconomica(id, valor, tipo, estado) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (tipo === 'money') {
+        el.textContent = formatMoneyCompact(valor);
+        el.title = formatMoney(valor);
+    } else if (tipo === 'number') {
+        el.textContent = formatNumCompact(valor);
+        el.title = formatNum(valor);
+    } else if (tipo === 'moneyPerUnit') {
+        el.textContent = isFinite(valor) ? formatMoney(Math.round(valor)) : '-';
+        el.title = isFinite(valor) ? formatMoney(valor) : '-';
+    } else if (tipo === 'percent') {
+        el.textContent = formatPercent(valor);
+        el.title = formatPercent(valor);
+    } else if (tipo === 'ratio') {
+        el.textContent = formatRatio(valor);
+        el.title = formatRatio(valor);
+    } else {
+        el.textContent = valor;
+        el.title = valor;
+    }
+    aplicarEstadoCard(id, estado || '');
+}
+function construirAjusteForrajeroEconomico(balanceMensual, kgSuplementoPlan, costoSuplementoUnit) {
+    var balance = (balanceMensual || Array(12).fill(0)).slice(0, 12);
+    var kgPlanRemanente = kgSuplementoPlan || 0;
+    var costoPlanMes = Array(12).fill(0);
+    var costoExtraMes = Array(12).fill(0);
+    var balanceNegativo = [];
+    for (var i = 0; i < balance.length; i++) {
+        if (balance[i] >= 0) continue;
+        var kgRequeridos = Math.abs(balance[i]) / 0.9;
+        var kgPlanMes = Math.min(kgPlanRemanente, kgRequeridos);
+        kgPlanRemanente -= kgPlanMes;
+        costoPlanMes[i] = kgPlanMes * costoSuplementoUnit;
+        costoExtraMes[i] = Math.max(0, kgRequeridos - kgPlanMes) * costoSuplementoUnit;
+        balanceNegativo.push(i);
+    }
+    var costoPlanNoAsignadoMes = kgPlanRemanente > 0 ? (kgPlanRemanente * costoSuplementoUnit) / 12 : 0;
+    var costoMensual = Array(12).fill(0).map(function(_, idx) {
+        return costoPlanMes[idx] + costoExtraMes[idx] + costoPlanNoAsignadoMes;
+    });
+    var additionalFeedCost = costoExtraMes.reduce(function(s, v) { return s + v; }, 0);
+    var cumulativeCost = 0;
+    var cumulativeCostSeries = costoMensual.map(function(v) {
+        cumulativeCost += v;
+        return cumulativeCost;
+    });
+    return {
+        mesesDeficit: balanceNegativo,
+        additionalFeedCost: additionalFeedCost,
+        feedCostMonthly: costoMensual,
+        cumulativeFeedCost: cumulativeCostSeries
+    };
+}
+function renderizarWaterfallEconomico(revenue, purchaseCost, operatingCosts, totalMargin) {
+    var ctx = prepararCanvasChart('chartWaterfallEconomico', 'El grafico de estructura de costos no esta disponible sin Chart.js. Los valores numericos siguen funcionando.');
+    if (chartWaterfallEconomico) chartWaterfallEconomico.destroy();
+    if (!ctx) { chartWaterfallEconomico = null; return; }
+    var acumuladoCompra = revenue - purchaseCost;
+    var acumuladoOperativo = acumuladoCompra - operatingCosts;
+    chartWaterfallEconomico = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Ingreso', 'Compra', 'Costos operativos', 'Margen final'],
+            datasets: [{
+                label: 'Monto',
+                data: [
+                    [0, revenue],
+                    [acumuladoCompra, revenue],
+                    [acumuladoOperativo, acumuladoCompra],
+                    [Math.min(0, totalMargin), Math.max(0, totalMargin)]
+                ],
+                backgroundColor: ['#48b14c', '#d64545', '#e0a203', totalMargin >= 0 ? '#1a4a35' : '#c62828'],
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Revenue -> compra -> costos -> margen', font: { size: 14, weight: 'bold' } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var raw = context.raw || [0, 0];
+                            return formatMoney(Math.abs(raw[1] - raw[0]));
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) { return formatMoneyCompact(value); }
+                    }
+                }
+            }
+        }
+    });
+}
+function renderizarGraficoMargenForrajero(balanceMensual, marginSeries, marginBase) {
+    var ctx = prepararCanvasChart('chartForageMargin', 'El grafico margen vs balance forrajero no esta disponible sin Chart.js. El analisis numerico sigue funcionando.');
+    if (chartForageMargin) chartForageMargin.destroy();
+    if (!ctx) { chartForageMargin = null; return; }
+    chartForageMargin = new Chart(ctx, {
+        data: {
+            labels: MESES_NOMBRES,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Balance forrajero',
+                    yAxisID: 'yForraje',
+                    data: balanceMensual,
+                    backgroundColor: balanceMensual.map(function(v) { return v >= 0 ? '#48b14c80' : '#d6454588'; }),
+                    borderColor: balanceMensual.map(function(v) { return v >= 0 ? '#48b14c' : '#c62828'; }),
+                    borderWidth: 1.5
+                },
+                {
+                    type: 'line',
+                    label: 'Margen proyectado',
+                    yAxisID: 'yMargen',
+                    data: marginSeries,
+                    borderColor: '#1a4a35',
+                    backgroundColor: '#1a4a3522',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    type: 'line',
+                    label: 'Margen antes del ajuste forrajero',
+                    yAxisID: 'yMargen',
+                    data: Array(12).fill(marginBase),
+                    borderColor: '#1a7ab5',
+                    borderDash: [6, 4],
+                    borderWidth: 2,
+                    tension: 0,
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'El margen cae a medida que el déficit exige compra externa', font: { size: 14, weight: 'bold' } },
+                legend: { position: 'top' }
+            },
+            scales: {
+                yForraje: {
+                    type: 'linear',
+                    position: 'left',
+                    ticks: {
+                        callback: function(value) { return (value / 1000).toFixed(0) + 'k'; }
+                    }
+                },
+                yMargen: {
+                    type: 'linear',
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        callback: function(value) { return formatMoneyCompact(value); }
+                    }
+                }
+            }
+        }
+    });
+}
 
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
@@ -1528,6 +1672,8 @@ function switchTab(tabId) {
     var tabEl = document.getElementById(tabId);
     if (tabEl) tabEl.classList.add('active');
     if (tabId === 'lotes') actualizarHintGanancia();
+    // Al entrar a Económico, refrescar el resumen de precios del rodeo
+    if (tabId === 'economico') { try { actualizarResumenPrecios(); } catch(e) {} }
     document.querySelectorAll('.tab').forEach(function(t) {
         var txt = t.textContent.toLowerCase();
         if ((tabId === 'balance' && txt === 'balance') || (tabId === 'lotes' && txt.indexOf('lotes') >= 0) ||
@@ -1791,11 +1937,14 @@ var recursosActivos = [];
 function limpiarEstadoResultados() {
     configuracionCampo = null;
     ultimaDemandaMensual = null;
+    ultimoAnalisisForrajero = null;
     alertasPredictivas = [];
     if (chartBalance) { chartBalance.destroy(); chartBalance = null; }
     if (chartAcumulado) { chartAcumulado.destroy(); chartAcumulado = null; }
     if (chartOfertaDemanda) { chartOfertaDemanda.destroy(); chartOfertaDemanda = null; }
     if (chartDiferimiento) { chartDiferimiento.destroy(); chartDiferimiento = null; }
+    if (chartWaterfallEconomico) { chartWaterfallEconomico.destroy(); chartWaterfallEconomico = null; }
+    if (chartForageMargin) { chartForageMargin.destroy(); chartForageMargin = null; }
     ['resultadosBalance', 'resultadosDemanda', 'resultadosEconomico'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -1817,6 +1966,8 @@ function resultadosVisibles(id) {
     return !!(el && el.style.display !== 'none');
 }
 function ocultarResultadosDerivados() {
+    if (chartWaterfallEconomico) { chartWaterfallEconomico.destroy(); chartWaterfallEconomico = null; }
+    if (chartForageMargin) { chartForageMargin.destroy(); chartForageMargin = null; }
     ['resultadosDemanda', 'resultadosEconomico'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -3277,7 +3428,58 @@ function calcularDemanda(sinScroll) {
         balanceMensual[mes] = balance; diferidoActual = balance > 0 ? balance : 0; diferidoAcumulado[mes] = diferidoActual;
     }
     ultimaDemandaMensual = demandaMensual.slice();
+    ultimoAnalisisForrajero = {
+        oferta: ofertaMensual.slice(),
+        demanda: demandaMensual.slice(),
+        balance: balanceMensual.slice(),
+        eficiencia: eficiencia,
+        disponibilidad: disponibilidadMensual.slice(),
+        diferido: diferidoAcumulado.slice()
+    };
     mostrarGraficoOfertaDemanda(ofertaMensual, demandaMensual, balanceMensual, eficiencia);
+    var mesesDeficit = [];
+    var deficitTotal = 0;
+    var mesCritico = -1;
+    var balanceCritico = 0;
+    for (var j = 0; j < 12; j++) {
+        var mesAnalisis = (mesInicio + j) % 12;
+        var balanceMes = balanceMensual[mesAnalisis];
+        if (balanceMes < 0) {
+            mesesDeficit.push(mesAnalisis);
+            deficitTotal += Math.abs(balanceMes);
+            if (mesCritico === -1 || balanceMes < balanceCritico) {
+                mesCritico = mesAnalisis;
+                balanceCritico = balanceMes;
+            }
+        }
+    }
+    var claseDeficit = mesesDeficit.length === 0 ? 'success' : mesesDeficit.length <= 2 ? 'warning' : 'danger';
+    var nombresDeficit = mesesDeficit.map(function(m) { return MESES_NOMBRES[m]; });
+    var kgDiaSuplemento = mesesDeficit.length > 0 ? deficitTotal / mesesDeficit.length / 30 : 0;
+    var mensajeDiagnostico = '&#9989; La oferta cubre la demanda en todos los meses del ejercicio.';
+    if (mesesDeficit.length > 0 && mesesDeficit.length <= 2) {
+        mensajeDiagnostico = '&#9888;&#65039; Bache puntual en ' + nombresDeficit.join(', ') + '. D&eacute;ficit acumulado: ' + formatNum(deficitTotal) + ' kg MS &mdash; equivale a suplementar ' + kgDiaSuplemento.toFixed(1) + ' kg/d&iacute;a durante esos meses.';
+    } else if (mesesDeficit.length >= 3) {
+        mensajeDiagnostico = '&#128308; D&eacute;ficit estructural en ' + nombresDeficit.join(', ') + '. Revis&aacute; la carga animal o el plan forrajero.';
+    }
+    var insightsDemanda = document.getElementById('insightsOfertaDemanda');
+    var canvasOfertaDemanda = document.getElementById('chartOfertaDemanda');
+    if (!insightsDemanda && canvasOfertaDemanda && canvasOfertaDemanda.parentNode && canvasOfertaDemanda.parentNode.parentNode) {
+        var contenedorGraficoPrincipal = canvasOfertaDemanda.parentNode.parentNode;
+        insightsDemanda = document.createElement('div');
+        insightsDemanda.id = 'insightsOfertaDemanda';
+        insightsDemanda.style.marginTop = '12px';
+        contenedorGraficoPrincipal.parentNode.insertBefore(insightsDemanda, contenedorGraficoPrincipal.nextSibling);
+    }
+    if (insightsDemanda) {
+        var tarjetasInsights = '';
+        tarjetasInsights += '<div class="card"><div class="alert alert-' + claseDeficit + '" style="margin:0;"><strong>Meses con deficit</strong><br>' + mesesDeficit.length + '</div></div>';
+        if (deficitTotal > 0) {
+            tarjetasInsights += '<div class="card"><div class="alert alert-danger" style="margin:0;"><strong>Deficit total acumulado</strong><br>' + formatNum(deficitTotal) + ' kg MS</div></div>';
+        }
+        tarjetasInsights += '<div class="card"><div class="alert alert-' + (mesCritico === -1 ? 'success' : 'danger') + '" style="margin:0;"><strong>Mes mas critico</strong><br>' + (mesCritico === -1 ? 'Sin deficit' : MESES_NOMBRES[mesCritico] + ': ' + formatNum(balanceCritico) + ' kg MS') + '</div></div>';
+        insightsDemanda.innerHTML = '<div class="card-grid">' + tarjetasInsights + '</div><div class="alert alert-' + claseDeficit + '" style="margin-top:12px;">' + mensajeDiagnostico + '</div>';
+    }
     mostrarGraficoDiferimiento(diferidoAcumulado, disponibilidadMensual);
     mostrarGraficoDemandaCategoria(demandaPorGrupo);
     generarTablaDetalleMensual(produccionUtilizable, diferidoInicialMensual, disponibilidadMensual, demandaMensual, balanceMensual, diferidoAcumulado, mesInicio);
@@ -3685,13 +3887,16 @@ function calcularIndicadoresOfertaDemanda(oferta, demanda, balance, eficiencia) 
 function mostrarGraficoOfertaDemanda(oferta, demanda, balance, eficiencia) {
     var ctx = prepararCanvasChart('chartOfertaDemanda', 'Los graficos de oferta y demanda no estan disponibles sin Chart.js. El analisis numerico sigue funcionando.'); if (chartOfertaDemanda) chartOfertaDemanda.destroy();
     if (!ctx) { chartOfertaDemanda = null; return; }
-    chartOfertaDemanda = new Chart(ctx, { type: 'bar', data: { labels: MESES_NOMBRES, datasets: [
-        { label: 'Oferta aprovechable', data: oferta.map(function(o){return o*eficiencia;}), backgroundColor: '#48b14c50', borderColor: '#48b14c', borderWidth: 2 },
-        { label: 'Demanda', data: demanda, backgroundColor: '#0c83ae50', borderColor: '#0c83ae', borderWidth: 2 },
-        { label: 'Balance', data: balance, type: 'line', borderColor: '#e0a203', borderWidth: 2, tension: 0.4, fill: false, pointRadius: 4 }
+    var ofertaAprovechable = oferta.map(function(o) { return o * eficiencia; });
+    chartOfertaDemanda = new Chart(ctx, { type: 'line', data: { labels: MESES_NOMBRES, datasets: [
+        { label: 'Oferta aprovechable', data: ofertaAprovechable, borderColor: '#48b14c', backgroundColor: '#48b14c33', borderWidth: 3, tension: 0.35, pointRadius: 3, pointHoverRadius: 5,
+          fill: { target: 1, above: 'rgba(72, 177, 76, 0.20)', below: 'rgba(231, 76, 60, 0.30)' } },
+        { label: 'Demanda', data: demanda, borderColor: '#e74c3c', backgroundColor: '#e74c3c33', borderWidth: 3, tension: 0.35, pointRadius: 3, pointHoverRadius: 5, fill: false },
+        { label: 'Referencia 0', data: Array(12).fill(0), borderColor: '#95a5a6', borderWidth: 1.5, borderDash: [6,6], pointRadius: 0, fill: false }
     ]}, options: { responsive: true, maintainAspectRatio: false,
-        plugins: { title: { display: true, text: 'Oferta vs Demanda', font: { size: 14, weight: 'bold' } }, legend: { position: 'top' } },
-        scales: { y: { beginAtZero: true, ticks: { callback: function(v){return (v/1000).toFixed(0)+'k';} } } } } });
+        plugins: { filler: { propagate: false }, title: { display: true, text: 'Oferta vs Demanda', font: { size: 14, weight: 'bold' } }, legend: { position: 'top', labels: { filter: function(item) { return item.text !== 'Referencia 0'; } } } },
+        interaction: { mode: 'index', intersect: false },
+        scales: { y: { beginAtZero: true, ticks: { callback: function(v){return Math.round(v/1000)+'k';} } } } } });
 }
 
 function mostrarGraficoDiferimiento(diferido, disponibilidad) {
@@ -3853,105 +4058,395 @@ function calcularBalanceHidrico() {
 }
 
 // --- ECONOMICO ---
-function calcularEconomico(sinScroll) {
-    if (!configuracionCampo) { mostrarToast('Primero calcula el balance en la pestana Balance', 'info'); return; }
-    var esc = getEscenarioActivo(); if (!esc || esc.grupos.length === 0) { mostrarToast('Agrega al menos un grupo en Lotes/Rodeo', 'info'); return; }
-    var superficie = configuracionCampo.superficie;
-    var costoLabores = (parseFloat(document.getElementById('costoLabores').value)||0) * superficie;
-    var costosEstructura = (parseFloat(document.getElementById('costosEstructura').value)||0) * superficie;
-    var costoSuplemento = (parseFloat(document.getElementById('costoSuplemento').value)||0) * (parseFloat(document.getElementById('kgSuplemento').value)||0);
-    var comisionVenta = (parseFloat(document.getElementById('comisionVenta').value)||0) / 100;
-    var costoFleteCab = parseFloat(document.getElementById('costoFlete').value) || 0;
-    var inversionTotal = 0; var ingresoTotal = 0; var detalleGrupos = [];
-    var totalCabezas = 0;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// actualizarResumenPrecios — muestra los precios del rodeo antes de calcular
+// Se llama al entrar a la tab Económico y cuando cambia cualquier input.
+// ─────────────────────────────────────────────────────────────────────────────
+function actualizarResumenPrecios() {
+    var panelPrecios  = document.getElementById('ecoResumenPrecios');
+    var detalle       = document.getElementById('ecoResumenPreciosDetalle');
+    var alertaSin     = document.getElementById('ecoAlertaSinRodeo');
+    if (!panelPrecios || !detalle) return;
+
+    var esc = getEscenarioActivo();
+    var tieneRodeo = esc && esc.grupos && esc.grupos.length > 0;
+
+    if (alertaSin) alertaSin.style.display = tieneRodeo ? 'none' : '';
+    if (!tieneRodeo) { panelPrecios.style.display = 'none'; return; }
+
+    // Construir texto con los precios de cada grupo
+    var lineas = [];
     esc.grupos.forEach(function(g) {
-        var cat = CATEGORIAS[g.categoria]; var dias = Math.floor((new Date(g.fechaSalida)-new Date(g.fechaEntrada))/86400000);
-        var pesoFinal = g.pesoInicial + g.ganancia*dias; var kgCompra = g.pesoInicial*g.cantidad; var kgVenta = pesoFinal*g.cantidad;
-        var kgProducidos = g.ganancia*dias*g.cantidad;
-        // Produccion de terneros destete (se atribuye a la vaca)
-        var kgTerneros = 0; var cantTerneros = 0, cantTerneras = 0; var infoDestete = ''; var ingresoTerneros = 0;
+        var cat = CATEGORIAS[g.categoria];
+        var nombre = cat ? cat.nombre : g.categoria;
+        var linea = '<strong>' + nombre + '</strong> (' + g.cantidad + ' cab)';
+        // Precio de compra
+        if (g.costos && g.costos.compra > 0) {
+            linea += ' — Compra: <strong>$' + formatNum(g.costos.compra) + '/kg</strong>';
+        }
+        // Precio de venta
+        if (g.costos && g.costos.venta > 0) {
+            linea += ' · Venta: <strong>$' + formatNum(g.costos.venta) + '/kg</strong>';
+        }
+        // Relación compra/venta como señal rápida
+        if (g.costos && g.costos.compra > 0 && g.costos.venta > 0) {
+            var ratio = g.costos.compra / g.costos.venta;
+            if (ratio > 1.0) {
+                linea += ' <span style="color:#c62828;font-size:0.85em;">⚠ comprás más caro de lo que vendés</span>';
+            } else if (ratio > 0.90) {
+                linea += ' <span style="color:#b07800;font-size:0.85em;">margen ajustado</span>';
+            } else {
+                linea += ' <span style="color:#2e7d32;font-size:0.85em;">✓</span>';
+            }
+        }
+        // Terneros con precio propio
+        var trans = g.transicion || null;
+        if (trans && trans.tipo === 'cria' && trans.destinoDestete === 'vender' && trans.precioTernero > 0) {
+            linea += ' · Terneros venta: <strong>$' + formatNum(trans.precioTernero) + '/kg</strong>';
+        }
+        lineas.push(linea);
+    });
+
+    // Costos opcionales cargados (resumen breve)
+    var costos = [];
+    var labores = parseFloat(document.getElementById('costoLabores').value) || 0;
+    var estructura = parseFloat(document.getElementById('costosEstructura').value) || 0;
+    var supl = parseFloat(document.getElementById('costoSuplemento').value) || 0;
+    var kgSupl = parseFloat(document.getElementById('kgSuplemento').value) || 0;
+    if (labores > 0)   costos.push('Labores $' + formatNum(labores) + '/ha');
+    if (estructura > 0) costos.push('Estructura $' + formatNum(estructura) + '/ha');
+    if (supl > 0 && kgSupl > 0) costos.push('Suplemento $' + formatNum(supl) + '/kg × ' + formatNum(kgSupl) + ' kg');
+
+    var html = lineas.join('<br>');
+    if (costos.length > 0) {
+        html += '<br><span style="color:#888;font-size:0.85em;">Costos adicionales cargados: ' + costos.join(' · ') + '</span>';
+    } else {
+        html += '<br><span style="color:#aaa;font-size:0.85em;">Sin costos adicionales — resultado básico compra/venta.</span>';
+    }
+
+    detalle.innerHTML = html;
+    panelPrecios.style.display = '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// calcularEconomico — cálculo principal del módulo económico
+// Diseño simplificado: veredicto claro primero, detalle colapsado abajo.
+// ─────────────────────────────────────────────────────────────────────────────
+function calcularEconomico(sinScroll) {
+    if (!configuracionCampo) { mostrarToast('Primero calculá el balance en la pestaña Balance', 'info'); return; }
+    var esc = getEscenarioActivo();
+    if (!esc || esc.grupos.length === 0) { mostrarToast('Agregá al menos un grupo en Lotes / Rodeo', 'info'); return; }
+    // Calcular demanda en silencio si no se hizo todavía (necesitamos el balance forrajero)
+    if ((!ultimoAnalisisForrajero || !ultimoAnalisisForrajero.balance) && esc.grupos.length > 0) {
+        try { calcularDemanda(true); } catch(e) {}
+    }
+
+    var superficie       = configuracionCampo.superficie;
+    var costoLabores     = (parseFloat(document.getElementById('costoLabores').value)    || 0) * superficie;
+    var costosEstructura = (parseFloat(document.getElementById('costosEstructura').value)|| 0) * superficie;
+    var costoSuplementoUnit = parseFloat(document.getElementById('costoSuplemento').value) || 0;
+    var kgSuplementoPlan    = parseFloat(document.getElementById('kgSuplemento').value)    || 0;
+    var costoSuplemento     = costoSuplementoUnit * kgSuplementoPlan;
+    var comisionVenta    = (parseFloat(document.getElementById('comisionVenta').value)   || 0) / 100;
+    var costoFleteCab    =  parseFloat(document.getElementById('costoFlete').value)      || 0;
+
+    // ── Recorrer grupos: acumular ingresos, costos y kg producidos ──
+    var ingresoTotal = 0, kgCompraTotal = 0, kgVentaTotal = 0, kgProducidosTotal = 0;
+    var animalesVendidos = 0, animalesComprados = 0;
+    var detalleGrupos = [];
+
+    esc.grupos.forEach(function(g) {
+        var cat  = CATEGORIAS[g.categoria];
+        var dias = Math.floor((new Date(g.fechaSalida) - new Date(g.fechaEntrada)) / 86400000);
+        var pesoFinal    = g.pesoInicial + g.ganancia * dias;
+        var kgCompra     = g.pesoInicial * g.cantidad;
+        var kgVenta      = pesoFinal * g.cantidad;
+        var kgProducidos = g.ganancia * dias * g.cantidad;
+
+        // Terneros al destete en rodeo de cría
+        var kgTerneros = 0, cantTerneros = 0, cantTerneras = 0;
+        var infoDestete = '', ingresoTerneros = 0;
         var trans = g.transicion || null;
         if (trans && trans.tipo === 'cria' && trans.fechaDestete && g.categoria === 'vaca') {
             cantTerneros = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (trans.porcentajeMachos||50)/100);
             cantTerneras = Math.round(g.cantidad * (trans.porcentajeDestete||85)/100 * (1-(trans.porcentajeMachos||50)/100));
-            var diasLactancia = Math.floor((new Date(trans.fechaDestete) - new Date(trans.fechaParto)) / 86400000);
-            var pesoDesteteMachos = (cat.pesoCria || 80) + 0.6 * Math.max(0, diasLactancia);
-            var pesoDesteteHembras = pesoDesteteMachos - 10;
-            kgTerneros = cantTerneros * pesoDesteteMachos + cantTerneras * pesoDesteteHembras;
+            var diasLact = Math.floor((new Date(trans.fechaDestete) - new Date(trans.fechaParto)) / 86400000);
+            var pesoDMachos  = (cat.pesoCria || 80) + 0.6 * Math.max(0, diasLact);
+            var pesoDHembras = pesoDMachos - 10;
+            kgTerneros   = cantTerneros * pesoDMachos + cantTerneras * pesoDHembras;
             kgProducidos += kgTerneros;
-            var destinoDestete = trans.destinoDestete || 'vender';
-            if (destinoDestete === 'vender') {
-                var precioTernero = trans.precioTernero || g.costos.venta;
-                ingresoTerneros = kgTerneros * precioTernero;
-                infoDestete = ' (Venta: ' + (cantTerneros+cantTerneras) + ' terneros, ' + formatNum(kgTerneros) + ' kg a $' + formatNum(precioTernero) + '/kg)';
+            var dest = trans.destinoDestete || 'vender';
+            if (dest === 'vender') {
+                var pT = trans.precioTernero || g.costos.venta;
+                ingresoTerneros = kgTerneros * pT;
+                infoDestete = ' (Venta: ' + (cantTerneros+cantTerneras) + ' terneros, ' + formatNum(kgTerneros) + ' kg a $' + formatNum(pT) + '/kg)';
             } else {
                 infoDestete = ' (Retiene: ' + (cantTerneros+cantTerneras) + ' terneros, ' + formatNum(kgTerneros) + ' kg)';
             }
         }
-        var costoCompra = kgCompra*g.costos.compra; var costoSanidad = g.costos.sanidad*g.cantidad; var costoFlete = costoFleteCab*g.cantidad;
-        var ingresoBruto = kgVenta*g.costos.venta + ingresoTerneros; var costoComision = ingresoBruto*comisionVenta;
-        inversionTotal += costoCompra + costoSanidad; ingresoTotal += ingresoBruto;
-        totalCabezas += g.cantidad;
-        detalleGrupos.push({ nombre:cat.nombre, cantidad:g.cantidad, kgProducidos:kgProducidos, costoCompra:costoCompra,
-            costoSanidad:costoSanidad, costoFlete:costoFlete, costoComision:costoComision, ingresoBruto:ingresoBruto,
-            margen:ingresoBruto-costoComision-costoCompra-costoSanidad-costoFlete, dias:dias, pesoFinal:pesoFinal,
-            infoDestete:infoDestete, ingresoTerneros:ingresoTerneros });
+
+        var costoCompra   = kgCompra * g.costos.compra;
+        var costoSanidad  = g.costos.sanidad * g.cantidad;
+        var costoFlete    = costoFleteCab * g.cantidad;
+        var ingresoBruto  = kgVenta * g.costos.venta + ingresoTerneros;
+        var costoComision = ingresoBruto * comisionVenta;
+
+        ingresoTotal      += ingresoBruto;
+        animalesComprados += g.cantidad;
+        animalesVendidos  += g.cantidad + cantTerneros + cantTerneras;
+        kgCompraTotal     += kgCompra;
+        kgVentaTotal      += kgVenta + kgTerneros;
+        kgProducidosTotal += kgProducidos;
+
+        detalleGrupos.push({
+            nombre: cat.nombre, cantidad: g.cantidad, kgProducidos: kgProducidos,
+            costoCompra: costoCompra, costoSanidad: costoSanidad,
+            costoFlete: costoFlete, costoComision: costoComision,
+            ingresoBruto: ingresoBruto, dias: dias, pesoFinal: pesoFinal,
+            infoDestete: infoDestete, ingresoTerneros: ingresoTerneros,
+            margen: ingresoBruto - costoComision - costoCompra - costoSanidad - costoFlete
+        });
     });
-    var totalCostosCompra = detalleGrupos.reduce(function(s,d){return s+d.costoCompra;},0);
-    var totalCostosSanidad = detalleGrupos.reduce(function(s,d){return s+d.costoSanidad;},0);
-    var totalComision = detalleGrupos.reduce(function(s,d){return s+d.costoComision;},0);
-    var totalFlete = detalleGrupos.reduce(function(s,d){return s+d.costoFlete;},0);
-    var gastosGenerales = costoLabores + costosEstructura + costoSuplemento;
-    var margenBrutoCalc = ingresoTotal - totalCostosCompra - totalCostosSanidad - totalComision - totalFlete;
-    var margenNeto = margenBrutoCalc - gastosGenerales;
-    [{ id:'inversionTotal', val:totalCostosCompra+totalCostosSanidad },
-     { id:'ingresoTotal', val:ingresoTotal },
-     { id:'costosDirectosTotal', val:totalCostosCompra+totalCostosSanidad+totalComision+totalFlete },
-     { id:'margenBrutoTotal', val:margenBrutoCalc, color:true },
-     { id:'margenBrutoHa', val:margenBrutoCalc/superficie, color:true },
-     { id:'margenNetoTotal', val:margenNeto, color:true }
-    ].forEach(function(c) {
-        var el = document.getElementById(c.id); if (!el) return;
-        el.textContent = formatMoneyCompact(c.val);
-        el.title = formatMoney(c.val);
-        if (c.color) el.style.color = c.val >= 0 ? '#48b14c' : '#0c83ae';
-    });
-    var htmlD = '<table><thead><tr><th>Grupo</th><th>Cab</th><th>Dias</th><th>Peso Final</th><th>Kg Prod</th><th>Ingreso</th><th>Costos</th><th>Margen</th></tr></thead><tbody>';
+
+    // ── Totales ──
+    var totalCostosCompra  = detalleGrupos.reduce(function(s,d){ return s + d.costoCompra;   }, 0);
+    var totalCostosSanidad = detalleGrupos.reduce(function(s,d){ return s + d.costoSanidad;  }, 0);
+    var totalComision      = detalleGrupos.reduce(function(s,d){ return s + d.costoComision; }, 0);
+    var totalFlete         = detalleGrupos.reduce(function(s,d){ return s + d.costoFlete;    }, 0);
+
+    // Ajuste forrajero: si hubo baches de pasto, estima el costo de suplemento extra
+    var forageData = construirAjusteForrajeroEconomico(
+        ultimoAnalisisForrajero && ultimoAnalisisForrajero.balance
+            ? ultimoAnalisisForrajero.balance
+            : Array(12).fill(0),
+        kgSuplementoPlan, costoSuplementoUnit
+    );
+    var operatingCosts   = totalCostosSanidad + totalComision + totalFlete +
+                           costoLabores + costosEstructura + costoSuplemento +
+                           forageData.additionalFeedCost;
+    var totalTodosCostos = totalCostosCompra + operatingCosts;
+    var totalMargin      = ingresoTotal - totalTodosCostos;
+    var capitalInvested  = totalCostosCompra;
+
+    // ── Indicadores derivados ──
+    var kgHa              = safeDivide(kgProducidosTotal, superficie);
+    var marginHa          = safeDivide(totalMargin, superficie);
+    var marginHead        = safeDivide(totalMargin, animalesVendidos);
+    var avgSalePrice      = safeDivide(ingresoTotal, kgVentaTotal);
+    var avgPurchasePrice  = safeDivide(totalCostosCompra, kgCompraTotal);
+    var purchaseSaleRatio = safeDivide(avgPurchasePrice, avgSalePrice);
+    var costPerKg         = safeDivide(totalTodosCostos, kgProducidosTotal);
+    var roi               = safeDivide(totalMargin, capitalInvested);
+    var estadoGeneral     = obtenerEstadoRentabilidad(totalMargin, ingresoTotal);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // MEJORA 3 — Precio mínimo de venta para no perder (precio de equilibrio)
+    // Lógica: necesitamos que ingreso = totalTodosCostos
+    //   ingreso = kgVentaTotal × precioVentaEquilibrio + ingresoTerneros
+    //   precioVentaEquilibrio = (totalTodosCostos - ingresoTerneros) / kgVentaTotal
+    // ──────────────────────────────────────────────────────────────────────
+    var ingresoTernerosTotales = detalleGrupos.reduce(function(s,d){ return s + d.ingresoTerneros; }, 0);
+    // Costos que no dependen del precio de venta de hacienda (compra + operativos fijos)
+    var costosSinComision = totalCostosCompra + totalCostosSanidad + totalFlete +
+                            costoLabores + costosEstructura + costoSuplemento + forageData.additionalFeedCost;
+    // Con comisión: ingreso × comisionVenta se suma a costos, entonces:
+    //   kgVentaTotal × P × (1 - comision) = costosSinComision - ingresoTerneros × (1 - comision)
+    // Simplificado para la mayoría de los casos:
+    var denominadorPE = kgVentaTotal * (1 - comisionVenta);
+    var numeradorPE   = costosSinComision - ingresoTernerosTotales * (1 - comisionVenta);
+    var precioEquilibrio = denominadorPE > 0 ? Math.round(numeradorPE / denominadorPE) : 0;
+    var diferenciaPE = precioEquilibrio > 0 ? (avgSalePrice - precioEquilibrio) : 0;
+
+    // ══════════════════════════════════════════════════════════════════════
+    // PANEL VEREDICTO PRINCIPAL
+    // ══════════════════════════════════════════════════════════════════════
+    var elVeredicto = document.getElementById('ecoVeredicto');
+    var elIcono     = document.getElementById('ecoVeredictoIcono');
+    var elTitulo    = document.getElementById('ecoVeredictoTitulo');
+    var elDetalle   = document.getElementById('ecoVeredictoDetalle');
+    var elDeficit   = document.getElementById('ecoDeficitForraje');
+    var elPE        = document.getElementById('ecoPrecioEquilibrio');
+
+    if (elVeredicto && elTitulo && elDetalle) {
+        var pctMargen = ingresoTotal > 0 ? (totalMargin / ingresoTotal * 100) : 0;
+
+        if (totalMargin > 0) {
+            elVeredicto.style.borderLeftColor = '#2e7d32';
+            elVeredicto.style.background      = '#f0fdf4';
+            elIcono.textContent = '✅';
+            elTitulo.textContent = 'Ejercicio rentable — Margen: ' + formatMoney(totalMargin);
+            elTitulo.style.color = '#2e7d32';
+            elDetalle.innerHTML =
+                'Vendiste <strong>' + formatNum(kgProducidosTotal) + ' kg</strong> de carne y quedaron ' +
+                '<strong>' + formatMoney(Math.round(marginHa)) + '/ha</strong> de margen. ' +
+                'El margen representó el <strong>' + pctMargen.toFixed(1) + '%</strong> del ingreso bruto.';
+        } else if (totalMargin === 0) {
+            elVeredicto.style.borderLeftColor = '#b07800';
+            elVeredicto.style.background      = '#fffbf0';
+            elIcono.textContent = '⚖️';
+            elTitulo.textContent = 'Punto de equilibrio — Margen: $0';
+            elTitulo.style.color = '#b07800';
+            elDetalle.innerHTML = 'Ingreso y costos se igualaron exactamente. Cualquier variación de precio cambia el resultado.';
+        } else {
+            elVeredicto.style.borderLeftColor = '#c62828';
+            elVeredicto.style.background      = '#fff5f5';
+            elIcono.textContent = '🔴';
+            elTitulo.textContent = 'Ejercicio con pérdida — Margen: ' + formatMoney(totalMargin);
+            elTitulo.style.color = '#c62828';
+            elDetalle.innerHTML =
+                'Los costos superaron al ingreso en <strong>' + formatMoney(Math.abs(totalMargin)) + '</strong>. ' +
+                'La relación compra/venta fue ' + (purchaseSaleRatio * 100).toFixed(0) + '% — ' +
+                (purchaseSaleRatio > 1 ? 'compraste más caro de lo que vendiste.' :
+                 purchaseSaleRatio > 0.92 ? 'margen muy ajustado entre compra y venta.' :
+                 'el spread de precios no alcanzó para cubrir los costos.');
+        }
+    }
+
+    // MEJORA 2 — Déficit forrajero en el veredicto (no en nota al pie)
+    if (elDeficit) {
+        if (forageData.mesesDeficit.length > 0) {
+            var mesesTxt = forageData.mesesDeficit.map(function(i){ return MESES_NOMBRES[i]; }).join(', ');
+            elDeficit.innerHTML =
+                '🌿 <strong>El balance forrajero tuvo baches en ' + mesesTxt + '</strong>. ' +
+                'Para cubrir esos meses se imputaron <strong>' + formatMoney(forageData.additionalFeedCost) +
+                '</strong> de compra de suplemento, que ya están descontados del margen de arriba.';
+            elDeficit.style.display = '';
+        } else {
+            elDeficit.innerHTML = '';
+            elDeficit.style.display = 'none';
+        }
+    }
+
+    // MEJORA 3 — Precio de equilibrio
+    if (elPE && precioEquilibrio > 0 && kgVentaTotal > 0) {
+        if (totalMargin < 0) {
+            // Perdió: le decimos cuánto le faltó en precio
+            elPE.innerHTML =
+                '📊 Para empatar necesitabas vender a <strong>$' + formatNum(precioEquilibrio) + '/kg</strong>. ' +
+                'Con tu precio de venta ($' + formatNum(Math.round(avgSalePrice)) + '/kg) ' +
+                'te faltaron <strong>$' + formatNum(Math.abs(Math.round(diferenciaPE))) + '/kg</strong>.';
+        } else if (totalMargin > 0 && precioEquilibrio > 0) {
+            // Ganó: le decimos cuánto margen tiene sobre el piso
+            elPE.innerHTML =
+                '📊 Precio mínimo para no perder: <strong>$' + formatNum(precioEquilibrio) + '/kg</strong>. ' +
+                'Vendiste $' + formatNum(Math.round(diferenciaPE)) + '/kg por encima de ese piso — ' +
+                'ese margen es tu colchón ante una baja de precios.';
+        }
+        elPE.style.display = '';
+    } else if (elPE) {
+        elPE.style.display = 'none';
+    }
+
+    // ── Cards numéricas principales ──
+    var elRev = document.getElementById('ecoRevenue');
+    if (elRev) { elRev.textContent = formatMoneyCompact(ingresoTotal); elRev.title = formatMoney(ingresoTotal); }
+
+    var elCostos = document.getElementById('ecoTotalCostos');
+    if (elCostos) { elCostos.textContent = formatMoneyCompact(totalTodosCostos); elCostos.title = formatMoney(totalTodosCostos); }
+
+    var elMargen = document.getElementById('ecoTotalMargin');
+    if (elMargen) {
+        elMargen.textContent = formatMoneyCompact(totalMargin);
+        elMargen.title = formatMoney(totalMargin);
+        elMargen.style.color = totalMargin > 0 ? '#2e7d32' : totalMargin < 0 ? '#c62828' : '#b07800';
+        var cardMargen = elMargen.closest('.card');
+        if (cardMargen) {
+            cardMargen.classList.remove('card-profit-good','card-profit-warn','card-profit-bad');
+            if (totalMargin > 0)      cardMargen.classList.add('card-profit-good');
+            else if (totalMargin < 0) cardMargen.classList.add('card-profit-bad');
+            else                      cardMargen.classList.add('card-profit-warn');
+        }
+    }
+
+    // Cards de contexto
+    actualizarMetricaEconomica('ecoMarginHa',    marginHa,          'moneyPerUnit', estadoGeneral);
+    actualizarMetricaEconomica('ecoMarginHead',  marginHead,        'moneyPerUnit', estadoGeneral);
+    actualizarMetricaEconomica('ecoKgProducidos',kgProducidosTotal, 'number',       '');
+    actualizarMetricaEconomica('ecoKgHa',        kgHa,              'number',       estadoGeneral);
+
+    // IDs legacy ocultos (los usan renderizarResumenRentabilidad y generarInforme)
+    actualizarMetricaEconomica('ecoPurchaseCost',      totalCostosCompra,   'money',       '');
+    actualizarMetricaEconomica('ecoOperatingCosts',    operatingCosts,      'money',       '');
+    actualizarMetricaEconomica('ecoCapitalInvested',   capitalInvested,     'money',       '');
+    actualizarMetricaEconomica('ecoCostPerKg',         costPerKg,           'moneyPerUnit',obtenerEstadoCostoKg(costPerKg, avgSalePrice));
+    actualizarMetricaEconomica('ecoSalePrice',         avgSalePrice,        'moneyPerUnit','');
+    actualizarMetricaEconomica('ecoPurchaseSaleRatio', purchaseSaleRatio,   'ratio',       obtenerEstadoRelacion(purchaseSaleRatio));
+    actualizarMetricaEconomica('ecoRoi',               roi,                 'percent',     obtenerEstadoRentabilidad(totalMargin, capitalInvested));
+
+    // Nota al pie (vacía — la info de déficit ahora está en el veredicto)
+    var notaForraje = document.getElementById('economicoSupuestoForrajero');
+    if (notaForraje) notaForraje.innerHTML = '';
+
+    // Panel de análisis detallado (dentro del acordeón)
+    renderizarResumenRentabilidad(totalMargin, ingresoTotal, forageData);
+
+    // ── Tabla desglose por grupo ──
+    var htmlD = '<table><thead><tr><th>Grupo</th><th>Cab</th><th>Días</th><th>Peso final</th><th>Kg producidos</th><th>Ingreso</th><th>Costos directos</th><th>Margen</th></tr></thead><tbody>';
     detalleGrupos.forEach(function(d) {
-        htmlD += '<tr><td>' + d.nombre + '</td><td>' + d.cantidad + '</td><td>' + d.dias + '</td><td>' + d.pesoFinal.toFixed(0) + ' kg</td>';
-        htmlD += '<td>' + formatNum(d.kgProducidos) + (d.infoDestete || '') + '</td><td>' + formatMoney(d.ingresoBruto) + '</td>';
-        htmlD += '<td>' + formatMoney(d.costoCompra+d.costoSanidad+d.costoFlete+d.costoComision) + '</td>';
-        htmlD += '<td style="color:' + (d.margen>=0?'#48b14c':'#0c83ae') + ';font-weight:700;">' + formatMoney(d.margen) + '</td></tr>';
+        htmlD += '<tr><td>' + d.nombre + '</td><td>' + d.cantidad + '</td><td>' + d.dias + '</td>';
+        htmlD += '<td>' + d.pesoFinal.toFixed(0) + ' kg</td>';
+        htmlD += '<td>' + formatNum(d.kgProducidos) + (d.infoDestete||'') + '</td>';
+        htmlD += '<td>' + formatMoney(d.ingresoBruto) + '</td>';
+        htmlD += '<td>' + formatMoney(d.costoCompra + d.costoSanidad + d.costoFlete + d.costoComision) + '</td>';
+        htmlD += '<td style="color:' + (d.margen >= 0 ? '#2e7d32' : '#c62828') + ';font-weight:700;">' + formatMoney(d.margen) + '</td></tr>';
     });
-    htmlD += '</tbody></table>'; document.getElementById('tablaDetalleEconomico').innerHTML = htmlD;
-    var todosLosCostos = [{concepto:'Compra',monto:totalCostosCompra},{concepto:'Sanidad',monto:totalCostosSanidad},{concepto:'Comision',monto:totalComision},{concepto:'Flete',monto:totalFlete},{concepto:'Labores',monto:costoLabores},{concepto:'Estructura',monto:costosEstructura},{concepto:'Suplementacion',monto:costoSuplemento}];
-    var costoTotalG = todosLosCostos.reduce(function(s,c){return s+c.monto;},0);
-    var htmlC = '<table><thead><tr><th>Concepto</th><th>Monto</th><th>%</th></tr></thead><tbody>';
-    todosLosCostos.forEach(function(c) { if (c.monto>0) htmlC += '<tr><td>' + c.concepto + '</td><td>' + formatMoney(c.monto) + '</td><td>' + (c.monto/costoTotalG*100).toFixed(1) + '%</td></tr>'; });
+    htmlD += '</tbody></table>';
+    document.getElementById('tablaDetalleEconomico').innerHTML = htmlD;
+
+    // ── Tabla composición de costos ──
+    var todosLosCostos = [
+        { concepto: 'Compra de hacienda',              monto: totalCostosCompra },
+        { concepto: 'Sanidad',                         monto: totalCostosSanidad },
+        { concepto: 'Comisión venta',                  monto: totalComision },
+        { concepto: 'Flete',                           monto: totalFlete },
+        { concepto: 'Labores',                         monto: costoLabores },
+        { concepto: 'Estructura',                      monto: costosEstructura },
+        { concepto: 'Suplementación planificada',      monto: costoSuplemento },
+        { concepto: 'Compra extra por déficit de pasto', monto: forageData.additionalFeedCost }
+    ];
+    var costoTotalG = todosLosCostos.reduce(function(s,c){ return s + c.monto; }, 0);
+    var htmlC = '<table><thead><tr><th>Concepto de costo</th><th>Monto</th><th>Del total</th></tr></thead><tbody>';
+    todosLosCostos.forEach(function(c) {
+        if (c.monto > 0)
+            htmlC += '<tr><td>' + c.concepto + '</td><td>' + formatMoney(c.monto) + '</td><td>' + (c.monto/costoTotalG*100).toFixed(1) + '%</td></tr>';
+    });
     htmlC += '<tr class="fila-total"><td>TOTAL</td><td>' + formatMoney(costoTotalG) + '</td><td>100%</td></tr></tbody></table>';
     document.getElementById('tablaComposicionCostos').innerHTML = htmlC;
-    // Tabla de sensibilidad de precios
+
+    // ── Gráficos ──
+    renderizarWaterfallEconomico(ingresoTotal, totalCostosCompra, operatingCosts, totalMargin);
+    var margenBase = totalMargin + costoSuplemento + forageData.additionalFeedCost;
+    var margenSerie = forageData.cumulativeFeedCost.map(function(c){ return margenBase - c; });
+    renderizarGraficoMargenForrajero(
+        ultimoAnalisisForrajero && ultimoAnalisisForrajero.balance ? ultimoAnalisisForrajero.balance : Array(12).fill(0),
+        margenSerie, margenBase
+    );
+
+    // ── Sensibilidad de precios ──
     var variaciones = [-20, -10, 0, 10, 20];
-    var costosFijos = totalCostosSanidad + totalFlete + gastosGenerales;
-    var htmlSens = '<table><thead><tr><th>Precio venta \\ Precio compra</th>';
+    var costosFijos = totalCostosSanidad + totalFlete + costoLabores + costosEstructura + costoSuplemento + forageData.additionalFeedCost;
+    var htmlSens = '<table><thead><tr><th>Venta \\ Compra</th>';
     variaciones.forEach(function(vc) { htmlSens += '<th>Compra ' + (vc >= 0 ? '+' : '') + vc + '%</th>'; });
     htmlSens += '</tr></thead><tbody>';
     variaciones.forEach(function(vv) {
         htmlSens += '<tr><td style="font-weight:600;">Venta ' + (vv >= 0 ? '+' : '') + vv + '%</td>';
         variaciones.forEach(function(vc) {
             var ingAdj = 0, costoCompraAdj = 0;
-            detalleGrupos.forEach(function(d) { ingAdj += d.ingresoBruto * (1+vv/100); costoCompraAdj += d.costoCompra * (1+vc/100); });
+            detalleGrupos.forEach(function(d) { ingAdj += d.ingresoBruto*(1+vv/100); costoCompraAdj += d.costoCompra*(1+vc/100); });
             var comisionAdj = ingAdj * comisionVenta;
             var margenAdj = ingAdj - costoCompraAdj - comisionAdj - costosFijos;
             var esBase = (vc === 0 && vv === 0);
-            var bg = esBase ? 'background:#f0f4ff;font-weight:700;' : '';
-            var color = margenAdj >= 0 ? '#48b14c' : '#0c83ae';
-            htmlSens += '<td style="' + bg + 'color:' + color + ';">' + formatMoneyCompact(margenAdj) + '</td>';
+            var heat = obtenerColoresHeatmap(margenAdj, ingAdj);
+            var border = esBase ? 'box-shadow:inset 0 0 0 2px #1a7ab5;' : '';
+            htmlSens += '<td style="background:' + heat.bg + ';color:' + heat.color + ';' + border + '">' + formatMoneyCompact(margenAdj) + '</td>';
         });
         htmlSens += '</tr>';
     });
     htmlSens += '</tbody></table>';
     document.getElementById('tablaSensibilidad').innerHTML = htmlSens;
+
+    // ── Mostrar resultados ──
     document.getElementById('resultadosEconomico').style.display = 'block';
     if (!sinScroll) document.getElementById('resultadosEconomico').scrollIntoView({ behavior: 'smooth' });
 }
@@ -4233,8 +4728,8 @@ function generarInforme() {
     var tablaDetEco = document.getElementById('tablaDetalleEconomico');
     if (tablaDetEco && tablaDetEco.innerHTML) {
         html += '<div class="informe-seccion"><h2>Resultado Económico</h2><div class="informe-kpi">';
-        var ecoIds = ['inversionTotal','ingresoTotal','margenBrutoTotal','margenBrutoHa','margenNetoTotal'];
-        var ecoLabels = ['Inversion','Ingreso Bruto','Margen Bruto','Margen Bruto/ha','Margen Neto'];
+        var ecoIds = ['ecoKgProducidos','ecoRevenue','ecoPurchaseCost','ecoOperatingCosts','ecoTotalMargin','ecoMarginHa','ecoRoi'];
+        var ecoLabels = ['Kg producidos','Ingreso','Costo compra','Costos operativos','Margen total','Margen/ha','ROI'];
         ecoIds.forEach(function(id,i) {
             var el = document.getElementById(id);
             if (el) html += '<div class="informe-kpi-item"><div class="kpi-label">' + ecoLabels[i] + '</div><div class="kpi-value" style="color:' + (el.style.color||'#2c3e50') + ';">' + (el.title||el.textContent) + '</div></div>';
@@ -4390,3 +4885,4 @@ window.onload = cargarDatos;
 </footer>
 </body>
 </html>
+
