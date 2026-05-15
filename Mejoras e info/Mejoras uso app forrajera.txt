@@ -1,0 +1,16 @@
+﻿Observaciones de uso:
+Balance forrajero
+* Armar una lista desplegable de los recursos forrajeros aparezcan como las categorías de hacienda, creo que es un poco abrumadora esa primera página
+* Incorporar los datos de las otras zonas del país el observatorio forrajero tiene para diferentes zonas del país, creo que ahí tiene más credibilidad la app, en principio me dijiste no se podía porque requiere un login, pero yo lo hice sin ningun usuario, hay una forma de ingresar libre. https://tableroforrajero.crea.org.ar/dashboardcrea2/index.php/crea_session_manag
+   * elegis ususarios libres, 
+   * aceptas terminos y condiciones
+   * elegis año, región, comparar con uno mismo, y pones tablas y te tira los datos ahi los podes exportar  
+   * te voy a adjuntar también unas tablas de excel que encontré del observatorio forrajero nacional para ver si sirve la información
+
+Carga de lotes
+      * aca ya planteamos el tema de cria, hicimos una incorporación falta terminar de afinar, nos faltaria categoría toro 
+      * Cambiar  índice de preñez por índice de destete para calcular la cantidad de ternero a destetar
+      * aca tambien creo que debería haber una tabla con la evolución de los requerimientos anuales, cambios de peso, ganancias esperadas para cada mes (como para alcanzar el promedio que le pusimos anual) como para entender si es posible esas ganancias con los recursos disponibles
+      * en algún momento hablamos de que en el comparador poder volverlo más dinámico mover ganancias o pesos finales para jugar con los escenarios
+Módulo económico
+      * creo que por ahora simple como esta esta bueno, quizás poder asociarlo para que traiga valores actualizados de compra y venta, valores promedios de labores, estructura por si el usuario no lo tiene claro pero quiere profundizar un poco más en lo márgenes de su campo
